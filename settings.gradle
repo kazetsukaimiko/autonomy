@@ -8,3 +8,17 @@
  */
 
 rootProject.name = 'autonomy'
+
+List<String> localModules = Arrays.asList(
+    ':maestro-core',
+    ':maestro-usb4java'
+)
+
+for(String localModule : localModules) {
+    include localModule
+    File localModulePath = ("$rootDir/../maestro" + localModule.replaceAll(":", "/")) as File
+    if (localModulePath.exists()) {
+        System.out.println(localModule + " -> " + localModulePath.absolutePath)
+        project(localModule).projectDir = localModulePath
+    }
+}
