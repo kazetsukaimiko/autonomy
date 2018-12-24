@@ -9,9 +9,24 @@
 
 rootProject.name = 'autonomy'
 
+// Stuff inside our project
+List<String> embeddedModules = Arrays.asList(
+        ':interaction',
+        ':recognition'
+)
+
+for(String embeddedModule : embeddedModules) {
+    include embeddedModule
+    File embeddedModulePath = ("$rootDir" + embeddedModule.replaceAll(":", "/")) as File
+    if (embeddedModulePath.exists()) {
+        project(embeddedModule).projectDir = embeddedModulePath
+    }
+}
+
+// Stuff parallel to our project
 List<String> localModules = Arrays.asList(
-    ':maestro-core',
-    ':maestro-usb4java'
+        ':maestro-core',
+        ':maestro-usb4java'
 )
 
 for(String localModule : localModules) {
