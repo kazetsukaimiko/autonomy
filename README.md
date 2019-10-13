@@ -1,2 +1,0 @@
-# autonomy
-Autonomous Operations
