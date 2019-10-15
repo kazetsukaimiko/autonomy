@@ -5,8 +5,10 @@ import jssc.SerialPort;
 import jssc.SerialPortException;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 public class SerialConnector implements Connector {
+    private static final Logger LOGGER = Logger.getLogger(SerialConnector.class.getName());
 
     private final  SerialPort serialPort;
 
@@ -51,14 +53,11 @@ public class SerialConnector implements Connector {
         long startTime = System.currentTimeMillis();
         StringBuilder sb = new StringBuilder();
         while (true) {
-            long readStart = System.currentTimeMillis();
             String character = serialPort.readString(1);
-            long readTime = System.currentTimeMillis() - readStart;
-            //System.out.println("Read took "+readTime+"ms");
             sb.append(character);
             if (sb.toString().endsWith(delimiter)) {
                 long endTime = System.currentTimeMillis() - startTime;
-                System.out.println("Took "+endTime+"ms");
+                LOGGER.fine("Took "+endTime+"ms");
                 return sb.toString().substring(0, sb.length()-delimiter.length());
             }
         }

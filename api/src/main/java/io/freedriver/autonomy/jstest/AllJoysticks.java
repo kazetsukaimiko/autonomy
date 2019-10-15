@@ -19,7 +19,7 @@ public class AllJoysticks {
     }
 
     public void populate() {
-        System.out.println("populate");
+        LOGGER.info("Populating Joysticks.");
         while (true) {
             JSTestReader.getJoysticksPaths().stream()
                     .filter(path -> !activeJoysticks.containsKey(path) || activeJoysticks.get(path).isDead())

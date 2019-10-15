@@ -28,7 +28,7 @@ public class JoystickMonitor {
     private AllJoysticks allJoysticks;
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
-        System.out.println("Heeeeeelllllllllllooooooooooo");
+        LOGGER.info("Initializing JoystickMonitor.");
         allJoysticks = new AllJoysticks(this::convertAndFire);
         pool.submit(() -> allJoysticks.populate());
     }
