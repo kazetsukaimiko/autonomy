@@ -1,5 +1,6 @@
 package io.freedriver.jsonlink;
 
+import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 

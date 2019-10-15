@@ -1,6 +1,5 @@
 package io.freedriver.autonomy.hrorm;
 
-import io.freedriver.controller.JoystickEvent;
 import org.hrorm.Converter;
 
 import java.nio.file.Path;

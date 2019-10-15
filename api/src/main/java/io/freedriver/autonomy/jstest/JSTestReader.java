@@ -1,4 +1,4 @@
-package io.freedriver.controller;
+package io.freedriver.autonomy.jstest;
 
 import io.freedriver.util.ProcessUtil;
 
@@ -13,16 +13,16 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class JoystickReader implements AutoCloseable {
+public class JSTestReader implements AutoCloseable {
     private final Path path;
     private final Process process;
-    private final Consumer<JoystickEvent> sink;
+    private final Consumer<JSTestEvent> sink;
 
-    public JoystickReader(Path joystickPath, Consumer<JoystickEvent> sink) throws IOException {
+    public JSTestReader(Path joystickPath, Consumer<JSTestEvent> sink) throws IOException {
         this(joystickPath, Executors.newSingleThreadExecutor(), sink);
     }
 
-    public JoystickReader(Path joystickPath, ExecutorService pool, Consumer<JoystickEvent> sink) throws IOException {
+    public JSTestReader(Path joystickPath, ExecutorService pool, Consumer<JSTestEvent> sink) throws IOException {
         this.path = joystickPath;
         this.process = new ProcessBuilder(
                 "jstest",
@@ -32,8 +32,8 @@ public class JoystickReader implements AutoCloseable {
         this.sink = sink;
 
         pool.submit(() -> ProcessUtil.linesInputStream(process.getInputStream())
-                .filter(JoystickEvent::validEvent)
-                .map(joystickEventString -> new JoystickEvent(joystickPath, joystickEventString))
+                .filter(JSTestEvent::validEvent)
+                .map(joystickEventString -> new JSTestEvent(joystickPath, joystickEventString))
                 .forEach(this.sink));
     }
 
@@ -52,18 +52,18 @@ public class JoystickReader implements AutoCloseable {
                 .collect(Collectors.toList());
     }
 
-    private static JoystickReader constructUnchecked(Path joystickPath, Consumer<JoystickEvent> sink) {
+    private static JSTestReader constructUnchecked(Path joystickPath, Consumer<JSTestEvent> sink) {
         try {
-            return new JoystickReader(joystickPath, sink);
+            return new JSTestReader(joystickPath, sink);
         } catch (IOException e) {
-            throw new JoystickReaderException(e);
+            throw new JSTestException(e);
         }
     }
 
-    public static List<JoystickReader> getJoysticks(Consumer<JoystickEvent> sink) {
+    public static List<JSTestReader> getJoysticks(Consumer<JSTestEvent> sink) {
         return getJoysticksPaths()
                 .stream()
-                .map(path -> JoystickReader.constructUnchecked(path, sink))
+                .map(path -> JSTestReader.constructUnchecked(path, sink))
                 .collect(Collectors.toList());
     }
 

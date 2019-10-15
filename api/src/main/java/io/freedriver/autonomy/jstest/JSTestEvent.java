@@ -1,13 +1,14 @@
-package io.freedriver.controller;
+package io.freedriver.autonomy.jstest;
 
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class JoystickEvent {
+public class JSTestEvent {
     private Path path;
     private Instant now;
     private Type type;
@@ -15,10 +16,10 @@ public class JoystickEvent {
     private Long number;
     private Long value;
 
-    public JoystickEvent() {
+    public JSTestEvent() {
     }
 
-    public JoystickEvent(Path path, Type type, Long time, Long number, Long value) {
+    public JSTestEvent(Path path, Type type, Long time, Long number, Long value) {
         this.path = path;
         this.now = Instant.now();
         this.type = type;
@@ -27,7 +28,7 @@ public class JoystickEvent {
         this.value = value;
     }
 
-    private JoystickEvent(Path joystickPath, Map<String, Long> jstestEventMap) {
+    private JSTestEvent(Path joystickPath, Map<String, Long> jstestEventMap) {
         this(
                 joystickPath,
                 Type.ofTypeNumber(jstestEventMap.get("type")),
@@ -37,7 +38,7 @@ public class JoystickEvent {
         );
     }
 
-    public JoystickEvent(Path joystickPath, String jstestEvent) {
+    public JSTestEvent(Path joystickPath, String jstestEvent) {
         this(joystickPath, jstestEventMap(jstestEvent));
     }
 
@@ -48,7 +49,7 @@ public class JoystickEvent {
 
     private static Map<String, Long> jstestEventMap(String jstestEvent) {
         return Stream.of(jstestEvent)
-                .filter(JoystickEvent::validEvent)
+                .filter(JSTestEvent::validEvent)
                 .map(eventLine -> eventLine.split("Event: "))
                 .filter(eventLine -> eventLine.length == 2)
                 .map(eventLine -> eventLine[1])
@@ -131,6 +132,14 @@ public class JoystickEvent {
 
         Type(int typeNumber) {
             this.typeNumber = typeNumber;
+        }
+
+        public static boolean isButton(Type type) {
+            return type == BUTTON || type == BUTTON_INITIAL;
+        }
+
+        public static boolean isInitial(Type type) {
+            return type == BUTTON_INITIAL || type == AXIS_INITIAL;
         }
 
         public int getTypeNumber() {

@@ -1,24 +1,24 @@
-package io.freedriver.jsonlink;
+package io.freedriver.jsonlink.jackson.schema.v1;
 
 import java.util.Objects;
 
 public class AnalogRead {
-    private PinNumber pinNumber;
+    private Identifier pinNumber;
     private int resistance;
 
     public AnalogRead() {
     }
 
-    public AnalogRead(PinNumber pinNumber, int resistance) {
+    public AnalogRead(Identifier pinNumber, int resistance) {
         this.pinNumber = pinNumber;
         this.resistance = resistance;
     }
 
-    public PinNumber getPinNumber() {
+    public Identifier getPinNumber() {
         return pinNumber;
     }
 
-    public void setPinNumber(PinNumber pinNumber) {
+    public void setPinNumber(Identifier pinNumber) {
         this.pinNumber = pinNumber;
     }
 

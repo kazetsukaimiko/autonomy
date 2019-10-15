@@ -1,16 +1,16 @@
-package io.freedriver.jsonlink;
+package io.freedriver.jsonlink.jackson.schema.v1;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class WriteRequest {
-    private Map<PinNumber, Boolean> digital = new HashMap<>();
+    private Map<Identifier, Boolean> digital = new HashMap<>();
 
-    public Map<PinNumber, Boolean> getDigital() {
+    public Map<Identifier, Boolean> getDigital() {
         return digital;
     }
 
-    public void setDigital(Map<PinNumber, Boolean> digital) {
+    public void setDigital(Map<Identifier, Boolean> digital) {
         this.digital = digital;
     }
 

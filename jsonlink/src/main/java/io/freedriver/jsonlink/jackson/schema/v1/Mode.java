@@ -1,4 +1,4 @@
-package io.freedriver.jsonlink;
+package io.freedriver.jsonlink.jackson.schema.v1;
 
 public enum Mode {
     INPUT(false),

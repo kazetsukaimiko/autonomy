@@ -1,4 +1,4 @@
-package io.freedriver.jsonlink;
+package io.freedriver.jsonlink.jackson.schema.v1;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,11 +7,11 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public class Request {
-    private Map<PinNumber, Mode> mode = new HashMap<>();
+    private Map<Identifier, Mode> mode = new HashMap<>();
     private ReadRequest read;
     private WriteRequest write;
-    private List<PinNumber> turn_off = new ArrayList<>();
-    private List<PinNumber> turn_on = new ArrayList<>();
+    private List<Identifier> turn_off = new ArrayList<>();
+    private List<Identifier> turn_on = new ArrayList<>();
 
     public Request analogRead(AnalogRead... analogReads) {
         return analogRead(Stream.of(analogReads));
@@ -38,11 +38,11 @@ public class Request {
         getMode().put(modeSet.getPinNumber(), modeSet.getMode());
     }
 
-    public Request digitalRead(PinNumber... pins) {
+    public Request digitalRead(Identifier... pins) {
         return digitalRead(Stream.of(pins));
     }
 
-    public Request digitalRead(Stream<PinNumber> pins) {
+    public Request digitalRead(Stream<Identifier> pins) {
         if (read == null) {
             read = new ReadRequest();
         }
@@ -78,36 +78,36 @@ public class Request {
         this.write = write;
     }
 
-    public Map<PinNumber, Mode> getMode() {
+    public Map<Identifier, Mode> getMode() {
         return mode;
     }
 
-    public void setMode(Map<PinNumber, Mode> mode) {
+    public void setMode(Map<Identifier, Mode> mode) {
         this.mode = mode;
     }
 
-    public List<PinNumber> getTurn_off() {
+    public List<Identifier> getTurn_off() {
         return turn_off;
     }
 
-    public void setTurn_off(List<PinNumber> turn_off) {
+    public void setTurn_off(List<Identifier> turn_off) {
         this.turn_off = turn_off;
     }
 
-    public List<PinNumber> getTurn_on() {
+    public List<Identifier> getTurn_on() {
         return turn_on;
     }
 
-    public void setTurn_on(List<PinNumber> turn_on) {
+    public void setTurn_on(List<Identifier> turn_on) {
         this.turn_on = turn_on;
     }
 
-    public Request turnOn(Stream<PinNumber> pins) {
+    public Request turnOn(Stream<Identifier> pins) {
         pins.forEach(turn_on::add);
         return this;
     }
 
-    public Request turnOff(Stream<PinNumber> pins) {
+    public Request turnOff(Stream<Identifier> pins) {
         pins.forEach(turn_off::add);
         return this;
     }

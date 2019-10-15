@@ -3,6 +3,9 @@ package io.freedriver.jsonlink;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.freedriver.jsonlink.jackson.schema.v1.Request;
+import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import jssc.SerialPort;
 import jssc.SerialPortList;
 

@@ -1,22 +1,23 @@
-package io.freedriver.jsonlink;
+package io.freedriver.jsonlink.jackson.schema.v1;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.freedriver.jsonlink.jackson.PinNumberKeyDeserializer;
+import io.freedriver.jsonlink.jackson.PinNumberSerializer;
 
 import java.util.Objects;
-import java.util.stream.Stream;
 
 @JsonSerialize(using = PinNumberSerializer.class)
 @JsonDeserialize(keyUsing = PinNumberKeyDeserializer.class)
-public class PinNumber {
+public class Identifier {
     private final int pin;
 
-    public PinNumber(int pin) {
+    public Identifier(int pin) {
         this.pin = pin;
     }
 
-    public static PinNumber of(int pin) {
-        return new PinNumber(pin);
+    public static Identifier of(int pin) {
+        return new Identifier(pin);
     }
 
     public int getPin() {
@@ -32,7 +33,7 @@ public class PinNumber {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PinNumber pinNumber = (PinNumber) o;
+        Identifier pinNumber = (Identifier) o;
         return pin == pinNumber.pin;
     }
 

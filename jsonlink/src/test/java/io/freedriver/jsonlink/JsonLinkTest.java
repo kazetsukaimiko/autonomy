@@ -2,27 +2,19 @@ package io.freedriver.jsonlink;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
+import io.freedriver.jsonlink.jackson.schema.v1.Mode;
+import io.freedriver.jsonlink.jackson.schema.v1.Request;
+import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import io.freedriver.util.ProcessUtil;
-import jssc.SerialPortException;
 import jssc.SerialPortList;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import javax.print.attribute.standard.PrinterMoreInfoManufacturer;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,7 +23,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -93,11 +84,11 @@ public class JsonLinkTest implements ExecutionCondition {
 
     void initializePins(List<PinMapping> pinMappings) throws ConnectorException {
         Request r = new Request();
-        pinMappings.forEach(pinMapping -> r.modeSet(PinNumber.of(pinMapping.getPinNumber()).setMode(Mode.OUTPUT)));
+        pinMappings.forEach(pinMapping -> r.modeSet(Identifier.of(pinMapping.getPinNumber()).setMode(Mode.OUTPUT)));
         connector.send(r);
     }
 
-    Response checkDigitalPins(List<PinNumber> pinNumbers) throws ConnectorException {
+    Response checkDigitalPins(List<Identifier> pinNumbers) throws ConnectorException {
         Request r = new Request();
         pinNumbers.forEach(r::digitalRead);
         return connector.send(r);
@@ -107,7 +98,7 @@ public class JsonLinkTest implements ExecutionCondition {
         // kdialog --checklist "Select" 1 A off 2 B off
         //List<PinMapping> pinMappings = readPinMappings();
         //initializePins(pinMappings);
-        Response r = checkDigitalPins(pinMappings.stream().mapToInt(PinMapping::getPinNumber).mapToObj(PinNumber::of).collect(Collectors.toList()));
+        Response r = checkDigitalPins(pinMappings.stream().mapToInt(PinMapping::getPinNumber).mapToObj(Identifier::of).collect(Collectors.toList()));
         List<String> arguments = Stream.concat(
                 Stream.of("kdialog", "--checklist", "Select light status", "--geometry", "500x900"),
                 r.getDigital().entrySet()
@@ -129,15 +120,15 @@ public class JsonLinkTest implements ExecutionCondition {
 
         String returnedPins = ProcessUtil.readFromInputStream(p.getInputStream());
 
-        List<PinNumber> setToOn = Stream.of(returnedPins.split("\\s+"))
+        List<Identifier> setToOn = Stream.of(returnedPins.split("\\s+"))
                 .map(quoted -> quoted.replace("\"", ""))
                 .filter(unquoted -> !unquoted.isEmpty())
                 .map(Integer::parseInt)
-                .map(PinNumber::of)
+                .map(Identifier::of)
                 .collect(Collectors.toList());
-        List<PinNumber> setToOff = pinMappings.stream()
+        List<Identifier> setToOff = pinMappings.stream()
                 .map(PinMapping::getPinNumber)
-                .map(PinNumber::of)
+                .map(Identifier::of)
                 .filter(pinNumber -> !setToOn.contains(pinNumber))
                 .collect(Collectors.toList());
 
@@ -197,18 +188,18 @@ public class JsonLinkTest implements ExecutionCondition {
         boolean state = true;
         try {
             connector.send(new Request()
-                    .modeSet(PinNumber.of(pinNumber).setMode(Mode.OUTPUT))
-                    .digitalWrite(PinNumber.of(pinNumber).setDigital(state)));
+                    .modeSet(Identifier.of(pinNumber).setMode(Mode.OUTPUT))
+                    .digitalWrite(Identifier.of(pinNumber).setDigital(state)));
             Future<Boolean> lightFlashing = yesNo("Testing pin number "+pinNumber+": Is a light flashing?");
             while (!lightFlashing.isDone()) {
                 //Thread.sleep(150);
                 state = !state;
                 connector.send(new Request()
-                        .digitalWrite(PinNumber.of(pinNumber).setDigital(state)));
+                        .digitalWrite(Identifier.of(pinNumber).setDigital(state)));
             }
 
             connector.send(new Request()
-                    .digitalWrite(PinNumber.of(pinNumber).setDigital(true)));
+                    .digitalWrite(Identifier.of(pinNumber).setDigital(true)));
             return lightFlashing.get();
         } catch (Exception e) {
             throw new RuntimeException("Failed to test pin as digital: ", e);

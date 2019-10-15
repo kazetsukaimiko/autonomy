@@ -1,24 +1,24 @@
-package io.freedriver.jsonlink;
+package io.freedriver.jsonlink.jackson.schema.v1;
 
 import java.util.Objects;
 
 public class DigitalWrite {
-    private PinNumber pinNumber;
+    private Identifier pinNumber;
     private boolean operation;
 
     public DigitalWrite() {
     }
 
-    public DigitalWrite(PinNumber pinNumber, boolean operation) {
+    public DigitalWrite(Identifier pinNumber, boolean operation) {
         this.pinNumber = pinNumber;
         this.operation = operation;
     }
 
-    public PinNumber getPinNumber() {
+    public Identifier getPinNumber() {
         return pinNumber;
     }
 
-    public void setPinNumber(PinNumber pinNumber) {
+    public void setPinNumber(Identifier pinNumber) {
         this.pinNumber = pinNumber;
     }
 

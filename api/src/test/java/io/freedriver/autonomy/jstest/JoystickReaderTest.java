@@ -1,10 +1,7 @@
-package io.freedriver.jsonlink;
+package io.freedriver.autonomy.jstest;
 
-import io.freedriver.controller.AllJoysticks;
+
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.Executors;
 
 @Disabled
 public class JoystickReaderTest {

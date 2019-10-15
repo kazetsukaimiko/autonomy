@@ -1,24 +1,24 @@
-package io.freedriver.jsonlink;
+package io.freedriver.jsonlink.jackson.schema.v1;
 
 import java.util.Objects;
 
 public class ModeSet {
-    private PinNumber pinNumber;
+    private Identifier pinNumber;
     private Mode mode;
 
     public ModeSet() {
     }
 
-    public ModeSet(PinNumber pinNumber, Mode mode) {
+    public ModeSet(Identifier pinNumber, Mode mode) {
         this.pinNumber = pinNumber;
         this.mode = mode;
     }
 
-    public PinNumber getPinNumber() {
+    public Identifier getPinNumber() {
         return pinNumber;
     }
 
-    public void setPinNumber(PinNumber pinNumber) {
+    public void setPinNumber(Identifier pinNumber) {
         this.pinNumber = pinNumber;
     }
 
