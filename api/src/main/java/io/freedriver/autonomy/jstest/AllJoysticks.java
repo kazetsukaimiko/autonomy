@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,9 +14,11 @@ public class AllJoysticks {
     private static final Logger LOGGER = Logger.getLogger(AllJoysticks.class.getName());
 
     private final Map<Path, JSTestReader> activeJoysticks = new ConcurrentHashMap<>();
+    private final ExecutorService executorService;
     private final Consumer<JSTestEvent> sink;
 
-    public AllJoysticks(Consumer<JSTestEvent> sink) {
+    public AllJoysticks(ExecutorService executorService, Consumer<JSTestEvent> sink) {
+        this.executorService = executorService;
         this.sink = sink;
     }
 
@@ -36,7 +40,7 @@ public class AllJoysticks {
     private synchronized void constructFromPool(Path path) {
         LOGGER.info("Joystick " + path.toString() + " joining pool");
         try {
-            final JSTestReader joystickReader = new JSTestReader(path, sink);
+            final JSTestReader joystickReader = new JSTestReader(path, executorService, sink);
             activeJoysticks.put(path, joystickReader);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e, e::getMessage);

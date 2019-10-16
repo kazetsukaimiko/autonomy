@@ -31,12 +31,11 @@ public class DaoProvider {
     public KeylessDao<JoystickEvent> getJoystickEventDao() throws IOException, SQLException {
         DaoBuilder<JoystickEvent> builder = new DaoBuilder<JoystickEvent>("event", JoystickEvent::new)
                 .withPrimaryKey("id", "id_sequence", JoystickEvent::getNumber, JoystickEvent::setNumber)
-                .withConvertingStringColumn("path", JoystickEvent::getPath, JoystickEvent::setPath, new PathConverter())
+                .withStringColumn("name", JoystickEvent::getName, JoystickEvent::setName)
                 .withInstantColumn("timestamp", JoystickEvent::getTimestamp, JoystickEvent::setTimestamp)
                 .withConvertingStringColumn("type", JoystickEvent::getType, JoystickEvent::setType, new JoystickTypeConverter())
                 .withLongColumn("number", JoystickEvent::getNumber, JoystickEvent::setNumber)
                 .withLongColumn("value", JoystickEvent::getValue, JoystickEvent::setValue);
-
         try {
             Schema schema = new Schema(builder);
             connection.prepareStatement(schema.sql()).execute();

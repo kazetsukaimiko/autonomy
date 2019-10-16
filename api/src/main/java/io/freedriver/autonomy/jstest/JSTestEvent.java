@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JSTestEvent {
-    private Path path;
+    private JSMetadata metadata;
     private Instant now;
     private Type type;
     private Long time;
@@ -19,8 +19,8 @@ public class JSTestEvent {
     public JSTestEvent() {
     }
 
-    public JSTestEvent(Path path, Type type, Long time, Long number, Long value) {
-        this.path = path;
+    public JSTestEvent(JSMetadata metadata, Type type, Long time, Long number, Long value) {
+        this.metadata = metadata;
         this.now = Instant.now();
         this.type = type;
         this.time = time;
@@ -28,9 +28,9 @@ public class JSTestEvent {
         this.value = value;
     }
 
-    private JSTestEvent(Path joystickPath, Map<String, Long> jstestEventMap) {
+    private JSTestEvent(JSMetadata joystickMetadata, Map<String, Long> jstestEventMap) {
         this(
-                joystickPath,
+                joystickMetadata,
                 Type.ofTypeNumber(jstestEventMap.get("type")),
                 jstestEventMap.get("time"),
                 jstestEventMap.get("number"),
@@ -38,8 +38,8 @@ public class JSTestEvent {
         );
     }
 
-    public JSTestEvent(Path joystickPath, String jstestEvent) {
-        this(joystickPath, jstestEventMap(jstestEvent));
+    public JSTestEvent(JSMetadata joystickMetadata, String jstestEvent) {
+        this(joystickMetadata, jstestEventMap(jstestEvent));
     }
 
     public static boolean validEvent(String jstestEvent) {
@@ -62,12 +62,12 @@ public class JSTestEvent {
                         kvpair -> Long.parseLong(kvpair[1])));
     }
 
-    public Path getPath() {
-        return path;
+    public JSMetadata getMetadata() {
+        return metadata;
     }
 
-    public void setPath(Path path) {
-        this.path = path;
+    public void setMetadata(JSMetadata metadata) {
+        this.metadata = metadata;
     }
 
     public Instant getNow() {
@@ -112,8 +112,8 @@ public class JSTestEvent {
 
     @Override
     public String toString() {
-        return "JoystickEvent{" +
-                "path=" + path +
+        return "JSTestEvent{" +
+                "metadata=" + metadata +
                 ", now=" + now +
                 ", type=" + type +
                 ", time=" + time +

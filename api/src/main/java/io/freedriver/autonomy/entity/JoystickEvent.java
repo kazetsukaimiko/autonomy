@@ -1,17 +1,20 @@
 package io.freedriver.autonomy.entity;
 
+import io.freedriver.autonomy.jstest.JSMetadata;
 import io.freedriver.autonomy.jstest.JSTestEvent;
 
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class JoystickEvent {
-    private Path path;
+    private String title;
     private Instant timestamp;
     private Type type;
     private Boolean initial;
+    private String name;
     private Long number;
     private Long value;
 
@@ -20,41 +23,44 @@ public class JoystickEvent {
 
     public JoystickEvent(JoystickEvent joystickEvent) {
         this(
-                joystickEvent.getPath(),
+                joystickEvent.getTitle(),
                 joystickEvent.getTimestamp(),
                 joystickEvent.getType(),
                 joystickEvent.getInitial(),
+                joystickEvent.getName(),
                 joystickEvent.getNumber(),
                 joystickEvent.getValue()
         );
     }
 
-    public JoystickEvent(Path path, Instant timestamp, Type type, Boolean initial, Long number, Long value) {
-        this.path = path;
+    public JoystickEvent(String title, Instant timestamp, Type type, Boolean initial, String name, Long number, Long value) {
+        this.title = title;
         this.timestamp = timestamp;
         this.type = type;
         this.initial = initial;
+        this.name = name;
         this.number = number;
         this.value = value;
     }
 
     public JoystickEvent(JSTestEvent jsTestEvent) {
         this(
-            jsTestEvent.getPath(),
+            jsTestEvent.getMetadata().getTitle(),
             jsTestEvent.getNow(),
             Type.of(jsTestEvent),
             JSTestEvent.Type.isInitial(jsTestEvent.getType()),
+            jsTestEvent.getMetadata().getNameOf(jsTestEvent),
             jsTestEvent.getNumber(),
             jsTestEvent.getValue()
         );
     }
 
-    public Path getPath() {
-        return path;
+    public String getTitle() {
+        return title;
     }
 
-    public void setPath(Path path) {
-        this.path = path;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public Instant getTimestamp() {
@@ -81,6 +87,14 @@ public class JoystickEvent {
         this.initial = initial;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public Long getNumber() {
         return number;
     }
@@ -98,33 +112,35 @@ public class JoystickEvent {
     }
 
     @Override
-    public String toString() {
-        return "JoystickEvent{" +
-                "path=" + path +
-                ", timestamp=" + timestamp +
-                ", type=" + type +
-                ", initial=" + initial +
-                ", number=" + number +
-                ", value=" + value +
-                '}';
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         JoystickEvent that = (JoystickEvent) o;
-        return Objects.equals(path, that.path) &&
+        return Objects.equals(title, that.title) &&
                 Objects.equals(timestamp, that.timestamp) &&
                 type == that.type &&
                 Objects.equals(initial, that.initial) &&
+                Objects.equals(name, that.name) &&
                 Objects.equals(number, that.number) &&
                 Objects.equals(value, that.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(path, timestamp, type, initial, number, value);
+        return Objects.hash(title, timestamp, type, initial, name, number, value);
+    }
+
+    @Override
+    public String toString() {
+        return "JoystickEvent{" +
+                "title=" + title +
+                ", timestamp=" + timestamp +
+                ", type=" + type +
+                ", initial=" + initial +
+                ", name='" + name + '\'' +
+                ", number=" + number +
+                ", value=" + value +
+                '}';
     }
 
     public enum Type {

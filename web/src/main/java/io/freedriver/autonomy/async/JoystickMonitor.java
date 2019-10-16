@@ -29,7 +29,7 @@ public class JoystickMonitor {
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
         LOGGER.info("Initializing JoystickMonitor.");
-        allJoysticks = new AllJoysticks(this::convertAndFire);
+        allJoysticks = new AllJoysticks(pool, this::convertAndFire);
         pool.submit(() -> allJoysticks.populate());
     }
 
