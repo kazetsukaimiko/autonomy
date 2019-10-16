@@ -16,9 +16,8 @@ public class InterfaceBuilderParadigm<ENTITY> {
     private final Class<ENTITY> interfaceClass;
     private final List<ColumnConfiguration<ENTITY, ?>> columns = new ArrayList<>();
 
-    /**
+    /*
      * Add java.sql.Connection, obviously.
-     * @param interfaceClass
      */
     public InterfaceBuilderParadigm(Class<ENTITY> interfaceClass) {
         if (!interfaceClass.isInterface()) {
@@ -28,7 +27,7 @@ public class InterfaceBuilderParadigm<ENTITY> {
     }
 
     public static void demo() {
-        /**
+        /*
          * So building the dao is similar, but only requires getter methods. For convertingXColumn, you'll need
          * at least a Function<X, FIELD>, but not a Converter<X, FIELD>.
          */
@@ -64,10 +63,10 @@ public class InterfaceBuilderParadigm<ENTITY> {
          */
         ResultInvocationHandler<ENTITY> resultHandler = new ResultInvocationHandler<>(interfaceClass);
 
-        columns.forEach(columnDefinition -> this.showOff(columnDefinition, resultHandler));
+        columns.forEach(columnDefinition -> this.populateColumnData(columnDefinition, resultHandler));
 
         /*
-         * This method makes resultHandler masquerate as an ENTITY. All methods that get called against this instance
+         * This method makes resultHandler masquerade as an ENTITY. All methods that get called against this instance
          * are instead forwarded to invoke() on the InvocationHandler class passed.
          */
         ENTITY entity = (ENTITY) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class[] {interfaceClass}, resultHandler);
@@ -89,7 +88,7 @@ public class InterfaceBuilderParadigm<ENTITY> {
      * We're going to setup the return values for the handler here based on the entity column.
      * Note that while the generics upstream were erased, they're present here.
      */
-    private <FIELD> void showOff(ColumnConfiguration<ENTITY, FIELD> entityColumn, ResultInvocationHandler<ENTITY> handler) {
+    private <FIELD> void populateColumnData(ColumnConfiguration<ENTITY, FIELD> entityColumn, ResultInvocationHandler<ENTITY> handler) {
 
         // Not needed here- just for logging.
         Method m = findMethodOfGetterFunction(interfaceClass, entityColumn.getGetter());
