@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import io.freedriver.autonomy.config.Configuration;
 import io.freedriver.autonomy.config.PinGroup;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@ApplicationScoped
 public class ConfigurationProvider {
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);

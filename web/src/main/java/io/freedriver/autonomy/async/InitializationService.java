@@ -1,8 +1,10 @@
 package io.freedriver.autonomy.async;
 
+import io.freedriver.autonomy.config.Configuration;
 import io.freedriver.autonomy.entity.JoystickEvent;
 import io.freedriver.autonomy.jstest.AllJoysticks;
 import io.freedriver.autonomy.jstest.JSTestEvent;
+import io.freedriver.jsonlink.Connector;
 
 import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;
@@ -15,9 +17,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @ApplicationScoped
-public class JoystickMonitor {
+public class InitializationService {
 
-    private static final Logger LOGGER = Logger.getLogger(JoystickMonitor.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(InitializationService.class.getName());
+
+    @Inject
+    private Configuration configuration;
+
+    @Inject
+    private Connector connector;
 
     @Inject
     private Event<JoystickEvent> joystickEvents;
