@@ -69,11 +69,10 @@ public class JoystickEventActor {
         int i;
         for(i=0; i<pinGroup.getPermutations().size(); i++) {
             if (comparePermutation(pinGroup.getPermutations().get(i), state)) {
-                i = ((i + 1) < pinGroup.getPermutations().size()) ? i + 1 : 0;
                 break;
             }
         }
-        return pinGroup.getPermutations().get(i)
+        return pinGroup.getPermutations().get(i>=pinGroup.getPermutations().size() ? 0 : i)
                 .entrySet()
                 .stream()
                 .reduce(
