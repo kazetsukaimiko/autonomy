@@ -37,7 +37,7 @@ public class JoystickEventActor {
     private Instance<Connector> connectors;
 
     public void actOnEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
-        if (joystickEvent.getType() == JoystickEvent.Type.BUTTON_UP) {
+        if (joystickEvent.getType() == JoystickEvent.Type.BUTTON_UP && !joystickEvent.getInitial()) {
             configuration.getGroups()
                     .stream()
                     // TODO: Get the group from the configuration looked up by controller.button name

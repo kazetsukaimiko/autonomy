@@ -8,18 +8,19 @@ import io.freedriver.jsonlink.jackson.schema.v1.Mode;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.pin.Pin;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-@Dependent
+@ApplicationScoped
 public class JsonLinkProvider {
 
     @Inject
     private Configuration configuration;
 
-    @Produces @Default
+    @Produces @Default @ApplicationScoped
     public Connector getDefaultConnector() throws ConnectorException {
         Connector connector = Connector.getDefault()
                 .orElseThrow(() -> new ConnectorException("Couldn't spawn Connector."));

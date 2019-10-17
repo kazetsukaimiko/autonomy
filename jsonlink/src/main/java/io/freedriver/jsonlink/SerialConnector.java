@@ -7,7 +7,7 @@ import jssc.SerialPortException;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-public class SerialConnector implements Connector {
+public class SerialConnector implements Connector, AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(SerialConnector.class.getName());
 
     private final  SerialPort serialPort;
@@ -26,7 +26,7 @@ public class SerialConnector implements Connector {
                 );
                 Thread.sleep(1000);
             } catch (SerialPortException | InterruptedException e) {
-                e.printStackTrace();
+                throw new ConnectorException(e);
             }
         }
     }
@@ -64,4 +64,8 @@ public class SerialConnector implements Connector {
     }
 
 
+    @Override
+    public void close() throws Exception {
+        serialPort.closePort();
+    }
 }
