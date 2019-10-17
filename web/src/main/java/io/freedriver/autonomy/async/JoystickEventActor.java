@@ -56,7 +56,7 @@ public class JoystickEventActor {
                         configuration.getIdentifiers()
                                 .forEach(request::digitalRead);
 
-                        pool.submit(() -> Festival.speak(pinGroup.getName()));
+                        //pool.submit(() -> Festival.speak(pinGroup.getName()));
 
                         try {
                             // Current state
