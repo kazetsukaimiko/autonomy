@@ -13,6 +13,7 @@ import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class JsonLinkProvider {
@@ -25,12 +26,15 @@ public class JsonLinkProvider {
         Connector connector = Connector.getDefault()
                 .orElseThrow(() -> new ConnectorException("Couldn't spawn Connector."));
 
-        Request modeSets = configuration.getAliases()
+        Request modeSets = new Request();
+
+        configuration.getAliases()
                 .keySet()
                 .stream()
                 .map(Identifier::new)
-                .map(identifier -> identifier.setMode(Mode.OUTPUT))
-                .reduce(new Request(), Request::modeSet, (a, b) -> a);
+                .forEach(identifier -> modeSets
+                        .modeSet(identifier.setMode(Mode.OUTPUT))
+                        .digitalWrite(identifier.setDigital(true)));
 
         connector.send(modeSets);
 
