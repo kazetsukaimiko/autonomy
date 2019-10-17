@@ -33,6 +33,9 @@
         <artifactId>thorntail-maven-plugin</artifactId>
         <version>${version.thorntail}</version>
         <configuration>
+          <jvmArguments>
+            <jvmArgument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=10044</jvmArgument>
+          </jvmArguments>
         </configuration>
         <executions>
           <execution>

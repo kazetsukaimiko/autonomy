@@ -10,6 +10,8 @@ import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 
+import javax.annotation.Resource;
+import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Any;
@@ -17,6 +19,7 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,6 +39,9 @@ public class JoystickEventActor {
     @Inject @Any
     private Instance<Connector> connectors;
 
+    @Resource
+    private ManagedExecutorService pool;
+
     public void actOnEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
         if (joystickEvent.getType() == JoystickEvent.Type.BUTTON_UP && !joystickEvent.getInitial()) {
             configuration.getGroups()
@@ -50,13 +56,15 @@ public class JoystickEventActor {
                         configuration.getIdentifiers()
                                 .forEach(request::digitalRead);
 
-                        Festival.speak(pinGroup.getName());
+                        pool.submit(() -> Festival.speak(pinGroup.getName()));
 
                         try {
                             // Current state
                             Response response = connector.send(request);
+
+                            Request next = nextPermutation(pinGroup, response.getDigital());
                             // Next state
-                            connector.send(nextPermutation(pinGroup, response.getDigital()));
+                            connector.send(next);
                         } catch (ConnectorException e) {
                             LOGGER.log(Level.WARNING, e, () -> "Couldn't act on Joystick Event.");
                         }
@@ -68,11 +76,11 @@ public class JoystickEventActor {
     private Request nextPermutation(PinGroup pinGroup, Map<Identifier, Boolean> state) {
         int i;
         for(i=0; i<pinGroup.getPermutations().size(); i++) {
-            if (comparePermutation(pinGroup.getPermutations().get(i), state)) {
+            if (!comparePermutation(pinGroup.getPermutations().get(i), state)) {
                 break;
             }
         }
-        return pinGroup.getPermutations().get(i>=pinGroup.getPermutations().size() ? 0 : i)
+        return pinGroup.getPermutations().get(i==pinGroup.getPermutations().size() ? 0 : i)
                 .entrySet()
                 .stream()
                 .reduce(
@@ -83,11 +91,14 @@ public class JoystickEventActor {
     }
 
     private boolean comparePermutation(Map<String, Boolean> permutation, Map<Identifier, Boolean> state) {
-         return permutation.keySet()
-                 .stream()
-                 .allMatch(alias -> state.keySet().stream()
-                    .anyMatch(identifier -> Objects.equals(alias, getAlias(identifier)) &&
-                            Objects.equals(permutation.get(alias), state.get(identifier))));
+        Map<Identifier, Boolean> translated = permutation.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> ofAlias(e.getKey()),
+                        Map.Entry::getValue,
+                        (a, b) -> a
+                ));
+        return translated.keySet().stream()
+                .allMatch(identifier -> state.containsKey(identifier) && Objects.equals(translated.get(identifier), state.get(identifier)));
     }
 
     private Optional<String> getAlias(Identifier identifier) {
