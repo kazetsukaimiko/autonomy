@@ -21,8 +21,8 @@ public class InitializationService {
 
     private static final Logger LOGGER = Logger.getLogger(InitializationService.class.getName());
 
-    @Inject
-    private Configuration configuration;
+    //@Inject
+    //private Configuration configuration;
 
     @Inject
     private Connector connector;

@@ -20,6 +20,7 @@ public class JoystickEventRecorder {
     @Inject
     KeylessDao<JoystickEvent> joystickEventDao;
 
+
     public void saveJoystickEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
         LOGGER.info("Observed: " + joystickEvent.toString());
         try {
