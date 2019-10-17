@@ -43,11 +43,15 @@ public class JoystickEventActor {
     private ManagedExecutorService pool;
 
     public void actOnEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
+
+        LOGGER.info("Observed: " + joystickEvent.toString());
         if (joystickEvent.getType() == JoystickEvent.Type.BUTTON_UP && !joystickEvent.getInitial()) {
+            String target = joystickEvent.getNumber().equals(11L) ?
+                    "hallway" : "bathroom";
             configuration.getGroups()
                     .stream()
                     // TODO: Get the group from the configuration looked up by controller.button name
-                    .filter(pg -> Objects.equals("hallway", pg.getName()))
+                    .filter(pg -> Objects.equals(target, pg.getName()))
                     .findFirst()
                     .ifPresent(pinGroup -> {
                         Connector connector = connectors.get();
