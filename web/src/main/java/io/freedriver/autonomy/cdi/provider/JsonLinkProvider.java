@@ -6,18 +6,17 @@ import io.freedriver.jsonlink.ConnectorException;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Mode;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.pin.Pin;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import java.util.stream.Stream;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class JsonLinkProvider {
 
+    private static final Logger LOGGER = Logger.getLogger(JsonLinkProvider.class.getName());
     @Inject
     private Configuration configuration;
 
@@ -26,6 +25,7 @@ public class JsonLinkProvider {
     @Produces @Default @ApplicationScoped
     public Connector getDefaultConnector() throws ConnectorException {
         if (connector == null || connector.isClosed()) {
+            LOGGER.warning("Opening new Connector instance");
             connector = Connector.getDefault()
                     .orElseThrow(() -> new ConnectorException("Couldn't spawn Connector."));
             Request modeSets = new Request();
@@ -39,6 +39,8 @@ public class JsonLinkProvider {
                             .digitalWrite(identifier.setDigital(true)));
 
             connector.send(modeSets);
+        } else {
+            LOGGER.warning("Using existing connector instance");
         }
 
         return connector;

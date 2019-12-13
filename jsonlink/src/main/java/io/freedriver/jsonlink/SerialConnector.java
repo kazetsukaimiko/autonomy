@@ -72,7 +72,11 @@ public class SerialConnector implements Connector, AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        LOGGER.log(Level.WARNING, "Closing serialPort.");
-        serialPort.closePort();
+        if (!isClosed()) {
+            LOGGER.log(Level.WARNING, "Closing serialPort.");
+            serialPort.closePort();
+        } else {
+            LOGGER.log(Level.WARNING, "Tried to close serialPort, but was already closed.");
+        }
     }
 }
