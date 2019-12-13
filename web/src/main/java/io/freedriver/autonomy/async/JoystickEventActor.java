@@ -2,8 +2,9 @@ package io.freedriver.autonomy.async;
 
 import io.freedriver.autonomy.config.Configuration;
 import io.freedriver.autonomy.config.PinGroup;
-import io.freedriver.autonomy.entity.JoystickEvent;
-import io.freedriver.autonomy.util.Festival;
+import io.freedriver.autonomy.entity.event.EventType;
+import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.entity.event.input.joystick.JoystickEventType;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.ConnectorException;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
@@ -19,11 +20,9 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -43,12 +42,9 @@ public class JoystickEventActor {
     private ManagedExecutorService pool;
 
     public void actOnEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
-        LOGGER.info("Observed Joystick Event: " + joystickEvent.toString());
 
-        // We want to act here only when the user releases the button, in order to handle long-presses.
-        if (joystickEvent.getType() == JoystickEvent.Type.BUTTON_UP && !joystickEvent.getInitial()) {
-
-            // Only two
+        LOGGER.info("Observed: " + joystickEvent.toString());
+        if (joystickEvent.getJoystickEventType() == JoystickEventType.BUTTON_UP && joystickEvent.getDescription().getType() != EventType.INITIAL_STATE) {
             String target = joystickEvent.getNumber().equals(11L) ?
                     "hallway" : "bathroom";
             configuration.getGroups()
@@ -79,12 +75,6 @@ public class JoystickEventActor {
                     });
         }
     }
-
-    private Optional<PinGroup> getPingroupOfJoystickEvent(JoystickEvent joystickEvent) {
-
-    }
-
-
 
     private Request nextPermutation(PinGroup pinGroup, Map<Identifier, Boolean> state) {
         int i;

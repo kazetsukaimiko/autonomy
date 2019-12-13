@@ -1,17 +1,19 @@
-package io.freedriver.autonomy.jstest;
+package io.freedriver.autonomy.entity.event.input.joystick.jstest;
 
-import java.nio.file.Path;
+import io.freedriver.autonomy.entity.event.EventCoordinate;
+import io.freedriver.autonomy.entity.event.EventDescription;
+import io.freedriver.autonomy.entity.event.EventType;
+import io.freedriver.autonomy.entity.event.input.joystick.JoystickEventType;
+
 import java.time.Instant;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JSTestEvent {
     private JSMetadata metadata;
     private Instant now;
-    private Type type;
+    private JSTestEventType jsTestEventType;
     private Long time;
     private Long number;
     private Long value;
@@ -19,10 +21,10 @@ public class JSTestEvent {
     public JSTestEvent() {
     }
 
-    public JSTestEvent(JSMetadata metadata, Type type, Long time, Long number, Long value) {
+    public JSTestEvent(JSMetadata metadata, JSTestEventType jsTestEventType, Long time, Long number, Long value) {
         this.metadata = metadata;
         this.now = Instant.now();
-        this.type = type;
+        this.jsTestEventType = jsTestEventType;
         this.time = time;
         this.number = number;
         this.value = value;
@@ -31,7 +33,7 @@ public class JSTestEvent {
     private JSTestEvent(JSMetadata joystickMetadata, Map<String, Long> jstestEventMap) {
         this(
                 joystickMetadata,
-                Type.ofTypeNumber(jstestEventMap.get("type")),
+                JSTestEventType.ofTypeNumber(jstestEventMap.get("type")),
                 jstestEventMap.get("time"),
                 jstestEventMap.get("number"),
                 jstestEventMap.get("value")
@@ -78,12 +80,12 @@ public class JSTestEvent {
         this.now = now;
     }
 
-    public Type getType() {
-        return type;
+    public JSTestEventType getJsTestEventType() {
+        return jsTestEventType;
     }
 
-    public void setType(Type type) {
-        this.type = type;
+    public void setJsTestEventType(JSTestEventType jsTestEventType) {
+        this.jsTestEventType = jsTestEventType;
     }
 
     public Long getTime() {
@@ -115,49 +117,27 @@ public class JSTestEvent {
         return "JSTestEvent{" +
                 "metadata=" + metadata +
                 ", now=" + now +
-                ", type=" + type +
+                ", type=" + jsTestEventType +
                 ", time=" + time +
                 ", number=" + number +
                 ", value=" + value +
                 '}';
     }
 
-    public enum Type {
-        BUTTON(1),
-        AXIS(2),
-        BUTTON_INITIAL(129),
-        AXIS_INITIAL(130);
-
-        private final int typeNumber;
-
-        Type(int typeNumber) {
-            this.typeNumber = typeNumber;
-        }
-
-        public static boolean isButton(Type type) {
-            return type == BUTTON || type == BUTTON_INITIAL;
-        }
-
-        public static boolean isInitial(Type type) {
-            return type == BUTTON_INITIAL || type == AXIS_INITIAL;
-        }
-
-        public int getTypeNumber() {
-            return typeNumber;
-        }
-
-        public static Type ofTypeNumber(long typeNumber) {
-            return Stream.of(Type.values())
-                    .filter(type -> typeNumber == type.getTypeNumber())
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        public static Type byName(String s) {
-            return Stream.of(Type.values())
-                    .filter(type -> Objects.equals(s, type.name()))
-                    .findFirst()
-                    .orElse(null);
-        }
+    public EventCoordinate locate() {
+        return new EventCoordinate(
+                getMetadata().getTitle(),
+                (jsTestEventType.isButton(getJsTestEventType()) ?
+                        "BUTTON_" : "AXIS_") + getNumber()
+        );
     }
+
+    public EventDescription describe() {
+        return new EventDescription(
+                jsTestEventType.isInitial(getJsTestEventType()) ?
+                        EventType.INITIAL_STATE : EventType.CHANGE_STATE,
+                JoystickEventType.of(this)
+        );
+    }
+
 }
