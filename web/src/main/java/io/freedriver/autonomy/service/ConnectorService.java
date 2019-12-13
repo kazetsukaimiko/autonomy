@@ -37,28 +37,24 @@ public class ConnectorService {
     }
 
     // hallway, bathroom
-    public synchronized void cyclePinGroup(String groupName) {
-        configuration.getGroups()
+    public synchronized Optional<Response> cyclePinGroup(String groupName) {
+        return configuration.getGroups()
                 .stream()
                 // TODO: Get the group from the configuration looked up by controller.button name
                 .filter(pg -> Objects.equals(groupName, pg.getName()))
                 .findFirst()
-                .ifPresent(pinGroup -> {
+                .map(pinGroup -> {
                     Connector connector = connectors.get();
                     // First get current state
                     Request request = new Request();
                     configuration.getIdentifiers()
                             .forEach(request::digitalRead);
-                    try {
-                        // Current state
-                        Response response = connector.send(request);
+                    // Current state
+                    Response response = connector.send(request);
 
-                        Request next = nextPermutation(pinGroup, response.getDigital());
-                        // Next state
-                        connector.send(next);
-                    } catch (ConnectorException e) {
-                        LOGGER.log(Level.WARNING, e, () -> "Couldn't act on Joystick Event.");
-                    }
+                    Request next = nextPermutation(pinGroup, response.getDigital());
+                    // Next state
+                    return connector.send(next);
                 });
     }
 

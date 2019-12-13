@@ -1,6 +1,8 @@
 package io.freedriver.autonomy.rest;
 
 import io.freedriver.autonomy.config.Configuration;
+import io.freedriver.autonomy.service.ConnectorService;
+import io.freedriver.jsonlink.jackson.schema.v1.Response;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -17,8 +19,11 @@ public class ConfigurationEndpoint {
     @Inject
     private Configuration configuration;
 
+
     @GET
     public Configuration getConfiguration() {
         return configuration;
     }
+
+
 }

@@ -51,10 +51,12 @@ public class JoystickEventActor {
         if (joystickEvent.getJoystickEventType() == JoystickEventType.BUTTON_UP && joystickEvent.getDescription().getType() != EventType.INITIAL_STATE) {
             String target = joystickEvent.getNumber().equals(11L) ?
                     "hallway" : "bathroom";
-
-            connectorService.cyclePinGroup(target);
+            try {
+                connectorService.cyclePinGroup(target);
+            } catch (ConnectorException e) {
+                LOGGER.log(Level.WARNING, e, () -> "Couldn't act on Joystick Event.");
+            }
         }
-
     }
 
 }
