@@ -5,6 +5,7 @@ import io.freedriver.autonomy.config.PinGroup;
 import io.freedriver.autonomy.entity.event.EventType;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEventType;
+import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.ConnectorException;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
@@ -38,6 +39,9 @@ public class JoystickEventActor {
     @Inject @Any
     private Instance<Connector> connectors;
 
+    @Inject
+    private ConnectorService connectorService;
+
     @Resource
     private ManagedExecutorService pool;
 
@@ -47,80 +51,10 @@ public class JoystickEventActor {
         if (joystickEvent.getJoystickEventType() == JoystickEventType.BUTTON_UP && joystickEvent.getDescription().getType() != EventType.INITIAL_STATE) {
             String target = joystickEvent.getNumber().equals(11L) ?
                     "hallway" : "bathroom";
-            configuration.getGroups()
-                    .stream()
-                    // TODO: Get the group from the configuration looked up by controller.button name
-                    .filter(pg -> Objects.equals(target, pg.getName()))
-                    .findFirst()
-                    .ifPresent(pinGroup -> {
-                        Connector connector = connectors.get();
-                        // First get current state
-                        Request request = new Request();
-                        configuration.getIdentifiers()
-                                .forEach(request::digitalRead);
 
-                        //pool.submit(() -> Festival.speak(pinGroup.getName()));
-
-                        try {
-                            // Current state
-                            Response response = connector.send(request);
-
-                            Request next = nextPermutation(pinGroup, response.getDigital());
-                            // Next state
-                            connector.send(next);
-                        } catch (ConnectorException e) {
-                            LOGGER.log(Level.WARNING, e, () -> "Couldn't act on Joystick Event.");
-                        }
-
-                    });
+            connectorService.cyclePinGroup(target);
         }
-    }
 
-    private Request nextPermutation(PinGroup pinGroup, Map<Identifier, Boolean> state) {
-        int i;
-        for(i=0; i<pinGroup.getPermutations().size(); i++) {
-            if (!comparePermutation(pinGroup.getPermutations().get(i), state)) {
-                break;
-            }
-        }
-        return pinGroup.getPermutations().get(i==pinGroup.getPermutations().size() ? 0 : i)
-                .entrySet()
-                .stream()
-                .reduce(
-                        new Request(),
-                        (request, entry) -> request.digitalWrite(ofAlias(entry.getKey()).setDigital(entry.getValue())),
-                        (a,b) -> a);
-
-    }
-
-    private boolean comparePermutation(Map<String, Boolean> permutation, Map<Identifier, Boolean> state) {
-        Map<Identifier, Boolean> translated = permutation.entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> ofAlias(e.getKey()),
-                        Map.Entry::getValue,
-                        (a, b) -> a
-                ));
-        return translated.keySet().stream()
-                .allMatch(identifier -> state.containsKey(identifier) && Objects.equals(translated.get(identifier), state.get(identifier)));
-    }
-
-    private Optional<String> getAlias(Identifier identifier) {
-        return getAlias(identifier.getPin());
-    }
-
-    private Optional<String> getAlias(int pinValue) {
-        return Optional.ofNullable(configuration.getAliases().getOrDefault(pinValue, null));
-    }
-
-
-    private Identifier ofAlias(String alias) {
-        return configuration.getAliases().entrySet()
-                .stream()
-                .filter(e -> Objects.equals(alias, e.getValue()))
-                .map(Map.Entry::getKey)
-                .map(Identifier::new)
-                .findFirst()
-                .orElse(null);
     }
 
 }
