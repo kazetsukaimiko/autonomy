@@ -32,7 +32,6 @@ public class ConnectorService {
     @Inject @Any
     private Instance<Connector> connectors;
 
-
     public List<PinGroup> getGroups() {
         return configuration.getGroups();
     }

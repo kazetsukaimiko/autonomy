@@ -8,6 +8,7 @@ import io.freedriver.jsonlink.jackson.schema.v1.Mode;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -22,7 +23,7 @@ public class JsonLinkProvider {
 
     private Connector connector;
 
-    @Produces @Default @ApplicationScoped
+    @Produces @Default @Dependent
     public Connector getDefaultConnector() throws ConnectorException {
         if (connector == null || connector.isClosed()) {
             LOGGER.warning("Opening new Connector instance");
