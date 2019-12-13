@@ -1,23 +1,22 @@
 package io.freedriver.autonomy.hrorm;
 
-
-import io.freedriver.autonomy.entity.JoystickEvent;
+import io.freedriver.autonomy.entity.event.input.joystick.JoystickEventType;
 import org.hrorm.Converter;
 
 import java.util.Optional;
 
-public class JoystickTypeConverter implements Converter<JoystickEvent.Type, String> {
+public class JoystickTypeConverter implements Converter<JoystickEventType, String> {
     @Override
-    public String from(JoystickEvent.Type type) {
+    public String from(JoystickEventType type) {
         return Optional.ofNullable(type)
-                .map(JoystickEvent.Type::name)
+                .map(JoystickEventType::name)
                 .orElse(null);
     }
 
     @Override
-    public JoystickEvent.Type to(String s) {
+    public JoystickEventType to(String s) {
         return Optional.ofNullable(s)
-                .map(JoystickEvent.Type::byName)
+                .map(JoystickEventType::byName)
                 .orElse(null);
     }
 }

@@ -25,6 +25,7 @@ public class FestivalTest {
             "Terraforming Category"
     ).collect(Collectors.toList());
 
+    /*
     @Test
     public void testFestival() {
         IntStream.range(0,10)
@@ -50,4 +51,6 @@ public class FestivalTest {
                 .map(words::get)
                 .orElse("empty");
     }
+
+     */
 }

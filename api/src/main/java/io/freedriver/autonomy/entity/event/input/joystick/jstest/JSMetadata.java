@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.jstest;
+package io.freedriver.autonomy.entity.event.input.joystick.jstest;
 
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -90,7 +90,7 @@ public class JSMetadata {
 
     // TODO: HATS
     public String getNameOf(JSTestEvent jsTestEvent) {
-        if (JSTestEvent.Type.isButton(jsTestEvent.getType())) {
+        if (JSTestEventType.isButton(jsTestEvent.getJsTestEventType())) {
             return getButtonNames().get(jsTestEvent.getNumber().intValue());
         } else {
             return getAxisNames().get(jsTestEvent.getNumber().intValue());

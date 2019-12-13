@@ -1,9 +1,8 @@
 package io.freedriver.autonomy.async;
 
-import io.freedriver.autonomy.config.Configuration;
-import io.freedriver.autonomy.entity.JoystickEvent;
-import io.freedriver.autonomy.jstest.AllJoysticks;
-import io.freedriver.autonomy.jstest.JSTestEvent;
+import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.entity.event.input.joystick.jstest.AllJoysticks;
+import io.freedriver.autonomy.entity.event.input.joystick.jstest.JSTestEvent;
 import io.freedriver.jsonlink.Connector;
 
 import javax.annotation.Resource;
@@ -13,6 +12,7 @@ import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,7 +43,7 @@ public class InitializationService {
 
     public void convertAndFire(JSTestEvent jsTestEvent) {
         try {
-            joystickEvents.fire(new JoystickEvent(jsTestEvent));
+            joystickEvents.fire(new JoystickEvent(Instant.now(), jsTestEvent));
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to fire JoystickEvent: ", e);
         }
