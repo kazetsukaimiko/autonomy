@@ -50,6 +50,11 @@ public class SerialConnector implements Connector, AutoCloseable {
         }
     }
 
+    @Override
+    public boolean isClosed() {
+        return !serialPort.isOpened();
+    }
+
     private String readUntil(String delimiter) throws SerialPortException {
         long startTime = System.currentTimeMillis();
         StringBuilder sb = new StringBuilder();

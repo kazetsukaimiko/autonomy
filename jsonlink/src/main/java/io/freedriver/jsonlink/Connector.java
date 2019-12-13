@@ -32,6 +32,7 @@ public interface Connector extends AutoCloseable {
 
     void consumeJSON(String json) throws ConnectorException;
     Response receiveResponse() throws ConnectorException;
+    boolean isClosed();
 
     static Optional<Connector> getDefault() {
         return Stream.of(SerialPortList.getPortNames())

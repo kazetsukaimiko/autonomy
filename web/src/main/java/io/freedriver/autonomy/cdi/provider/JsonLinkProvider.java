@@ -25,22 +25,21 @@ public class JsonLinkProvider {
 
     @Produces @Default @ApplicationScoped
     public Connector getDefaultConnector() throws ConnectorException {
-        if (connector == null) {
+        if (connector == null || connector.isClosed()) {
             connector = Connector.getDefault()
                     .orElseThrow(() -> new ConnectorException("Couldn't spawn Connector."));
+            Request modeSets = new Request();
+
+            configuration.getAliases()
+                    .keySet()
+                    .stream()
+                    .map(Identifier::new)
+                    .forEach(identifier -> modeSets
+                            .modeSet(identifier.setMode(Mode.OUTPUT))
+                            .digitalWrite(identifier.setDigital(true)));
+
+            connector.send(modeSets);
         }
-
-        Request modeSets = new Request();
-
-        configuration.getAliases()
-                .keySet()
-                .stream()
-                .map(Identifier::new)
-                .forEach(identifier -> modeSets
-                        .modeSet(identifier.setMode(Mode.OUTPUT))
-                        .digitalWrite(identifier.setDigital(true)));
-
-        connector.send(modeSets);
 
         return connector;
     }
