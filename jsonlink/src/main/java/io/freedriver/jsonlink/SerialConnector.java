@@ -5,6 +5,7 @@ import jssc.SerialPort;
 import jssc.SerialPortException;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SerialConnector implements Connector, AutoCloseable {
@@ -66,6 +67,7 @@ public class SerialConnector implements Connector, AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        LOGGER.log(Level.WARNING, "Closing serialPort.");
         serialPort.closePort();
     }
 }

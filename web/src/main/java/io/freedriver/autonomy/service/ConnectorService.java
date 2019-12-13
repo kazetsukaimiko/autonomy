@@ -17,7 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -37,26 +38,61 @@ public class ConnectorService {
     }
 
     // hallway, bathroom
-    public synchronized Optional<Response> cyclePinGroup(String groupName) {
+    public Optional<Response> cyclePinGroup(String groupName) {
+        return pinGroupByName(groupName)
+                .flatMap(pinGroup -> readAllDigitalPins()
+                                .map(response -> nextPermutation(pinGroup, response.getDigital())))
+                .flatMap(this::sendRequest);
+    }
+
+    public Optional<PinGroup> pinGroupByName(String groupName) {
         return configuration.getGroups()
                 .stream()
                 // TODO: Get the group from the configuration looked up by controller.button name
                 .filter(pg -> Objects.equals(groupName, pg.getName()))
-                .findFirst()
-                .map(pinGroup -> {
-                    Connector connector = connectors.get();
-                    // First get current state
-                    Request request = new Request();
-                    configuration.getIdentifiers()
-                            .forEach(request::digitalRead);
-                    // Current state
-                    Response response = connector.send(request);
-
-                    Request next = nextPermutation(pinGroup, response.getDigital());
-                    // Next state
-                    return connector.send(next);
-                });
+                .findFirst();
     }
+
+    public Optional<Response> readPinGroup(String groupName) {
+        return pinGroupByName(groupName).flatMap(this::readPinGroup);
+    }
+
+    public Optional<Response> readPinGroup(PinGroup pinGroup) {
+        Request request = new Request();
+        request.digitalRead(pinGroup.getPermutations()
+                .stream()
+                .map(Map::keySet)
+                .flatMap(Set::stream)
+                .distinct()
+                .flatMap(alias -> configuration
+                                .getAliases()
+                                .entrySet()
+                                .stream()
+                                .filter(entry -> Objects.equals(alias, entry.getValue()))
+                                .map(Map.Entry::getKey))
+                                .map(Identifier::new));
+        return sendRequest(request);
+    }
+
+    public Optional<Response> readAllDigitalPins() {
+        Request request = new Request();
+        configuration.getIdentifiers()
+                .forEach(request::digitalRead);
+        return sendRequest(request);
+    }
+
+    public Optional<Response> sendRequest(Request request) {
+        return sendRequest(() -> request);
+    }
+
+    public synchronized Optional<Response> sendRequest(Supplier<Request> requestSupplier) {
+        try (Connector connector = connectors.get()) {
+            return Optional.of(connector.send(requestSupplier.get()));
+        } catch (Exception e) {
+            throw new ConnectorException("Failed to send request", e);
+        }
+    }
+
 
 
     private Request nextPermutation(PinGroup pinGroup, Map<Identifier, Boolean> state) {

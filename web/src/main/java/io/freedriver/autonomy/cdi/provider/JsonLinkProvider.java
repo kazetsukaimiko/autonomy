@@ -21,10 +21,14 @@ public class JsonLinkProvider {
     @Inject
     private Configuration configuration;
 
+    private Connector connector;
+
     @Produces @Default @ApplicationScoped
     public Connector getDefaultConnector() throws ConnectorException {
-        Connector connector = Connector.getDefault()
-                .orElseThrow(() -> new ConnectorException("Couldn't spawn Connector."));
+        if (connector == null) {
+            connector = Connector.getDefault()
+                    .orElseThrow(() -> new ConnectorException("Couldn't spawn Connector."));
+        }
 
         Request modeSets = new Request();
 

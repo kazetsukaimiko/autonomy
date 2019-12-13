@@ -17,13 +17,20 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 public class ConnectorEndpoint {
 
-    public static final String GROUP_PARAMETER = "group";
+    private static final String GROUP_PARAMETER = "group";
 
     @Inject
     private ConnectorService connectorService;
 
     @GET
     @Path("/group/{"+GROUP_PARAMETER+"}")
+    public Response readGroup(@PathParam(GROUP_PARAMETER) String groupName) {
+        return connectorService.readPinGroup(groupName)
+                .orElseThrow(() -> new WebApplicationException("Unknown group " + groupName, 404));
+    }
+
+    @GET
+    @Path("/group/{"+GROUP_PARAMETER+"}/rotate")
     public Response cycleGroup(@PathParam(GROUP_PARAMETER) String groupName) {
         return connectorService.cyclePinGroup(groupName)
                 .orElseThrow(() -> new WebApplicationException("Unknown group " + groupName, 404));

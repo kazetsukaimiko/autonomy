@@ -12,7 +12,7 @@ import jssc.SerialPortList;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public interface Connector {
+public interface Connector extends AutoCloseable {
     ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JsonLinkModule())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
