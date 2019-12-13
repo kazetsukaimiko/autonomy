@@ -1,5 +1,6 @@
 #include <Arduino.h>
 
+#include <EEPROM.h>
 #include <ArduinoJson.h>
 #include <SerialCommand.h>
 
@@ -8,6 +9,9 @@ StaticJsonDocument<1024> inputDocument;
 StaticJsonDocument<1024> outputDocument;
 char NEWLINE = '\n';
 
+char UUID_ADDRESS = 0;
+// Board ID
+String UUID = "uuid";
 // Stuff to return
 String READ = "read";
 // Stuff to change
@@ -53,6 +57,43 @@ void analogReadMode() {
     delay(1000);
   }
 }*/
+
+
+void writeToEEPROM(char add,String data) {
+  int _size = data.length();
+  int i;
+  for(i=0;i<_size;i++) {
+    EEPROM.write(add+i,data[i]);
+  }
+  EEPROM.write(add+_size,'\0');   //Add termination null character for String Data
+  EEPROM.commit();
+}
+
+String readFromEEPROM(char add) {
+  int i;
+  char data[100]; //Max 100 Bytes
+  int len=0;
+  unsigned char k;
+  k=EEPROM.read(add);
+  while(k != '\0' && len<500) {   //Read until null character
+    k=EEPROM.read(add+len);
+    data[len]=k;
+    len++;
+  }
+  data[len]='\0';
+  return String(data);
+}
+
+void setupUUID() {
+    if (inputDocument.containsKey(UUID)) {
+        String newUUID = inputDocument[UUID];
+        writeToEEPROM(UUID_ADDRESS, newUUID);
+    }
+    String uuid = readFromEEPROM(UUID_ADDRESS);
+    if (uuid.length() == 36) {
+        outputDocument[UUID] = uuid;
+    }
+}
 
 boolean validPin(int pinNum) {
   for(int pin : ANALOG_PINS) {
@@ -132,6 +173,7 @@ void readPins() {
 
 
 void processJson() {
+  setupUUID();
   modePins();
   writePins();
   readPins();

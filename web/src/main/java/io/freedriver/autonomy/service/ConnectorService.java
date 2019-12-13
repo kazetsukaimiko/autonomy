@@ -32,6 +32,15 @@ public class ConnectorService {
     @Inject @Any
     private Instance<Connector> connectors;
 
+    private Connector connector;
+
+    private Connector getConnector() { // TODO : Multiple board support here via parameter.
+        if (connector == null || connector.isClosed()) {
+            connector = connectors.get();
+        }
+        return connector;
+    }
+
     public List<PinGroup> getGroups() {
         return configuration.getGroups();
     }
@@ -85,14 +94,8 @@ public class ConnectorService {
     }
 
     public synchronized Optional<Response> sendRequest(Supplier<Request> requestSupplier) {
-        try (Connector connector = connectors.get()) {
-            return Optional.of(connector.send(requestSupplier.get()));
-        } catch (Exception e) {
-            throw new ConnectorException("Failed to send request", e);
-        }
+        return Optional.of(connector.send(requestSupplier.get()));
     }
-
-
 
     private Request nextPermutation(PinGroup pinGroup, Map<Identifier, Boolean> state) {
         int i;
