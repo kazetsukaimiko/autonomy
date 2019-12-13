@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 public class Request {
+    private UUID uuid;
     private Map<Identifier, Mode> mode = new HashMap<>();
     private ReadRequest read;
     private WriteRequest write;
@@ -62,6 +64,14 @@ public class Request {
         return this;
     }
 
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
+
     public ReadRequest getRead() {
         return read;
     }
@@ -112,4 +122,8 @@ public class Request {
         return this;
     }
 
+    public Request newUuid() {
+        setUuid(UUID.randomUUID());
+        return this;
+    }
 }

@@ -2,11 +2,8 @@
 
 #include <EEPROM.h>
 #include <ArduinoJson.h>
-#include <SerialCommand.h>
-
-SerialCommand sCmd;
-StaticJsonDocument<1024> inputDocument;
-StaticJsonDocument<1024> outputDocument;
+StaticJsonDocument<2048> inputDocument;
+StaticJsonDocument<2048> outputDocument;
 char NEWLINE = '\n';
 
 char UUID_ADDRESS = 0;
@@ -63,10 +60,10 @@ void writeToEEPROM(char add,String data) {
   int _size = data.length();
   int i;
   for(i=0;i<_size;i++) {
-    EEPROM.write(add+i,data[i]);
+    EEPROM.update(add+i,data[i]);
   }
-  EEPROM.write(add+_size,'\0');   //Add termination null character for String Data
-  EEPROM.commit();
+  EEPROM.update(add+_size,'\0');   //Add termination null character for String Data
+  //EEPROM.
 }
 
 String readFromEEPROM(char add) {

@@ -10,6 +10,7 @@ import jssc.SerialPort;
 import jssc.SerialPortList;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 public interface Connector extends AutoCloseable {
@@ -28,6 +29,16 @@ public interface Connector extends AutoCloseable {
         } catch (JsonProcessingException e) {
             throw new ConnectorException("Couldn't marshall JSON", e);
         }
+    }
+
+    /**
+     * Setup the board's UUID.
+     */
+    default UUID getUUID() throws ConnectorException {
+        return Optional.of(new Request())
+                .map(this::send)
+                .map(Response::getUuid)
+                .orElseGet(() -> send(new Request().newUuid()).getUuid());
     }
 
     void consumeJSON(String json) throws ConnectorException;
