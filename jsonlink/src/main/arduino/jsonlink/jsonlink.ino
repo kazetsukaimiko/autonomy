@@ -6,7 +6,10 @@ StaticJsonDocument<2048> inputDocument;
 StaticJsonDocument<2048> outputDocument;
 char NEWLINE = '\n';
 
+
 char UUID_ADDRESS = 0;
+// Errors
+String ERROR = "error";
 // Board ID
 String UUID = "uuid";
 // Stuff to return
@@ -25,9 +28,12 @@ String ANALOG = "analog";
 String TURN_ON = "turn_on";
 String TURN_OFF = "turn_off";
 
+// Arduino Mega2560
 int ANALOG_PINS[] = {82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97};
 int DIGITAL_PINS[] = {1,2,3,5,6,7,12,13,15,16,17,18,19,20,21,22,23,24,25,26,35,36,37,38,39,40,41,42,43,44,45,46,50,51,52,53,54,55,56,57,58,59,60,63,64,70,71,72,73,74,75,76,77,78};
 
+// Bugger
+String buffer = "";
 
 
 // TODO: analog read pins
@@ -68,11 +74,11 @@ void writeToEEPROM(char add,String data) {
 
 String readFromEEPROM(char add) {
   int i;
-  char data[100]; //Max 100 Bytes
+  char data[64]; //Max 64 Bytes
   int len=0;
   unsigned char k;
   k=EEPROM.read(add);
-  while(k != '\0' && len<500) {   //Read until null character
+  while(k != '\0' && len<=63) {   //Read until null character
     k=EEPROM.read(add+len);
     data[len]=k;
     len++;
@@ -81,29 +87,46 @@ String readFromEEPROM(char add) {
   return String(data);
 }
 
-void setupUUID() {
-    if (inputDocument.containsKey(UUID)) {
-        String newUUID = inputDocument[UUID];
-        writeToEEPROM(UUID_ADDRESS, newUUID);
-    }
+void readUUID() {
     String uuid = readFromEEPROM(UUID_ADDRESS);
     if (uuid.length() == 36) {
         outputDocument[UUID] = uuid;
     }
 }
 
-boolean validPin(int pinNum) {
-  for(int pin : ANALOG_PINS) {
-    if (pin == pinNum) {
-      return true;
+void setupUUID() {
+    if (inputDocument.containsKey(UUID)) {
+        if (outputDocument.containsKey(UUID)) {
+          outputDocument[ERROR].add("UUID Already set.");
+        } else {
+          String newUUID = inputDocument[UUID];
+          writeToEEPROM(UUID_ADDRESS, newUUID);
+        }
     }
-  }
+    readUUID();
+}
+
+boolean validDigitalPin(int pinNum) {
   for(int pin : DIGITAL_PINS) {
     if (pin == pinNum) {
       return true;
     }
   }
   return false;
+}
+
+boolean validAnalogPin(int pinNum) {
+  for(int pin : ANALOG_PINS) {
+    if (pin == pinNum) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+boolean validPin(int pinNum) {
+  return validDigitalPin(pinNum) || validAnalogPin(pinNum);
 }
 
 boolean getPinMode(int pinNum) {
@@ -118,8 +141,19 @@ void modePins() {
   if (inputDocument.containsKey(MODE)) {
     JsonObject pinsToMode = inputDocument[MODE];
     for( JsonPair pinToMode : pinsToMode ) {
+      // Which pin
       int pinToModeNumber = atoi(pinToMode.key().c_str());
+      // True = OUTPUT, False = INPUT
       bool value = pinToMode.value();
+
+      // If we're setting as output (digital) and not a valid digital pin
+      if (value && !validDigitalPin(pinToModeNumber)) {
+        outputDocument[ERROR].add(String("Cannot set OUTPUT, Invalid Digital Pin: ") + pinToMode.key().c_str());
+      }
+
+      if (!value && !validAnalogPin(pinToModeNumber)) {
+        outputDocument[ERROR].add(String("Cannot set INPUT, Invalid Analog Pin: ") + pinToMode.key().c_str());
+      }
       pinMode(pinToModeNumber, value ? OUTPUT : INPUT);
       if (value) {
         digitalWrite(pinToModeNumber, HIGH);
@@ -179,11 +213,24 @@ void processJson() {
 void loop() {
   // Reset the output
   deserializeJson(outputDocument, "{}");
-  // If no error, process
-  if (!deserializeJson(inputDocument, Serial.readStringUntil(NEWLINE))) {
-    processJson();
+  outputDocument.createNestedArray(ERROR);
+
+  buffer = buffer + Serial.readStringUntil(NEWLINE);
+  if (buffer.startsWith("{") || buffer.endsWith("}")) {
+    DeserializationError error = deserializeJson(inputDocument, buffer);
+    // If no error, process
+    if (!error) {
+      processJson();
+    } else {
+      readUUID();
+      outputDocument[ERROR].add(error.c_str());
+    }
     serializeJson(outputDocument, Serial);
     Serial.write(NEWLINE);
+  }
+  // Reset.
+  if (buffer.length() > 2000) {
+    buffer = "";
   }
 }
 

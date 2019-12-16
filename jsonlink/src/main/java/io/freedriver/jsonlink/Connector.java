@@ -11,9 +11,11 @@ import jssc.SerialPortList;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public interface Connector extends AutoCloseable {
+    Logger LOGGER = Logger.getLogger(Connector.class.getName());
     ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JsonLinkModule())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -24,8 +26,19 @@ public interface Connector extends AutoCloseable {
      */
     default Response send(Request request) throws ConnectorException {
         try {
-            consumeJSON(MAPPER.writeValueAsString(request));
-            return receiveResponse();
+            String json = MAPPER.writeValueAsString(request);
+            LOGGER.info("Sending Request: ");
+            LOGGER.info(json);
+            consumeJSON(json);
+            while (true) {
+                Optional<Response> response = fetchResponse();
+                if (response.isPresent()) {
+                    return response.map(r -> r.logAnyErrors(err -> LOGGER.warning("Error from board: " + err)))
+                            .get();
+                }
+            }
+
+            //return receiveResponse().logAnyErrors(err -> LOGGER.warning("Error from board: " + err));
         } catch (JsonProcessingException e) {
             throw new ConnectorException("Couldn't marshall JSON", e);
         }
@@ -43,12 +56,18 @@ public interface Connector extends AutoCloseable {
 
     void consumeJSON(String json) throws ConnectorException;
     Response receiveResponse() throws ConnectorException;
+    Optional<Response> fetchResponse() throws ConnectorException;
     boolean isClosed();
 
-    static Optional<Connector> getDefault() {
+    static Stream<Connector> allConnectors() {
         return Stream.of(SerialPortList.getPortNames())
-                .findFirst()
+                .peek(LOGGER::info)
                 .map(SerialPort::new)
                 .map(SerialConnector::new);
+    }
+
+    static Optional<Connector> getDefault() {
+        return allConnectors()
+                .findFirst();
     }
 }
