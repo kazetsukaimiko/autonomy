@@ -2,6 +2,11 @@ package io.freedriver.autonomy.entity.event;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import org.dizitart.no2.IndexType;
+import org.dizitart.no2.NitriteId;
+import org.dizitart.no2.objects.Id;
+import org.dizitart.no2.objects.Index;
+import org.dizitart.no2.objects.Indices;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -10,8 +15,18 @@ import java.util.Objects;
  * An entity that represents either the initial state of some thing or a change
  * in that thing's state.
  */
-@JsonTypeInfo(use=JsonTypeInfo.Id.MINIMAL_CLASS, include=JsonTypeInfo.As.PROPERTY, property="@extension")
+@Indices({
+        @Index(value="timestamp", type= IndexType.NonUnique),
+        @Index(value="subject", type= IndexType.NonUnique),
+        @Index(value="property", type= IndexType.NonUnique),
+        @Index(value="type", type= IndexType.NonUnique)
+})
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property="@extension")
 public class Event {
+
+    @Id
+    private NitriteId id;
+
     private Instant timestamp;
 
     @JsonUnwrapped
@@ -27,6 +42,14 @@ public class Event {
         this.timestamp = timestamp;
         this.coordinate = coordinate;
         this.description = description;
+    }
+
+    public NitriteId getId() {
+        return id;
+    }
+
+    public void setId(NitriteId id) {
+        this.id = id;
     }
 
     public Instant getTimestamp() {

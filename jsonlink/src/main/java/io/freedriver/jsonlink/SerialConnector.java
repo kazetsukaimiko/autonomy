@@ -21,11 +21,13 @@ import java.util.stream.Collectors;
 public class SerialConnector implements Connector, AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(SerialConnector.class.getName());
 
+    private final String device;
     private final  SerialPort serialPort;
 
     private StringBuilder buffer = new StringBuilder();
 
     public SerialConnector(SerialPort serialPort) {
+        this.device = serialPort.getPortName();
         this.serialPort = serialPort;
 
         if (!serialPort.isOpened()) {
@@ -39,15 +41,17 @@ public class SerialConnector implements Connector, AutoCloseable {
                 );
                 Thread.sleep(1000);
 
-                Optional<String> packet = poll(100);
-                if (packet.isEmpty() && buffer.length() > 0) {
-                    pollUntilFinish();
-                }
+
                 send(new Request());
             } catch (SerialPortException | InterruptedException e) {
                 throw new ConnectorException(e);
             }
         }
+    }
+
+    @Override
+    public String device() {
+        return device;
     }
 
     @Override
@@ -81,6 +85,8 @@ public class SerialConnector implements Connector, AutoCloseable {
     public Optional<Response> fetchResponse() throws ConnectorException {
         try {
             Optional<String> json = pollUntilFinish();
+                    //Optional.of(readUntil("\n"))
+                    //.filter(SerialConnector::validate);
             if (json.isPresent()) {
                 return Optional.of(MAPPER.readValue(json.get(), Response.class));
             } else {
@@ -96,7 +102,11 @@ public class SerialConnector implements Connector, AutoCloseable {
         while (true) {
             Optional<String> response = poll(10);
             if (response.isPresent()) {
-                return response;
+                if (validate(response.get())) {
+                    return response;
+                } else {
+                    LOGGER.warning("Invalid");
+                }
             } else if (invalidBuffer && buffer.length() == 0) { // If we reset polling...
                 return Optional.empty();
             }
@@ -105,11 +115,15 @@ public class SerialConnector implements Connector, AutoCloseable {
 
     private static boolean validate(String input) {
         Map<Character, Integer> occurrenceMap = occurrenceMap(input);
-        return
+        boolean valid =
                 input.startsWith("{") && input.endsWith("}\n") && !input.contains(String.valueOf((char) 65533))
                     && occurrenceMap.getOrDefault("{", 0) == occurrenceMap.getOrDefault("}", 0)
                     && occurrenceMap.getOrDefault("[", 0) == occurrenceMap.getOrDefault("]", 0)
                 ;
+        if (!valid) {
+            LOGGER.warning(input);
+        }
+        return valid;
     }
 
     private static Map<Character, Integer> occurrenceMap(String input) {
@@ -131,7 +145,7 @@ public class SerialConnector implements Connector, AutoCloseable {
         try {
             String character = serialPort.readString(1, timeout);
             buffer.append(character);
-            if (buffer.toString().endsWith("}\n")) {
+            if (buffer.toString().endsWith("\n")) {
                 String result = buffer.toString();
                 buffer = new StringBuilder();
                 return Optional.of(result)

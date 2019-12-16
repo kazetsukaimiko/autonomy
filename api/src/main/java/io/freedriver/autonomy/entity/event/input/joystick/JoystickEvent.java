@@ -4,9 +4,11 @@ import io.freedriver.autonomy.entity.event.Event;
 import io.freedriver.autonomy.entity.event.EventCoordinate;
 import io.freedriver.autonomy.entity.event.EventDescription;
 import io.freedriver.autonomy.entity.event.input.joystick.jstest.JSTestEvent;
+import org.dizitart.no2.objects.InheritIndices;
 
 import java.time.Instant;
 
+@InheritIndices
 public class JoystickEvent extends Event {
     private Long number;
     private Long value;

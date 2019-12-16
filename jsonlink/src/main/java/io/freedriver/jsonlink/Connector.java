@@ -9,6 +9,7 @@ import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import jssc.SerialPort;
 import jssc.SerialPortList;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -54,20 +55,10 @@ public interface Connector extends AutoCloseable {
                 .orElseGet(() -> send(new Request().newUuid()).getUuid());
     }
 
+    String device();
     void consumeJSON(String json) throws ConnectorException;
     Response receiveResponse() throws ConnectorException;
     Optional<Response> fetchResponse() throws ConnectorException;
     boolean isClosed();
 
-    static Stream<Connector> allConnectors() {
-        return Stream.of(SerialPortList.getPortNames())
-                .peek(LOGGER::info)
-                .map(SerialPort::new)
-                .map(SerialConnector::new);
-    }
-
-    static Optional<Connector> getDefault() {
-        return allConnectors()
-                .findFirst();
-    }
 }

@@ -52,7 +52,9 @@ public class Response {
     @Override
     public String toString() {
         return "Response{" +
-                "digital=" + digital +
+                "uuid=" + uuid +
+                ", error=" + error +
+                ", digital=" + digital +
                 ", analog=" + analog +
                 '}';
     }

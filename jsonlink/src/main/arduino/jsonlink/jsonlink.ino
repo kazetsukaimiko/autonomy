@@ -4,7 +4,7 @@
 #include <ArduinoJson.h>
 StaticJsonDocument<2048> inputDocument;
 StaticJsonDocument<2048> outputDocument;
-char NEWLINE = '\n';
+static char NEWLINE = '\n';
 
 
 char UUID_ADDRESS = 0;
@@ -32,7 +32,7 @@ String TURN_OFF = "turn_off";
 int ANALOG_PINS[] = {82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97};
 int DIGITAL_PINS[] = {1,2,3,5,6,7,12,13,15,16,17,18,19,20,21,22,23,24,25,26,35,36,37,38,39,40,41,42,43,44,45,46,50,51,52,53,54,55,56,57,58,59,60,63,64,70,71,72,73,74,75,76,77,78};
 
-// Bugger
+// Buffer
 String buffer = "";
 
 
@@ -203,6 +203,13 @@ void readPins() {
 }
 
 
+void debugOutput(String debug) {
+  for (int i=0; i< debug.length(); i++) {
+    Serial.write(debug.charAt(i));
+  }
+  Serial.write(NEWLINE);
+}
+
 void processJson() {
   setupUUID();
   modePins();
@@ -215,23 +222,47 @@ void loop() {
   deserializeJson(outputDocument, "{}");
   outputDocument.createNestedArray(ERROR);
 
-  buffer = buffer + Serial.readStringUntil(NEWLINE);
-  if (buffer.startsWith("{") || buffer.endsWith("}")) {
-    DeserializationError error = deserializeJson(inputDocument, buffer);
-    // If no error, process
-    if (!error) {
-      processJson();
-    } else {
-      readUUID();
-      outputDocument[ERROR].add(error.c_str());
+  /*
+  String packet = Serial.readString();
+  debugOutput(packet);
+  int delimiter = packet.indexOf(NEWLINE);
+  if (delimiter > -1) {
+    debugOutput("FOUND");
+    while (delimiter != -1) {
+      int startPos = 0;
+      buffer = buffer + packet.substring(startPos, delimiter);
+      startPos = delimiter+1;
+      packet = packet.substring(startPos);
+      delimiter = packet.indexOf(NEWLINE);
+      processBuffer();
     }
-    serializeJson(outputDocument, Serial);
-    Serial.write(NEWLINE);
   }
-  // Reset.
-  if (buffer.length() > 2000) {
+  buffer = buffer + packet;
+  */
+
+  buffer = Serial.readStringUntil(NEWLINE);
+  processBuffer();
+  
+}
+
+
+void processBuffer() {
+    if (buffer.startsWith("{") && buffer.endsWith("}")) {
+      DeserializationError error = deserializeJson(inputDocument, buffer);
+      // If no error, process
+      if (!error) {
+        processJson();
+      } else {
+        readUUID();
+        outputDocument[ERROR].add(error.c_str());
+      }
+      serializeJson(outputDocument, Serial);
+      Serial.write(NEWLINE);
+    } else if (buffer.length() > 0) {
+      debugOutput("Bad Input.");
+      debugOutput(buffer);
+    }
     buffer = "";
-  }
 }
 
 
@@ -239,4 +270,5 @@ void setup() {
   // Initialize Serial port
   Serial.begin(115200);
   Serial.setTimeout(50);
+  buffer = "";
 }

@@ -34,7 +34,7 @@ public class ConnectorTest {
 
 
     public static List<Connector> allConnectors() {
-        return Connector.getDefault().stream()
+        return Connectors.allConnectors() //.stream()
                 .collect(Collectors.toList());
     }
 
