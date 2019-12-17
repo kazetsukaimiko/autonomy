@@ -17,6 +17,12 @@ public final class Connectors {
     private static final Set<Connector> ALL_CONNECTORS = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final Logger LOGGER = Logger.getLogger(Connectors.class.getName());
 
+    private static Consumer<String> callback;
+
+    private Connectors() {
+        // Prevent Construction
+    }
+
     private static synchronized <T> T connectors(Function<Stream<Connector>, T> setFunction) {
         return setFunction.apply(new HashSet<>(ALL_CONNECTORS).stream());
     }
@@ -36,7 +42,7 @@ public final class Connectors {
         });
     }
 
-    static synchronized Optional<Connector> findOrOpen(String device) {
+    private static synchronized Optional<Connector> findOrOpen(String device) {
         Optional<Connector> found = findByDeviceId(device);
         if (found.isPresent()) {
             Connector inQuestion = found.get();
@@ -56,14 +62,25 @@ public final class Connectors {
         }
     }
 
-    static Stream<Connector> allConnectors() {
+    public static Stream<Connector> allConnectors() {
         return Stream.of(SerialPortList.getPortNames())
                 .map(Connectors::findOrOpen)
                 .flatMap(Optional::stream);
     }
 
-    static Optional<Connector> getConnector(UUID deviceId) {
+    public static Optional<Connector> getConnector(UUID deviceId) {
         return connectors(cs -> cs.filter(connector -> Objects.equals(connector.getUUID(), deviceId)))
                 .findFirst();
+    }
+
+    public static Consumer<String> getCallback() {
+        return callback != null ?
+            callback
+                :
+                i -> {};
+    }
+
+    public static void setCallback(Consumer<String> callback) {
+        Connectors.callback = callback;
     }
 }

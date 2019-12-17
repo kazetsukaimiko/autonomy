@@ -6,14 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import io.freedriver.jsonlink.jackson.JsonLinkModule;
-import jssc.SerialPort;
-import jssc.SerialPortList;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 public interface Connector extends AutoCloseable {
     Logger LOGGER = Logger.getLogger(Connector.class.getName());
@@ -30,16 +26,9 @@ public interface Connector extends AutoCloseable {
             String json = MAPPER.writeValueAsString(request);
             LOGGER.info("Sending Request: ");
             LOGGER.info(json);
-            consumeJSON(json);
-            while (true) {
-                Optional<Response> response = fetchResponse();
-                if (response.isPresent()) {
-                    return response.map(r -> r.logAnyErrors(err -> LOGGER.warning("Error from board: " + err)))
-                            .get();
-                }
-            }
-
-            //return receiveResponse().logAnyErrors(err -> LOGGER.warning("Error from board: " + err));
+            return sendJSONRequest(json)
+                    .map(r -> r.logAnyErrors(err -> LOGGER.warning("Error from board: " + err)))
+                    .get();
         } catch (JsonProcessingException e) {
             throw new ConnectorException("Couldn't marshall JSON", e);
         }
@@ -55,10 +44,13 @@ public interface Connector extends AutoCloseable {
                 .orElseGet(() -> send(new Request().newUuid()).getUuid());
     }
 
+    default void processBoardOutput(String line) {
+        Connectors.getCallback().accept(line);
+    }
+
     String device();
-    void consumeJSON(String json) throws ConnectorException;
-    Response receiveResponse() throws ConnectorException;
-    Optional<Response> fetchResponse() throws ConnectorException;
+    Optional<Response> sendJSONRequest(String json) throws ConnectorException;
+    //Optional<Response> fetchResponse() throws ConnectorException;
     boolean isClosed();
 
 }

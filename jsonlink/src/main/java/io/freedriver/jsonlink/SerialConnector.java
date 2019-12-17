@@ -22,7 +22,7 @@ public class SerialConnector implements Connector, AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(SerialConnector.class.getName());
 
     private final String device;
-    private final  SerialPort serialPort;
+    private final SerialPort serialPort;
 
     private StringBuilder buffer = new StringBuilder();
 
@@ -41,8 +41,6 @@ public class SerialConnector implements Connector, AutoCloseable {
                 );
                 Thread.sleep(1000);
 
-
-                send(new Request());
             } catch (SerialPortException | InterruptedException e) {
                 throw new ConnectorException(e);
             }
@@ -55,46 +53,24 @@ public class SerialConnector implements Connector, AutoCloseable {
     }
 
     @Override
-    public void consumeJSON(String json) throws ConnectorException {
+    public Optional<Response> sendJSONRequest(String requestJSON) throws ConnectorException {
         try {
-            LOGGER.info("Payload: ");
-            LOGGER.info(json);
-            serialPort.writeString(json);
-        } catch (SerialPortException e) {
-            throw new ConnectorException("Couldn't consume JSON", e);
-        }
-    }
-
-    @Override
-    public Response receiveResponse() throws ConnectorException {
-        try {
-            String jsonResponse = readUntil("\n");
-            LOGGER.info(jsonResponse);
-            return MAPPER.readValue(jsonResponse, Response.class);
+            LOGGER.log(Level.FINEST, requestJSON);
+            serialPort.writeString(requestJSON);
+            Optional<String> responseJSON = pollUntilFinish();
+            if (responseJSON.isPresent()) {
+                return Optional.of(MAPPER.readValue(responseJSON.get(), Response.class));
+            } else {
+                return Optional.empty();
+            }
         } catch (IOException | SerialPortException e) {
-            throw new ConnectorException("Couldn't receive response", e);
+            throw new ConnectorException("Couldn't consume JSON", e);
         }
     }
 
     @Override
     public boolean isClosed() {
         return !serialPort.isOpened();
-    }
-
-    @Override
-    public Optional<Response> fetchResponse() throws ConnectorException {
-        try {
-            Optional<String> json = pollUntilFinish();
-                    //Optional.of(readUntil("\n"))
-                    //.filter(SerialConnector::validate);
-            if (json.isPresent()) {
-                return Optional.of(MAPPER.readValue(json.get(), Response.class));
-            } else {
-                return Optional.empty();
-            }
-        } catch (IOException | SerialPortException e) {
-            throw new ConnectorException("Couldn't poll",e);
-        }
     }
 
     private Optional<String> pollUntilFinish() throws SerialPortException {
@@ -121,7 +97,8 @@ public class SerialConnector implements Connector, AutoCloseable {
                     && occurrenceMap.getOrDefault("[", 0) == occurrenceMap.getOrDefault("]", 0)
                 ;
         if (!valid) {
-            LOGGER.warning(input);
+            Connectors.getCallback()
+                    .accept(input);
         }
         return valid;
     }

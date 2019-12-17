@@ -8,6 +8,8 @@ static char NEWLINE = '\n';
 
 
 char UUID_ADDRESS = 0;
+// Debug
+String DEBUG = "debug";
 // Errors
 String ERROR = "error";
 // Board ID
@@ -60,6 +62,23 @@ void analogReadMode() {
     delay(1000);
   }
 }*/
+
+
+void debug(String debug) {
+    if (inputDocument.containsKey(DEBUG)) {
+        if (!outputDocument.containsKey(DEBUG)) {
+            outputDocument.createNestedArray(DEBUG);
+        }
+        outputDocument[DEBUG].add(debug);
+    }
+}
+
+void debugOutput(String debug) {
+  for (int i=0; i< debug.length(); i++) {
+    Serial.write(debug.charAt(i));
+  }
+  Serial.write(NEWLINE);
+}
 
 
 void writeToEEPROM(char add,String data) {
@@ -162,6 +181,7 @@ void modePins() {
   }
 }
 
+
 void writePins() {
   if (inputDocument.containsKey(WRITE)) {
     if (inputDocument[WRITE].containsKey(DIGITAL)) {
@@ -171,6 +191,7 @@ void writePins() {
         bool value = digitalPin.value();
         digitalWrite(digitalPinNumber, value ? HIGH : LOW);
         outputDocument[DIGITAL][String(digitalPinNumber)] = value;
+        debug("Set:" + String(digitalPinNumber) + ":" + value ? "HIGH": "LOW");
       }
     }
   }
@@ -202,13 +223,6 @@ void readPins() {
   }
 }
 
-
-void debugOutput(String debug) {
-  for (int i=0; i< debug.length(); i++) {
-    Serial.write(debug.charAt(i));
-  }
-  Serial.write(NEWLINE);
-}
 
 void processJson() {
   setupUUID();
