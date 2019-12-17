@@ -24,12 +24,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ConnectorTest {
     private static final Logger LOGGER = Logger.getLogger(ConnectorTest.class.getName());
-
-    static List<UUID> allUUIDs;
     static Identifier LED_PIN = Identifier.of(40); // Hallway
 
-    @BeforeAll
-    public static void init() {
+    List<UUID> allUUIDs;
+
+    @BeforeEach
+    public void init() {
         allUUIDs = Connectors.allConnectors()
                 .map(Connector::getUUID)
                 .distinct()
