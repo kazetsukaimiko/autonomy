@@ -1,7 +1,8 @@
 package io.freedriver.autonomy.rest;
 
-import io.freedriver.autonomy.cdi.qualifier.NitriteDatabase;
+import io.freedriver.autonomy.ee.Autonomy;
 import io.freedriver.autonomy.entity.event.Event;
+import io.freedriver.ee.cdi.qualifier.NitriteDatabase;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.objects.ObjectRepository;
@@ -12,7 +13,8 @@ import java.util.stream.StreamSupport;
 
 public class NitriteEventEndpoint implements EventEndpoint<NitriteId> {
 
-    @Inject @NitriteDatabase(Event.class)
+    @Inject
+    @NitriteDatabase(deployment = Autonomy.DEPLOYMENT, database = Event.class)
     private Nitrite nitrite;
 
     public ObjectRepository<Event> getRepository() {

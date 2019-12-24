@@ -49,14 +49,6 @@
   </build>
 
   <dependencies>
-    <!--
-    <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
-      <version>8.0.1</version>
-      <scope>provided</scope>
-    </dependency>-->
-
     <dependency>
       <groupId>io.thorntail</groupId>
       <artifactId>ejb</artifactId>
@@ -77,20 +69,36 @@
       <artifactId>jaxrs</artifactId>
     </dependency>
 
-    <!-- Joystick Support -->
+    <dependency>
+      <groupId>io.freedriver.ee</groupId>
+      <artifactId>ee-common</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>io.freedriver.autonomy</groupId>
       <artifactId>jsonlink</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <dependency>
       <groupId>io.freedriver.autonomy</groupId>
       <artifactId>autonomy-api</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
     </dependency>
 
+    <dependency>
+      <groupId>io.freedriver.skaiskreiper</groupId>
+      <artifactId>api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>kaze.victron</groupId>
+      <artifactId>victron-java</artifactId>
+    </dependency>
+
+    <!--
+    -->
+
     <!-- Arduino -->
+    <!--
     <dependency>
       <groupId>org.ardulink</groupId>
       <artifactId>ardulink-core-base</artifactId>
@@ -102,6 +110,7 @@
       <artifactId>ardulink-core-serial-jssc</artifactId>
       <version>2.1.0</version>
     </dependency>
+    -->
 
     <!-- Storage Engines -->
     <dependency>
@@ -122,12 +131,14 @@
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
       <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

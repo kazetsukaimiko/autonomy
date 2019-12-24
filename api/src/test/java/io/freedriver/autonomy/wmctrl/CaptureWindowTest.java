@@ -1,5 +1,5 @@
 package io.freedriver.autonomy.wmctrl;
-
+/*
 import io.freedriver.wmctrl.WMCtrlEntry;
 import io.freedriver.wmctrl.WMCtrlReader;
 import javafx.embed.swing.SwingFXUtils;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+*/
 public class CaptureWindowTest {
     /*
     Robot robot;

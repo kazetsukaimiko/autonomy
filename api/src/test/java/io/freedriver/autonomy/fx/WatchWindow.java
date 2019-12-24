@@ -1,5 +1,5 @@
 package io.freedriver.autonomy.fx;
-
+/*
 import io.freedriver.wmctrl.WMCtrlEntry;
 import io.freedriver.wmctrl.WMCtrlReader;
 import javafx.application.Application;
@@ -18,8 +18,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.OptionalDouble;
-
-public class WatchWindow extends Application {
+*/
+public class WatchWindow { //extends Application {
+    /*
     private Robot robot;
     private ImageView iv;
     private Stage stage;
@@ -137,5 +138,5 @@ public class WatchWindow extends Application {
         return robot
                 .getScreenCapture(writableImage, rectangle2D);
     }
-
+*/
 }

@@ -12,36 +12,10 @@
     <name>Autonomy API</name>
     <packaging>jar</packaging>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.3</version>
-                <configuration>
-                    <mainClass>HelloFX</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.thorntail</groupId>
-                <artifactId>bom-all</artifactId>
-                <version>${version.thorntail}</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>io.freedriver.autonomy</groupId>
             <artifactId>jsonlink</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -56,6 +30,7 @@
             <version>3.2.0</version>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -67,6 +42,7 @@
             <artifactId>javafx-swing</artifactId>
             <version>11</version>
         </dependency>
+        -->
     </dependencies>
 
 </project>

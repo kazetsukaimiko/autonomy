@@ -1,6 +1,6 @@
 package io.freedriver.wmctrl;
 
-import javafx.geometry.Rectangle2D;
+//import javafx.geometry.Rectangle2D;
 
 import java.awt.*;
 import java.util.Objects;
@@ -60,9 +60,11 @@ public class WMCtrlEntry {
         return Optional.empty();
     }
 
+    /*
     public Rectangle2D getRectangle2D() {
         return new Rectangle2D(getXpos(), getYpos(), getWidth(), getHeight());
     }
+     */
 
     public Rectangle getRectangle() {
         return new Rectangle(getXpos(), getYpos(), getWidth(), getHeight());

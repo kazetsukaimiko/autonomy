@@ -15,11 +15,8 @@
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <lwjgl.version>3.2.3</lwjgl.version>
-    <swt.version>4.6.1</swt.version>
-    <joml.version>1.9.18-SNAPSHOT</joml.version>
-
     <junit.jupiter.version>5.5.2</junit.jupiter.version>
+    <kaze.victron.version>0.3.0</kaze.victron.version>
   </properties>
 
   <dependencyManagement>
@@ -33,8 +30,14 @@
       </dependency>
 
       <dependency>
+        <groupId>io.freedriver.ee</groupId>
+        <artifactId>ee-common</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
         <groupId>io.freedriver.autonomy</groupId>
-        <artifactId>automony-api</artifactId>
+        <artifactId>autonomy-api</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -42,6 +45,12 @@
         <groupId>io.freedriver.autonomy</groupId>
         <artifactId>jsonlink</artifactId>
         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>kaze.victron</groupId>
+        <artifactId>victron-java</artifactId>
+        <version>${kaze.victron.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

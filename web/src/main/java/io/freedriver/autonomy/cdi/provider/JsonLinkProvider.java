@@ -11,68 +11,49 @@ import io.freedriver.jsonlink.jackson.schema.v1.Request;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class JsonLinkProvider {
 
     private static final Logger LOGGER = Logger.getLogger(JsonLinkProvider.class.getName());
+    private static final Map<UUID, Connector> connectors = new ConcurrentHashMap<>();
+
     @Inject
     private Configuration configuration;
-
-    private Connector connector;
-
-    @Produces @Default @Dependent
-    public Connector getDefaultConnector() throws ConnectorException {
-        if (connector == null || connector.isClosed()) {
-            LOGGER.warning("Opening new Connector instance");
-            connector = Connectors.allConnectors()
-                    .findFirst()
-                    .orElseThrow(() -> new ConnectorException("Couldn't spawn Connector."));
-            Request modeSets = new Request();
-
-            configuration.getAliases()
-                    .keySet()
-                    .stream()
-                    .map(Identifier::new)
-                    .forEach(identifier -> modeSets
-                            .modeSet(identifier.setMode(Mode.OUTPUT))
-                            .digitalWrite(identifier.setDigital(true)));
-
-            connector.send(modeSets);
-        } else {
-            LOGGER.warning("Using existing connector instance");
-        }
-
-        return connector;
-    }
-
-
-
 
     @Produces @Dependent @ByUUID("")
     public Connector getDefaultConnector(InjectionPoint injectionPoint) throws ConnectorException {
         UUID parameterValue = injectionPoint.getQualifiers().stream()
+                .peek(q -> LOGGER.warning("Qualifier: " + q.getClass().getName()))
             .filter(ByUUID.class::isInstance)
             .map(ByUUID.class::cast)
             .map(ByUUID::value)
-            .map(JsonLinkProvider::fromUUIDString)
+            .map(UUID::fromString)
             .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Cannot get UUID for Connector."));
+            .orElseThrow(() -> new IllegalArgumentException(noUUIDExceptionMessage(injectionPoint)));
 
-        if (connector == null || connector.isClosed()) {
-            LOGGER.warning("Opening new Connector instance");
-            connector = Connectors.allConnectors()
+        if (!connectors.containsKey(parameterValue) || connectors.get(parameterValue).isClosed()) {
+            Connector connector = Connectors.allConnectors()
+                    .filter(candidate -> Objects.equals(candidate.getUUID(), parameterValue))
                     .findFirst()
-                    .orElseThrow(() -> new ConnectorException("Couldn't spawn Connector."));
-            Request modeSets = new Request();
+                    .orElseThrow(() -> new ConnectorException(
+                            "Couldn't find Connector for board "
+                            + parameterValue.toString()
+                            + ", available boards: "
+                            + getAvailableUUIDs()
+                    ));
+            LOGGER.warning("Connector " + parameterValue.toString() + " spawned. Mode setting. ");
 
+            Request modeSets = new Request();
             configuration.getAliases()
                     .keySet()
                     .stream()
@@ -85,16 +66,25 @@ public class JsonLinkProvider {
         } else {
             LOGGER.warning("Using existing connector instance");
         }
-
-        return connector;
+        return connectors.get(parameterValue);
     }
 
-    private static UUID fromUUIDString(String uuidString) {
-        try {
-            return UUID.fromString(uuidString);
-        } catch (IllegalArgumentException iae) {
-            throw new IllegalArgumentException("Invalid UUID String: " + uuidString, iae);
-        }
+    private static final String getAvailableUUIDs() {
+        return Connectors.allConnectors()
+                .map(Connector::getUUID)
+                .map(UUID::toString)
+                .collect(Collectors.joining(", "));
+    }
+
+    private static String noUUIDExceptionMessage(InjectionPoint injectionPoint) {
+        String uuids = getAvailableUUIDs();
+
+        return "Cannot get UUID for Connector, injection point: "
+                + injectionPoint.getMember().getDeclaringClass().getName()
+                + "/"
+                + injectionPoint.getMember().getName()
+                + "\nAvailable UUIDs: ("+uuids+")"
+                ;
     }
 
 }
