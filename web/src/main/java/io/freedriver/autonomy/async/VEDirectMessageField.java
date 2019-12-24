@@ -4,6 +4,8 @@ import kaze.victron.VEDirectMessage;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public enum VEDirectMessageField {
     RELAY_STATE("Relay state", VEDirectMessage::getRelayState),
@@ -25,6 +27,12 @@ public enum VEDirectMessageField {
 
     <T> VEDirectMessageField(String fieldName, Function<VEDirectMessage, T> getter) {
         this(fieldName, getter, Objects::toString);
+    }
+
+    public static String allValues(VEDirectMessage message) {
+        return Stream.of(values())
+                .map(field -> field.getFieldName() + ": " + field.apply(message))
+                .collect(Collectors.joining("\n"));
     }
 
     public String getFieldName() {

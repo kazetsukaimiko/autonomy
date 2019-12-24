@@ -20,6 +20,9 @@ public class VEDirectMessageActor {
     public synchronized void actOnVEDirectMessage(@Observes @Default VEDirectMessage veDirectMessage) throws IOException {
         if (lastMessage == null) {
             lastMessage = veDirectMessage;
+            LOGGER.info("VE.Direct initial field values: " +
+                    VEDirectMessageField.allValues(lastMessage)
+            );
         }
         Stream.of(VEDirectMessageField.values())
                 .forEach(field -> compareMessageField(field, veDirectMessage));
@@ -33,4 +36,5 @@ public class VEDirectMessageActor {
                 + oldField + " -> " + newField);
         }
     }
+
 }
