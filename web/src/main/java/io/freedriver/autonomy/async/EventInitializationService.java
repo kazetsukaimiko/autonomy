@@ -34,7 +34,7 @@ public class EventInitializationService {
     private static final Map<VEDirectDevice, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
 
     // TODO: Use ByUUID.Literal. Static injection like this defeats the purpose.
-    @Inject @ByUUID("af36c07b-20cf-4253-abb1-53280f13c211")
+    @Inject @ByUUID("0f2829e1-1804-4993-ae33-c5dd21840646")
     private Connector connector;
 
     @Inject
