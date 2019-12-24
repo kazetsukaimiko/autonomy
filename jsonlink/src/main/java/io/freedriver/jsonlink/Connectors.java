@@ -55,11 +55,12 @@ public final class Connectors {
         try {
             return Optional.of(createConnector(device).get(2500, TimeUnit.MILLISECONDS));
         } catch (InterruptedException | ExecutionException e) {
-            throw new ConnectorException("Couldn't create connecotr" + device, e);
+            //throw new ConnectorException("Couldn't create connector " + device, e);
+            LOGGER.log(Level.SEVERE, "Timed out building connector " + device, e);
         } catch (TimeoutException e) {
             LOGGER.log(Level.WARNING, "Timed out building connector " + device, e);
-            return Optional.empty();
         }
+        return Optional.empty();
     }
 
     public static Stream<Connector> allConnectors() {

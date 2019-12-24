@@ -18,8 +18,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class JsonLinkProvider {
@@ -71,9 +73,18 @@ public class JsonLinkProvider {
 
     private static final String getAvailableUUIDs() {
         return Connectors.allConnectors()
-                .map(Connector::getUUID)
+                .flatMap(JsonLinkProvider::safeGetUUID)
                 .map(UUID::toString)
                 .collect(Collectors.joining(", "));
+    }
+
+    private static Stream<UUID> safeGetUUID(Connector connector) {
+        try {
+            return Stream.of(connector.getUUID());
+        } catch (ConnectorException ce) {
+            LOGGER.log(Level.WARNING, "Couldn't get Connector Board UUID for port " + connector.device(), ce);
+            return Stream.empty();
+        }
     }
 
     private static String noUUIDExceptionMessage(InjectionPoint injectionPoint) {
