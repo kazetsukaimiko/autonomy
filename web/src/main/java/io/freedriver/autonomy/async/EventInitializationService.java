@@ -75,7 +75,7 @@ public class EventInitializationService {
                 .filter(devicesInOperation::containsKey)
                 .map(devicesInOperation::get)
                 .map(Future::isDone)
-                .orElse(false);
+                .orElse(true);
     }
 
     private synchronized void initVEDirectDevice(final VEDirectDevice veDirectDevice) {
