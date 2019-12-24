@@ -66,6 +66,7 @@ public class EventInitializationService {
                 wait(Duration.of(5, ChronoUnit.SECONDS));
             }
         }
+        LOGGER.info("VEDirectMonitor initialized.");
         return true;
     }
 
@@ -78,6 +79,7 @@ public class EventInitializationService {
     }
 
     private synchronized void initVEDirectDevice(final VEDirectDevice veDirectDevice) {
+        LOGGER.info("Initializing VEDirectDevice: " + veDirectDevice.toString());
         devicesInOperation.put(veDirectDevice, pool.submit(() -> {
             veDirectDevice.readAsMessages()
                     .forEach(this::fireVEDirectMessage);
@@ -108,6 +110,7 @@ public class EventInitializationService {
     }
 
     private void wait(Duration duration) {
+        LOGGER.info("Waiting " + duration.toMillis() +"ms");
         try {
             Thread.sleep(duration.toMillis());
         } catch (InterruptedException e) {
