@@ -42,7 +42,7 @@ public enum VEDirectMessageChange {
         this(
                 fieldName,
                 (o, n) -> !Objects.equals(getter.apply(o), getter.apply(n)),
-                (o, n) -> o == null ?
+                (o, n) -> o == n ?
                         fieldName + " initial value: " + getter.apply(n)
                 :
                         fieldName + " changed: "
@@ -64,7 +64,7 @@ public enum VEDirectMessageChange {
 
     public static String allValues(VEDirectMessage message) {
         return Stream.of(values())
-                .map(field -> field.getOnChangeFunction().apply(null, message))
+                .map(field -> field.getOnChangeFunction().apply(message, message))
                 .collect(Collectors.joining("\n"));
     }
 

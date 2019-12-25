@@ -22,7 +22,7 @@ public class VEDirectMessageActor {
                     .forEach(field -> compareMessageField(field, veDirectMessage));
         } else {
             LOGGER.info("VE.Direct initial field values: " +
-                    VEDirectMessageChange.allValues(lastMessage));
+                    VEDirectMessageChange.allValues(veDirectMessage));
         }
         lastMessage = veDirectMessage;
     }
