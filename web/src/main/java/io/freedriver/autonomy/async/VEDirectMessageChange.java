@@ -20,9 +20,9 @@ public enum VEDirectMessageChange {
     ERROR_CODE("Error code", VEDirectMessage::getErrorCode),
     OFF_REASON("Off reason", VEDirectMessage::getOffReason),
     YIELD_YESTERDAY("Yesterday's yield", VEDirectMessage::getYieldYesterday),
-    PANEL_YIELD_CHANGE("Panel Power Change",
+    PANEL_YIELD_CHANGE("Panel Power",
             (o, n) -> o != null && n != null && o.getPanelPower().subtract(o.getPanelPower()).greaterThan(Power.of(new BigDecimal("50"), PowerUnit.WATTS)),
-            (o, n) -> { return null; })
+            (o, n) -> o == n ? "Current Panel Power: " + n.getPanelPower() : "Panel Power Change: " + o.getPanelPower() + " -> " + n.getPanelPower())
     ;
 
     private final String fieldName;
