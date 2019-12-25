@@ -44,7 +44,8 @@ public class VEDirectMessageActor implements VEDirectEndpointApi {
      */
 
     public synchronized void actOnVEDirectMessage(@Observes @Default VEDirectMessage veDirectMessage) throws IOException {
-        handleProductMessage(VictronProduct.of(veDirectMessage), veDirectMessage);
+        VictronProduct.of(veDirectMessage)
+                .ifPresent(product -> handleProductMessage(product, veDirectMessage));
     }
 
     public synchronized void handleProductMessage(VictronProduct product, VEDirectMessage veDirectMessage) {
