@@ -7,7 +7,6 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
@@ -18,23 +17,18 @@ public class VEDirectMessageActor {
     private VEDirectMessage lastMessage;
 
     public synchronized void actOnVEDirectMessage(@Observes @Default VEDirectMessage veDirectMessage) throws IOException {
-        if (lastMessage == null) {
-            lastMessage = veDirectMessage;
+        if (lastMessage != null) {
+            Stream.of(VEDirectMessageChange.values())
+                    .forEach(field -> compareMessageField(field, veDirectMessage));
+        } else {
             LOGGER.info("VE.Direct initial field values: " +
-                    VEDirectMessageField.allValues(lastMessage)
-            );
+                    VEDirectMessageChange.allValues(lastMessage));
         }
-        Stream.of(VEDirectMessageField.values())
-                .forEach(field -> compareMessageField(field, veDirectMessage));
+        lastMessage = veDirectMessage;
     }
 
-    private void compareMessageField(VEDirectMessageField field, VEDirectMessage newMessage) {
-        String oldField = field.apply(lastMessage);
-        String newField = field.apply(newMessage);
-        if (!Objects.equals(oldField, newField)) {
-            LOGGER.info(field.getFieldName() + " changed: "
-                + oldField + " -> " + newField);
-        }
+    private void compareMessageField(VEDirectMessageChange field, VEDirectMessage newMessage) {
+        field.test(lastMessage, newMessage, LOGGER::info);
     }
 
 }
