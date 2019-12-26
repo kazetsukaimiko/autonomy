@@ -1,7 +1,5 @@
 package io.freedriver.autonomy.async;
 
-import kaze.math.power.Power;
-import kaze.math.power.PowerUnit;
 import kaze.victron.VEDirectMessage;
 
 import java.math.BigDecimal;
@@ -13,6 +11,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static kaze.math.Multiplier.BASE;
+
 public enum VEDirectMessageChange {
     RELAY_STATE("Relay state", VEDirectMessage::getRelayState),
     STATE_OF_OPERATION("State of operation", VEDirectMessage::getStateOfOperation),
@@ -21,7 +21,7 @@ public enum VEDirectMessageChange {
     OFF_REASON("Off reason", VEDirectMessage::getOffReason),
     YIELD_YESTERDAY("Yesterday's yield", VEDirectMessage::getYieldYesterday),
     PANEL_YIELD_CHANGE("Panel Power",
-            (o, n) -> o != null && n != null && o.getPanelPower().subtract(o.getPanelPower()).greaterThan(Power.of(new BigDecimal("50"), PowerUnit.WATTS)),
+            (o, n) -> o != null && n != null && o.getPanelPower().subtract(o.getPanelPower()).greaterThan(BASE.watts(new BigDecimal("50"))),
             (o, n) -> o == n ? "Current Panel Power: " + n.getPanelPower() : "Panel Power Change: " + o.getPanelPower() + " -> " + n.getPanelPower())
     ;
 
