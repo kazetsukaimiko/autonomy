@@ -1,8 +1,10 @@
 package io.freedriver.autonomy.async;
 
+import kaze.math.potential.Potential;
 import kaze.victron.VEDirectMessage;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -20,6 +22,14 @@ public enum VEDirectMessageChange {
     ERROR_CODE("Error code", VEDirectMessage::getErrorCode),
     OFF_REASON("Off reason", VEDirectMessage::getOffReason),
     YIELD_YESTERDAY("Yesterday's yield", VEDirectMessage::getYieldYesterday),
+    BATTERY_VOLTAGE("Battery Voltage",
+            (o, n) -> tenthOfaVolt(o.getMainVoltage()).compareTo(tenthOfaVolt(n.getMainVoltage())) != 0,
+            (o, n) ->
+                o == n ?
+                    "Current voltage: " + n.getMainVoltage()
+                :
+                    "Voltage " + (o.getMainVoltage().lessThan(n.getMainVoltage()) ? "Rose":"Fell")
+                    + " from " + o.getMainVoltage() + " to " + n.getMainVoltage()),
     PANEL_YIELD_CHANGE("Panel Power",
             (o, n) -> o != null && n != null && o.getPanelPower().subtract(o.getPanelPower()).greaterThan(BASE.watts(new BigDecimal("50"))),
             (o, n) -> o == n ? "Current Panel Power: " + n.getPanelPower() : "Panel Power Change: " + o.getPanelPower() + " -> " + n.getPanelPower())
@@ -72,5 +82,9 @@ public enum VEDirectMessageChange {
         if (onChangePredicate.test(oldMessage, newMessage)) {
             messageConsumer.accept(onChangeFunction.apply(oldMessage, newMessage));
         }
+    }
+
+    public static BigDecimal tenthOfaVolt(Potential potential) {
+        return potential.getNumber().divide(BASE.volts(new BigDecimal("0.1")).getNumber(), RoundingMode.FLOOR);
     }
 }
