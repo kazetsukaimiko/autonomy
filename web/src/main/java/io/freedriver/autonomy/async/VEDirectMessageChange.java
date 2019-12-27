@@ -28,7 +28,7 @@ public enum VEDirectMessageChange {
                 o == n ?
                     "Current voltage: " + n.getMainVoltage()
                 :
-                    "Voltage " + (o.getMainVoltage().lessThan(n.getMainVoltage()) ? "Rose":"Fell")
+                    "Main Voltage " + (o.getMainVoltage().lessThan(n.getMainVoltage()) ? "Rose":"Fell")
                     + " from " + o.getMainVoltage() + " to " + n.getMainVoltage()),
     PANEL_YIELD_CHANGE("Panel Power",
             (o, n) -> o != null && n != null && o.getPanelPower().subtract(o.getPanelPower()).greaterThan(BASE.watts(new BigDecimal("50"))),
