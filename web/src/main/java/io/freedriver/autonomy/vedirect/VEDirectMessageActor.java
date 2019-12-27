@@ -1,7 +1,6 @@
-package io.freedriver.autonomy.async;
+package io.freedriver.autonomy.vedirect;
 
 import io.freedriver.autonomy.cdi.qualifier.VEProduct;
-import io.freedriver.autonomy.rest.VEDirectEndpointApi;
 import kaze.victron.VEDirectMessage;
 import kaze.victron.VictronProduct;
 import kaze.victron.VictronProductType;
@@ -11,10 +10,9 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -23,12 +21,12 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 @ApplicationScoped
-public class VEDirectMessageActor implements VEDirectEndpointApi {
+public class VEDirectMessageActor {
     private static final Logger LOGGER = Logger.getLogger(VEDirectMessageActor.class.getName());
-
     private static final Map<VictronProduct, VEDirectMessage> lastMessage = new ConcurrentHashMap<>();
 
-    private static final Map<VictronProduct, List<VEDirectMessage>> lastMessages = new ConcurrentHashMap<>();
+    @Inject
+    private VEDirectMessageService messageService;
 
     /*
      * SERVICE METHODS
@@ -46,7 +44,6 @@ public class VEDirectMessageActor implements VEDirectEndpointApi {
     /*
      * EVENT HANDLERS
      */
-
     public synchronized void actOnVEDirectMessage(@Observes @Default VEDirectMessage veDirectMessage) throws IOException {
         VictronProduct.of(veDirectMessage)
                 .ifPresent(product -> handleProductMessage(product, veDirectMessage));
@@ -65,9 +62,11 @@ public class VEDirectMessageActor implements VEDirectEndpointApi {
                     VEDirectMessageChange.allValues(veDirectMessage));
         }
         lastMessage.put(product, veDirectMessage);
-        handleHistory(product, veDirectMessage);
+        messageService.save(veDirectMessage);
+        //handleHistory(product, veDirectMessage);
     }
 
+    /*
     public synchronized void handleHistory(VictronProduct product, VEDirectMessage newMessage) {
         if (!lastMessages.containsKey(product)) {
             lastMessages.put(product, new ArrayList<>());
@@ -81,6 +80,8 @@ public class VEDirectMessageActor implements VEDirectEndpointApi {
         }
         lastMessages.get(product).add(newMessage);
     }
+
+     */
 
     @Produces @VEProduct(value = VictronProductType.UNKNOWN, serial = "")
     public Optional<VEDirectMessage> getLastMessage(InjectionPoint injectionPoint) {

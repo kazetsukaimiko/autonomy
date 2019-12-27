@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.async;
+package io.freedriver.autonomy.vedirect;
 
 import kaze.math.potential.Potential;
 import kaze.victron.VEDirectMessage;
