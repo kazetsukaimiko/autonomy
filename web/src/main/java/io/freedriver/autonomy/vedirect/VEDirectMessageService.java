@@ -1,6 +1,8 @@
 package io.freedriver.autonomy.vedirect;
 
+import io.freedriver.autonomy.ee.Autonomy;
 import io.freedriver.ee.cdi.qualifier.NitriteDatabase;
+import io.undertow.servlet.api.Deployment;
 import kaze.victron.VEDirectMessage;
 import kaze.victron.VictronProduct;
 import org.dizitart.no2.Nitrite;
@@ -26,7 +28,7 @@ public class VEDirectMessageService {
 
     private static final Set<VictronProduct> PRODUCT_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    @Inject @NitriteDatabase(database = NitriteVEDirectMessage.class)
+    @Inject @NitriteDatabase(database = NitriteVEDirectMessage.class, deployment = Autonomy.DEPLOYMENT)
     private Nitrite nitrite;
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
