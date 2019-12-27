@@ -12,7 +12,9 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -25,6 +27,8 @@ public class VEDirectMessageActor implements VEDirectEndpointApi {
     private static final Logger LOGGER = Logger.getLogger(VEDirectMessageActor.class.getName());
 
     private static final Map<VictronProduct, VEDirectMessage> lastMessage = new ConcurrentHashMap<>();
+
+    private static final Map<VictronProduct, List<VEDirectMessage>> lastMessages = new ConcurrentHashMap<>();
 
     /*
      * SERVICE METHODS
@@ -60,7 +64,22 @@ public class VEDirectMessageActor implements VEDirectEndpointApi {
             LOGGER.info(product + " VE.Direct initial field values: \n" +
                     VEDirectMessageChange.allValues(veDirectMessage));
         }
-        lastMessage.put(product, veDirectMessage);
+
+        handleHistory(product, veDirectMessage);
+    }
+
+    public synchronized void handleHistory(VictronProduct product, VEDirectMessage newMessage) {
+        if (!lastMessages.containsKey(product)) {
+            lastMessages.put(product, new ArrayList<>());
+        }
+        List<VEDirectMessage> productHistory = lastMessages.get(product);
+        if (productHistory.size() > 10000) {
+            lastMessages.put(product, productHistory.subList(
+                    1,
+                    productHistory.size()
+            ));
+        }
+        lastMessages.get(product).add(newMessage);
     }
 
     @Produces @VEProduct(value = VictronProductType.UNKNOWN, serial = "")

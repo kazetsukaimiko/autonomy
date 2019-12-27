@@ -85,6 +85,6 @@ public enum VEDirectMessageChange {
     }
 
     public static BigDecimal tenthOfaVolt(Potential potential) {
-        return potential.getNumber().divide(BASE.volts(new BigDecimal("0.1")).getNumber(), RoundingMode.FLOOR);
+        return potential.getValue().divide(BASE.volts(new BigDecimal("0.1")).getValue(), RoundingMode.FLOOR);
     }
 }
