@@ -50,7 +50,7 @@ public class VEDirectMessageService {
             nitriteVEDirectMessage.setNitriteId(((NitriteVEDirectMessage) veDirectMessage).getNitriteId());
         }
         // Insert or update- update should never happen.
-        if (nitriteVEDirectMessage.getNitriteId() != null) {
+        if (nitriteVEDirectMessage.getNitriteId() == null) {
             getRepository().insert(nitriteVEDirectMessage);
         } else {
             getRepository().update(nitriteVEDirectMessage);
