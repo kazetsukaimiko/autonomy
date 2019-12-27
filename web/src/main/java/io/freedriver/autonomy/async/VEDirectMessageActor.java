@@ -64,7 +64,7 @@ public class VEDirectMessageActor implements VEDirectEndpointApi {
             LOGGER.info(product + " VE.Direct initial field values: \n" +
                     VEDirectMessageChange.allValues(veDirectMessage));
         }
-
+        lastMessage.put(product, veDirectMessage);
         handleHistory(product, veDirectMessage);
     }
 
