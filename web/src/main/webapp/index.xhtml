@@ -29,18 +29,18 @@
         </p:tab>
         <p:tab title="Victron">
             <p:tabView value="#{victronView.products}" var="product">
-                <p:tab title="#{connector.getUUID()}">
+                <p:tab title="Serial # #{product.serialNumber}: #{product.type.productName}">
                     <p:panelGrid columns="2" cellpadding="5">
-                        <f:facet name="header">Board Details</f:facet>
+                        <f:facet name="header">Product Details</f:facet>
 
-                        <h:outputLabel for="#{connector.getUUID()}UUID" value="UUID"/>
-                        <h:outputText id="#{connector.getUUID()}UUID" value="#{connector.getUUID()}" />
+                        <h:outputLabel for="#{product.serialNumber}ProductId" value="Product Id"/>
+                        <h:outputText id="#{product.serialNumber}ProductId" value="#{product.type.productId}" />
 
-                        <h:outputLabel for="#{connector.getUUID()}Device" value="Device"/>
-                        <h:outputText id="#{connector.getUUID()}Device" value="#{connector.device()}" />
+                        <h:outputLabel for="#{product.serialNumber}Enum" value="Type"/>
+                        <h:outputText id="#{product.serialNumber}Enum" value="#{connector.type.name()}" />
 
-                        <h:outputLabel for="#{connector.getUUID()}Status" value="Status"/>
-                        <h:outputText id="#{connector.getUUID()}Status" value="#{connector.getStatus()}" />
+                        <h:outputLabel for="#{product.serialNumber}Name" value="Name"/>
+                        <h:outputText id="#{product.serialNumber}Name" value="#{product.type.productName}" />
                     </p:panelGrid>
                 </p:tab>
             </p:tabView>
