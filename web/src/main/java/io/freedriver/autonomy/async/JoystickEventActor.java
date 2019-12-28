@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.async;
 
-import io.freedriver.autonomy.config.Configuration;
+import io.freedriver.jsonlink.config.ConnectorConfig;
 import io.freedriver.autonomy.entity.event.EventType;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEventType;
@@ -26,7 +26,7 @@ public class JoystickEventActor {
     private static final Logger LOGGER = Logger.getLogger(JoystickEventActor.class.getName());
 
     @Inject
-    private Configuration configuration;
+    private ConnectorConfig configuration;
 
     @Inject @Any
     private Instance<Connector> connectors;

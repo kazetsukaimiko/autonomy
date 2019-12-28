@@ -1,7 +1,8 @@
 package io.freedriver.autonomy.cdi.provider;
 
 import io.freedriver.autonomy.cdi.qualifier.ByUUID;
-import io.freedriver.autonomy.config.Configuration;
+import io.freedriver.autonomy.service.ConnectorService;
+import io.freedriver.jsonlink.config.ConnectorConfig;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.ConnectorException;
 import io.freedriver.jsonlink.Connectors;
@@ -11,6 +12,7 @@ import io.freedriver.jsonlink.jackson.schema.v1.Request;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
@@ -23,6 +25,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+// TODO : Move to JSONLINK-CDI
 @ApplicationScoped
 public class JsonLinkProvider {
 
@@ -30,10 +33,21 @@ public class JsonLinkProvider {
     private static final Map<UUID, Connector> connectors = new ConcurrentHashMap<>();
 
     @Inject
-    private Configuration configuration;
+    private ConnectorConfig configuration; // TODO: JSONLink specific config
+
+    @Inject
+    private ConnectorService connectorService;
+
+    @Produces @Dependent @Default
+    public Connector getDefaultConnector(InjectionPoint injectionPoint) throws ConnectorException {
+        return connectorService.getAllConnectors()
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No connectors present"));
+    }
 
     @Produces @Dependent @ByUUID("")
-    public Connector getDefaultConnector(InjectionPoint injectionPoint) throws ConnectorException {
+    public Connector getConnectorByUUID(InjectionPoint injectionPoint) throws ConnectorException {
         UUID parameterValue = injectionPoint.getQualifiers().stream()
                 .peek(q -> LOGGER.warning("Qualifier: " + q.getClass().getName()))
             .filter(ByUUID.class::isInstance)
@@ -55,8 +69,9 @@ public class JsonLinkProvider {
                     ));
             LOGGER.warning("Connector " + parameterValue.toString() + " spawned. Mode setting. ");
 
+            /*
             Request modeSets = new Request();
-            configuration.getAliases()
+            configuration.getPins()
                     .keySet()
                     .stream()
                     .map(Identifier::new)
@@ -65,6 +80,8 @@ public class JsonLinkProvider {
                             .digitalWrite(identifier.setDigital(true)));
 
             connector.send(modeSets);
+
+             */
         } else {
             LOGGER.warning("Using existing connector instance");
         }

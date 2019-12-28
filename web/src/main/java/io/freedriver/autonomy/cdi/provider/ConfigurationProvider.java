@@ -1,10 +1,11 @@
 package io.freedriver.autonomy.cdi.provider;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.freedriver.autonomy.config.Configuration;
-import io.freedriver.autonomy.config.PinGroup;
+import io.freedriver.jsonlink.config.ConnectorConfig;
+import io.freedriver.jsonlink.config.ConnectorConfigs;
+import io.freedriver.jsonlink.config.Mappings;
+import io.freedriver.jsonlink.config.PinName;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
@@ -14,14 +15,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ConfigurationProvider {
@@ -29,24 +25,47 @@ public class ConfigurationProvider {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
     @Produces @Default
-    public Configuration getConfiguration() throws IOException {
+    public ConnectorConfig getConfiguration() throws IOException {
+        if (true) {
+            return new ConnectorConfig();
+        }
         Path configFile = inConfigDirectory("config.json");
         if (!configFile.toFile().exists()) {
             OBJECT_MAPPER.writeValue(configFile.toFile(), generateFromMappings());
         }
-        return OBJECT_MAPPER.readValue(configFile.toFile(), Configuration.class);
+        return OBJECT_MAPPER.readValue(configFile.toFile(), ConnectorConfig.class);
     }
 
     public static Path inConfigDirectory(String name) {
         return Paths.get(CONFIG_PATH.toAbsolutePath().toString(), name);
     }
 
-    public static Configuration generateFromMappings() throws IOException {
+    public static ConnectorConfigs generateFromMappings() throws IOException {
         Path mappingsFile = inConfigDirectory("mappings.json");
-        Map<Integer, String> mappings = OBJECT_MAPPER.readValue(mappingsFile.toFile(), new TypeReference<HashMap<Integer, String>>(){});
+        Mappings mappings = OBJECT_MAPPER.readValue(mappingsFile.toFile(), Mappings.class);
 
-        Configuration configuration = new Configuration();
-        configuration.setAliases(mappings);
+        ConnectorConfigs configurations = new ConnectorConfigs();
+
+
+        mappings.getMappings().forEach(mapping -> {
+            ConnectorConfig configuration = new ConnectorConfig();
+            configurations.getConnectors().put(mapping.getConnectorId(), configuration);
+            mapping.getPinNamesAsEntities()
+                    .stream()
+                    .map(PinName::getGroup)
+                    .forEach(groupName -> {
+                        //Permutation pinGroup = configuration.getGroups().getOrDefault(groupName, new Permutation());
+                        //configuration.getGroups().put(groupName, pinGroup);
+                    });
+        });
+
+
+        //configuration.setPinNames(mappings);
+
+
+        // TODO: CRUD
+        /*
+
 
         for (Integer pinNumber : mappings.keySet()) {
             String[] nameSplit = Optional.of(pinNumber)
@@ -70,12 +89,33 @@ public class ConfigurationProvider {
                 }
             }
         }
-        return configuration;
+
+         */
+
+
+        return configurations;
     }
 
-    private static PinGroup ofMappings(Map<Integer, String> mappings, String group, Set<Integer> members) {
-        PinGroup pinGroup = new PinGroup();
-        pinGroup.setName(group);
+/*
+    private static Set<Permutation> ofMappings(Set<PinName> pinNames) {
+        return pinNames.stream()
+                .map(PinName::getGroup)
+                .map(groupName -> ofMappings(groupName, pinNames.stream().filter(p -> p.ofGroup(groupName)).collect(Collectors.toSet())))
+                .collect(Collectors.toSet());
+    }
+
+    private static Permutation ofMappings(String group, Set<PinName> pinNamesOfGroup) {
+        Map<Integer, String> remap = pinNamesOfGroup.stream()
+                .collect(Collectors.toMap(
+                        pinName -> pinName.getPinNumber().getPin(),
+                        PinName::getPinName,
+                        (a, b) -> b
+                        ));
+        return ofMappings(remap, group, pinNamesOfGroup.stream().map(pinName -> pinName.getPinNumber().getPin()).collect(Collectors.toSet()));
+    }
+
+    private static Permutation ofMappings(Map<Integer, String> mappings, String group, Set<Integer> members) {
+        Permutation pinGroup = new Permutation();
 
         pinGroup.setPermutations(powerSet(members).stream()
                 .map(on -> members.stream()
@@ -85,7 +125,7 @@ public class ConfigurationProvider {
                 .collect(Collectors.toList()));
 
         return pinGroup;
-    }
+    }*/
 
     /**
      * Adaptation of https://stackoverflow.com/questions/4640034/calculating-all-of-the-subsets-of-a-set-of-numbers

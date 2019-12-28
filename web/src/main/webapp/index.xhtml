@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3c.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Autonomy</title>
+</h:head>
+<h:body>
+
+    <p:tabView>
+        <p:tab title="Arduino">
+            <p:tabView value="#{connectorView.connectors}" var="connector">
+                <p:tab title="Board #{connector.getUUID()}">
+                    <p:panelGrid columns="2" cellpadding="5">
+                        <f:facet name="header">Board Details</f:facet>
+
+                        <h:outputLabel for="#{connector.getUUID()}UUID" value="UUID"/>
+                        <h:outputText id="#{connector.getUUID()}UUID" value="#{connector.getUUID()}" />
+
+                        <h:outputLabel for="#{connector.getUUID()}Device" value="Device"/>
+                        <h:outputText id="#{connector.getUUID()}Device" value="#{connector.device()}" />
+
+                        <h:outputLabel for="#{connector.getUUID()}Status" value="Status"/>
+                        <h:outputText id="#{connector.getUUID()}Status" value="#{connector.getStatus()}" />
+                    </p:panelGrid>
+                </p:tab>
+            </p:tabView>
+        </p:tab>
+        <p:tab title="Victron">
+            <p:tabView value="#{victronView.products}" var="product">
+                <p:tab title="#{connector.getUUID()}">
+                    <p:panelGrid columns="2" cellpadding="5">
+                        <f:facet name="header">Board Details</f:facet>
+
+                        <h:outputLabel for="#{connector.getUUID()}UUID" value="UUID"/>
+                        <h:outputText id="#{connector.getUUID()}UUID" value="#{connector.getUUID()}" />
+
+                        <h:outputLabel for="#{connector.getUUID()}Device" value="Device"/>
+                        <h:outputText id="#{connector.getUUID()}Device" value="#{connector.device()}" />
+
+                        <h:outputLabel for="#{connector.getUUID()}Status" value="Status"/>
+                        <h:outputText id="#{connector.getUUID()}Status" value="#{connector.getStatus()}" />
+                    </p:panelGrid>
+                </p:tab>
+            </p:tabView>
+        </p:tab>
+    </p:tabView>
+
+</h:body>
+</html>

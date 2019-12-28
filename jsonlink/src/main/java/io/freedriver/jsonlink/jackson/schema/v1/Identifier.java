@@ -42,6 +42,10 @@ public class Identifier {
         return Objects.hash(pin);
     }
 
+    /*
+     * Convenience methods
+     */
+
     public DigitalWrite setDigital(boolean b) {
         return new DigitalWrite(this, b);
     }
@@ -53,5 +57,4 @@ public class Identifier {
     public ModeSet setMode(Mode mode) {
         return new ModeSet(this, mode);
     }
-
 }

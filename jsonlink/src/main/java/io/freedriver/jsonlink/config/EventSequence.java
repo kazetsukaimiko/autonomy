@@ -1,17 +1,15 @@
-package io.freedriver.autonomy.config;
+package io.freedriver.jsonlink.config;
 
-
-import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
 
 public class EventSequence {
-    private JoystickEvent start;
-    private JoystickEvent end;
+//    private JoystickEvent start;
+//    private JoystickEvent end;
     private EventDuration duration;
     private String group;
 
     public EventSequence() {
     }
-
+/*
     public EventSequence(JoystickEvent start, JoystickEvent end, EventDuration duration, String group) {
         this.start = start;
         this.end = end;
@@ -50,4 +48,6 @@ public class EventSequence {
     public void setGroup(String group) {
         this.group = group;
     }
+
+ */
 }

@@ -14,6 +14,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
@@ -27,15 +28,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @ApplicationScoped
-public class EventInitializationService {
+public class EventInitializationService extends BaseService {
 
     private static final Logger LOGGER = Logger.getLogger(EventInitializationService.class.getName());
 
     private static final Map<VEDirectDevice, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
 
-    // TODO: Use ByUUID.Literal. Static injection like this defeats the purpose.
-    @Inject @ByUUID("0f2829e1-1804-4993-ae33-c5dd21840646")
-    private Connector connector;
+    @Inject
+    private VEDirectDeviceService deviceService;
 
     @Inject
     private Event<JoystickEvent> joystickEvents;
@@ -57,14 +57,15 @@ public class EventInitializationService {
         LOGGER.info("Initializing VEDirectMonitor.");
         while (true) {
             try {
-                VEDirectDevice.allVEDirectDevices()
+                deviceService.allDevices()
                         .filter(this::veDeviceInactive)
                         .forEach(this::initVEDirectDevice);
                 break;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Couldn't iterate over VEDirectDevices:", e);
                 wait(Duration.of(5, ChronoUnit.SECONDS));
             }
+
         }
         LOGGER.info("VEDirectMonitor initialized.");
         return true;
@@ -109,12 +110,8 @@ public class EventInitializationService {
         }
     }
 
-    private void wait(Duration duration) {
-        LOGGER.info("Waiting " + duration.toMillis() +"ms");
-        try {
-            Thread.sleep(duration.toMillis());
-        } catch (InterruptedException e) {
-            LOGGER.log(Level.SEVERE, "Failed wait: ", e);
-        }
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
 }

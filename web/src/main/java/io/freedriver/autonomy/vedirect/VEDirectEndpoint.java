@@ -6,6 +6,7 @@ import kaze.victron.VictronProduct;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -37,6 +38,11 @@ public class VEDirectEndpoint implements VEDirectEndpointApi {
         return bySerial(serial)
                 .flatMap(product -> messageService.last(product, Duration.of(number, chronoUnit)))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BigDecimal> getFieldData(String serial, Integer number, ChronoUnit chronoUnit, String field) {
+        return null;
     }
 
     private Stream<VictronProduct> bySerial(String serial) {

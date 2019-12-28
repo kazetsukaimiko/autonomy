@@ -48,9 +48,15 @@ public interface Connector extends AutoCloseable {
         Connectors.getCallback().accept(line);
     }
 
+    default String getStatus() {
+        return isClosed() ? "Closed" : "Opened";
+    }
+
     String device();
     Optional<Response> sendJSONRequest(String json) throws ConnectorException;
     //Optional<Response> fetchResponse() throws ConnectorException;
     boolean isClosed();
+
+
 
 }

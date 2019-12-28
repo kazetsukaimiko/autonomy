@@ -8,6 +8,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
@@ -25,6 +26,8 @@ public interface VEDirectEndpointApi {
     String NUMBER = "number";
     String UNITS = "units";
     String MESSAGE_TIME_PATH = PRODUCT_SERIAL_PATH + "/last/{"+NUMBER+"}/{"+UNITS+"}";
+    String FIELD = "field";
+    String FIELD_DATA_PATH = MESSAGE_TIME_PATH + "/{"+FIELD+"}";
 
     @GET
     @Path(PRODUCT_PATH)
@@ -37,4 +40,8 @@ public interface VEDirectEndpointApi {
     @GET
     @Path(MESSAGE_TIME_PATH)
     List<VEDirectMessage> getProductsFrom(@PathParam(PRODUCT_SERIAL) String serial, @PathParam(NUMBER) Integer number, @PathParam(UNITS) ChronoUnit chronoUnit);
+
+    @GET
+    @Path(FIELD_DATA_PATH)
+    List<BigDecimal> getFieldData(@PathParam(PRODUCT_SERIAL) String serial, @PathParam(NUMBER) Integer number, @PathParam(UNITS) ChronoUnit chronoUnit, @PathParam(FIELD) String field);
 }

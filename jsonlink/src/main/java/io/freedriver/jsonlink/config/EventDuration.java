@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.config;
+package io.freedriver.jsonlink.config;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;

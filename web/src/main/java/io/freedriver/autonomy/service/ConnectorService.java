@@ -1,24 +1,21 @@
 package io.freedriver.autonomy.service;
 
-import io.freedriver.autonomy.async.JoystickEventActor;
-import io.freedriver.autonomy.config.Configuration;
-import io.freedriver.autonomy.config.PinGroup;
 import io.freedriver.jsonlink.Connector;
-import io.freedriver.jsonlink.ConnectorException;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
+import io.freedriver.jsonlink.Connectors;
+import io.freedriver.jsonlink.config.ConnectorConfig;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -26,22 +23,26 @@ import java.util.stream.Collectors;
 public class ConnectorService {
     private static final Logger LOGGER = Logger.getLogger(ConnectorService.class.getName());
 
-    @Inject
-    private Configuration configuration;
-
-    @Inject @Any
-    private Instance<Connector> connectors;
-
-    private Connector connector;
-
-    private Connector getConnector() { // TODO : Multiple board support here via parameter.
-        if (connector == null || connector.isClosed()) {
-            connector = connectors.get();
-        }
-        return connector;
+    public Set<Connector> getAllConnectors() {
+        return Connectors.allConnectors()
+                .collect(Collectors.toSet());
     }
 
-    public List<PinGroup> getGroups() {
+
+
+
+    // hallway, bathroom
+    public Optional<Response> cyclePinGroup(String groupName) {
+        return Optional.empty();
+    }
+
+    public Optional<Response> readPinGroup(String groupName) {
+        return Optional.empty();
+    }
+
+
+    /*
+    public List<Permutation> getGroups() {
         return configuration.getGroups();
     }
 
@@ -53,7 +54,7 @@ public class ConnectorService {
                 .flatMap(this::sendRequest);
     }
 
-    public Optional<PinGroup> pinGroupByName(String groupName) {
+    public Optional<Permutation> pinGroupByName(String groupName) {
         return configuration.getGroups()
                 .stream()
                 // TODO: Get the group from the configuration looked up by controller.button name
@@ -65,7 +66,7 @@ public class ConnectorService {
         return pinGroupByName(groupName).flatMap(this::readPinGroup);
     }
 
-    public Optional<Response> readPinGroup(PinGroup pinGroup) {
+    public Optional<Response> readPinGroup(Permutation pinGroup) {
         Request request = new Request();
         request.digitalRead(pinGroup.getPermutations()
                 .stream()
@@ -73,7 +74,7 @@ public class ConnectorService {
                 .flatMap(Set::stream)
                 .distinct()
                 .flatMap(alias -> configuration
-                                .getAliases()
+                                .getPins()
                                 .entrySet()
                                 .stream()
                                 .filter(entry -> Objects.equals(alias, entry.getValue()))
@@ -97,7 +98,7 @@ public class ConnectorService {
         return Optional.of(connector.send(requestSupplier.get()));
     }
 
-    private Request nextPermutation(PinGroup pinGroup, Map<Identifier, Boolean> state) {
+    private Request nextPermutation(Permutation pinGroup, Map<Identifier, Boolean> state) {
         int i;
         for(i=0; i<pinGroup.getPermutations().size(); i++) {
             if (!comparePermutation(pinGroup.getPermutations().get(i), state)) {
@@ -130,12 +131,12 @@ public class ConnectorService {
     }
 
     private Optional<String> getAlias(int pinValue) {
-        return Optional.ofNullable(configuration.getAliases().getOrDefault(pinValue, null));
+        return Optional.ofNullable(configuration.getPins().getOrDefault(pinValue, null));
     }
 
 
     private Identifier ofAlias(String alias) {
-        return configuration.getAliases().entrySet()
+        return configuration.getPins().entrySet()
                 .stream()
                 .filter(e -> Objects.equals(alias, e.getValue()))
                 .map(Map.Entry::getKey)
@@ -144,5 +145,5 @@ public class ConnectorService {
                 .orElse(null);
     }
 
-
+*/
 }

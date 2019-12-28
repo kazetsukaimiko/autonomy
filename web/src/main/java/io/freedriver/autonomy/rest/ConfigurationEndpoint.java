@@ -1,8 +1,6 @@
 package io.freedriver.autonomy.rest;
 
-import io.freedriver.autonomy.config.Configuration;
-import io.freedriver.autonomy.service.ConnectorService;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import io.freedriver.jsonlink.config.ConnectorConfig;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -17,11 +15,10 @@ import javax.ws.rs.core.MediaType;
 public class ConfigurationEndpoint {
 
     @Inject
-    private Configuration configuration;
-
+    private ConnectorConfig configuration;
 
     @GET
-    public Configuration getConfiguration() {
+    public ConnectorConfig getConfiguration() {
         return configuration;
     }
 

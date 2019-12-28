@@ -17,6 +17,7 @@
 
     <junit.jupiter.version>5.5.2</junit.jupiter.version>
     <kaze.victron.version>0.4.7</kaze.victron.version>
+    <primefaces.version>7.0</primefaces.version>
   </properties>
 
   <dependencyManagement>
