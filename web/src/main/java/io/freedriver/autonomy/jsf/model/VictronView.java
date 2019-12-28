@@ -27,9 +27,9 @@ public class VictronView {
     private VEDirectMessageService messageService;
 
     public List<VictronProduct> getProducts() {
-        return deviceService.allDevices()
-                .map(VEDirectDevice::attemptToGetProduct)
-                .flatMap(Optional::stream)
+        return messageService.products()
+                .stream()
+                .sorted(Comparator.comparing(VictronProduct::getSerialNumber))
                 .collect(Collectors.toList());
     }
 
