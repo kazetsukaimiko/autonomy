@@ -11,7 +11,7 @@ public class ObjectMapperContextResolver implements ContextResolver<ObjectMapper
 
     private final ObjectMapper mapper;
 
-    public ObjectMapperContextResolver(ObjectMapper mapper) {
+    public ObjectMapperContextResolver() {
         this.mapper = new ObjectMapper()
             .registerModule(new NitriteIdModule());
     }
