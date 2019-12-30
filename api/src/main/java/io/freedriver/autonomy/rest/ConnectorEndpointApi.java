@@ -4,7 +4,6 @@ import io.freedriver.autonomy.entity.jsonlink.BoardNameEntity;
 import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
 import io.freedriver.autonomy.entity.jsonlink.PinGroupEntity;
 import io.freedriver.autonomy.entity.jsonlink.PinNameEntity;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import org.dizitart.no2.NitriteId;
 
 import javax.ws.rs.Consumes;
@@ -12,10 +11,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Path(ConnectorEndpointApi.ROOT)
@@ -33,14 +30,6 @@ public interface ConnectorEndpointApi {
     String GROUP_ID_PATH = PIN_GROUP_PATH + "/id/{"+GROUP_ID+"}";
     String GROUP_NEXT_PATH = GROUP_ID_PATH + "/next";
 
-
-    /*
-    Matching methods: [
-    public abstract java.util.List io.freedriver.autonomy.rest.ConnectorEndpointApi.pinGroupsByBoardId(java.util.UUID),
-    public abstract java.util.List io.freedriver.autonomy.rest.ConnectorEndpointApi.permutationsByBoardId(java.util.UUID),
-    public abstract java.util.List io.freedriver.autonomy.rest.ConnectorEndpointApi.allBoardNames(),
-    public abstract java.util.List io.freedriver.autonomy.rest.ConnectorEndpointApi.pinNamesByBoardId(java.util.UUID)
-    */
     @GET
     List<BoardNameEntity> allBoardNames();
 
