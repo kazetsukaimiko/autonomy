@@ -18,6 +18,7 @@ import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.Connectors;
 import io.freedriver.jsonlink.config.Mappings;
 import io.freedriver.jsonlink.config.PinName;
+import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
@@ -46,7 +47,9 @@ public class ConnectorService {
     private static final Logger LOGGER = Logger.getLogger(ConnectorService.class.getName());
     private static final Set<Connector> ACTIVE_CONNECTORS = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .registerModule(new JsonLinkModule())
+            .enable(SerializationFeature.INDENT_OUTPUT);
 
 
     @Inject

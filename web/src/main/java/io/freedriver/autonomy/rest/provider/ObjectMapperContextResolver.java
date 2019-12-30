@@ -1,6 +1,7 @@
 package io.freedriver.autonomy.rest.provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import org.dizitart.no2.mapper.NitriteIdModule;
 
 import javax.ws.rs.ext.ContextResolver;
@@ -13,6 +14,7 @@ public class ObjectMapperContextResolver implements ContextResolver<ObjectMapper
 
     public ObjectMapperContextResolver() {
         this.mapper = new ObjectMapper()
+            .registerModule(new JsonLinkModule())
             .registerModule(new NitriteIdModule());
     }
 
