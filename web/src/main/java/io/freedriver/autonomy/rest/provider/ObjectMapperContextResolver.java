@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.cdi.provider;
+package io.freedriver.autonomy.rest.provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dizitart.no2.mapper.NitriteIdModule;

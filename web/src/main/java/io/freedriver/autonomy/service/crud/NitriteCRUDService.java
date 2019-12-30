@@ -50,6 +50,7 @@ public abstract class NitriteCRUDService<T extends EntityBase<T>> {
         return find(filter, sort());
     }
 
+    @SuppressWarnings("unchecked") // Asinine api method
     public Stream<T> getAllById(NitriteId... nitriteIds) {
         return find(ObjectFilters.in("nitriteId", nitriteIds));
     }
