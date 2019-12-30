@@ -1,41 +1,61 @@
 package io.freedriver.jsonlink.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ConnectorConfig {
-    private Set<PinName> pins = new HashSet<>();
-    private Map<String, Map<String, Boolean>> groups = new HashMap<>();
+    private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/jsonlink");
+    private static final Path CONFIG_FILE_PATH = Paths.get(CONFIG_PATH.toAbsolutePath().toString(), "connectors.json");
+    private static final Logger LOGGER = Logger.getLogger(ConnectorConfig.class.getName());
+    private static final ObjectMapper MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+    private List<String> ignoreDevices = new ArrayList<>();
 
     public ConnectorConfig() {
     }
 
-    public Set<PinName> getPins() {
-        return pins;
+    public List<String> getIgnoreDevices() {
+        return ignoreDevices != null ?
+                ignoreDevices : new ArrayList<>();
     }
 
-    public void setPins(Set<PinName> pins) {
-        this.pins = pins;
+    public void setIgnoreDevices(List<String> ignoreDevices) {
+        this.ignoreDevices = ignoreDevices != null ?
+            ignoreDevices : new ArrayList<>();
     }
 
-    public Map<String, Map<String, Boolean>> getGroups() {
-        return groups;
+    public static ConnectorConfig load() {
+        try {
+            return loadOrCreate();
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Couldn't load connector.config, defaulting to new ", e);
+            return new ConnectorConfig();
+        }
     }
 
-    public void setGroups(Map<String, Map<String, Boolean>> groups) {
-        this.groups = groups;
+    private static ConnectorConfig loadOrCreate() throws IOException {
+        if (!Files.isDirectory(CONFIG_PATH)) {
+            Files.createDirectories(CONFIG_PATH);
+            return loadOrCreate();
+        } else {
+            if (Files.isRegularFile(CONFIG_FILE_PATH)) {
+                return MAPPER.readValue(CONFIG_FILE_PATH.toFile(), ConnectorConfig.class);
+            } else {
+                MAPPER.writeValue(CONFIG_FILE_PATH.toFile(), new ConnectorConfig());
+                return loadOrCreate();
+            }
+        }
     }
 
-    @JsonIgnore
-    public Stream<Identifier> getIdentifiers() {
-        return pins.stream()
-                .map(PinName::getPinNumber);
+    public boolean doNotIgnore(String s) {
+        return !getIgnoreDevices().contains(s);
     }
 }

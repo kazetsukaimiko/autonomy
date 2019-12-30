@@ -1,5 +1,7 @@
 package io.freedriver.autonomy.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.freedriver.autonomy.cdi.provider.ConfigurationProvider;
 import io.freedriver.autonomy.entity.EntityBase;
 import io.freedriver.autonomy.entity.jsonlink.BoardNameEntity;
@@ -14,8 +16,6 @@ import io.freedriver.autonomy.service.crud.PinGroupService;
 import io.freedriver.autonomy.service.crud.PinNameService;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.Connectors;
-import io.freedriver.jsonlink.config.ConnectorConfig;
-import io.freedriver.jsonlink.config.ConnectorConfigs;
 import io.freedriver.jsonlink.config.Mappings;
 import io.freedriver.jsonlink.config.PinName;
 import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
@@ -24,15 +24,12 @@ import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import org.dizitart.no2.NitriteId;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -48,6 +45,9 @@ import static io.freedriver.jsonlink.jackson.schema.v1.Mode.OUTPUT;
 public class ConnectorService {
     private static final Logger LOGGER = Logger.getLogger(ConnectorService.class.getName());
     private static final Set<Connector> ACTIVE_CONNECTORS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+
 
     @Inject
     private BoardNameService boardNameService;
@@ -171,10 +171,8 @@ public class ConnectorService {
     }
 
     public void generateFromMappings() throws IOException {
-        Path mappingsFile = ConfigurationProvider.inConfigDirectory("mappings.json");
-        Mappings mappings = ConfigurationProvider.OBJECT_MAPPER.readValue(mappingsFile.toFile(), Mappings.class);
-
-        ConnectorConfigs configurations = new ConnectorConfigs();
+        Path mappingsFile = inConfigDirectory("mappings.json");
+        Mappings mappings = OBJECT_MAPPER.readValue(mappingsFile.toFile(), Mappings.class);
 
         Stream.of(boardNameService, pinNameService, groupService, permutationService)
                 .forEach(NitriteCRUDService::deleteAll);
@@ -208,6 +206,12 @@ public class ConnectorService {
 
         });
     }
+
+
+    public static Path inConfigDirectory(String name) {
+        return Paths.get(CONFIG_PATH.toAbsolutePath().toString(), name);
+    }
+
 
     public Stream<PermutationEntity> permutationsOf(PinGroupEntity pinGroupEntity) {
         PermutationEntity allOn = new PermutationEntity();

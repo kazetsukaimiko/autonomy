@@ -1,5 +1,6 @@
 package io.freedriver.jsonlink;
 
+import io.freedriver.jsonlink.config.ConnectorConfig;
 import jssc.SerialPort;
 import jssc.SerialPortList;
 
@@ -66,6 +67,7 @@ public final class Connectors {
 
     public static Stream<Connector> allConnectors() {
         return Stream.of(SerialPortList.getPortNames())
+                .filter(getConfig()::doNotIgnore)
                 .map(Connectors::findOrOpen)
                 .flatMap(Optional::stream);
     }
@@ -84,5 +86,9 @@ public final class Connectors {
 
     public static void setCallback(Consumer<String> callback) {
         Connectors.callback = callback;
+    }
+
+    private static ConnectorConfig getConfig() {
+        return ConnectorConfig.load();
     }
 }
