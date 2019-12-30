@@ -22,7 +22,7 @@ import java.util.Objects;
         @Index(value="type", type= IndexType.NonUnique)
 })
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property="@extension")
-public class Event {
+public abstract class Event {
 
     @Id
     private NitriteId id;

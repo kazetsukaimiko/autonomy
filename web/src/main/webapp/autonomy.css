@@ -1,0 +1,56 @@
+
+#target {
+    width: 700px;
+    height: 500px;
+    position:relative;
+}
+
+.animbg {
+
+}
+
+.background {
+    transition: opacity 2s ease-in-out;
+    display: block;
+    opacity: 0%;
+    position:absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    z-index:-100;
+}
+
+.background.toggle {
+    opacity: 100%;
+}
+
+.bluesky {
+    background: rgb(255,157,82);
+    background: linear-gradient(0deg, rgba(255,157,82,1) -10%, rgba(255,219,151,1) -10%, rgba(252,252,255,1) 7%, rgba(123,173,241,1) 99%);
+}
+
+.sunset {
+    background: rgb(255,157,82);
+    background: linear-gradient(0deg, rgba(255,157,82,1) 16%, rgba(255,219,151,1) 89%, rgba(252,252,255,1) 105%, rgba(123,173,241,1) 110%);
+}
+
+.yugure {
+    background: rgb(255,157,82);
+    background: linear-gradient(0deg, rgba(255,157,82,1) 0%, rgba(255,219,151,1) 20%, rgba(210,152,200,1) 40%, rgba(101,82,152,1) 78%, rgba(35,31,56,1) 100%);
+}
+
+.yugured {
+    background: rgb(255,157,82);
+    background: linear-gradient(0deg, rgba(255,157,82,1) 0%, rgba(255,219,151,1) 10%, rgba(210,152,200,1) 20%, rgba(101,82,152,1) 40%, rgba(35,31,56,1) 100%);
+}
+
+.yuguredd {
+    background: rgb(255,157,82);
+    background: linear-gradient(0deg, rgba(255,157,82,1) 0%, rgba(255,219,151,1) 5%, rgba(210,152,200,1) 10%, rgba(101,82,152,1) 15%, rgba(35,31,56,1) 75%);
+}
+
+.yoru {
+    background: rgb(255,157,82);
+    background: linear-gradient(0deg, rgba(255,157,82,1) 0%, rgba(255,219,151,1) 5%, rgba(210,152,200,1) 10%, rgba(101,82,152,1) 15%, rgba(0,0,0,1) 20%);
+}

@@ -43,6 +43,7 @@ public final class Connectors {
     }
 
     private static synchronized Optional<Connector> findOrOpen(String device) {
+
         Optional<Connector> found = findByDeviceId(device);
         if (found.isPresent()) {
             Connector inQuestion = found.get();
@@ -56,7 +57,7 @@ public final class Connectors {
             return Optional.of(createConnector(device).get(2500, TimeUnit.MILLISECONDS));
         } catch (InterruptedException | ExecutionException e) {
             //throw new ConnectorException("Couldn't create connector " + device, e);
-            LOGGER.log(Level.SEVERE, "Timed out building connector " + device, e);
+            LOGGER.log(Level.SEVERE, "Failed building connector " + device, e);
         } catch (TimeoutException e) {
             LOGGER.log(Level.WARNING, "Timed out building connector " + device, e);
         }

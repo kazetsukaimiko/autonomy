@@ -1,5 +1,7 @@
 package io.freedriver.autonomy.jsf.model;
 
+import io.freedriver.autonomy.entity.jsonlink.BoardNameEntity;
+import io.freedriver.autonomy.iface.Positional;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.jsonlink.Connector;
 
@@ -17,10 +19,10 @@ public class ConnectorView {
     @Inject
     private ConnectorService connectors;
 
-    public List<Connector> getConnectors() {
-        return connectors.getAllConnectors()
+    public List<BoardNameEntity> getConnectors() {
+        return connectors.allBoardNames()
                 .stream()
-                .sorted(Comparator.comparing(c -> c.getUUID().toString()))
+                .sorted(Positional.EXPLICIT_ORDER)
                 .collect(Collectors.toList());
     }
 }

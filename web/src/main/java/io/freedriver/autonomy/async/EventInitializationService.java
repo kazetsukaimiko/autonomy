@@ -1,10 +1,9 @@
 package io.freedriver.autonomy.async;
 
-import io.freedriver.autonomy.cdi.qualifier.ByUUID;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.entity.event.input.joystick.jstest.AllJoysticks;
 import io.freedriver.autonomy.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.jsonlink.Connector;
+import io.freedriver.autonomy.service.ConnectorService;
 import kaze.victron.VEDirectDevice;
 import kaze.victron.VEDirectMessage;
 
@@ -14,7 +13,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
@@ -35,6 +33,9 @@ public class EventInitializationService extends BaseService {
     private static final Map<VEDirectDevice, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
 
     @Inject
+    private ConnectorService connectorService;
+
+    @Inject
     private VEDirectDeviceService deviceService;
 
     @Inject
@@ -49,6 +50,11 @@ public class EventInitializationService extends BaseService {
     private AllJoysticks allJoysticks;
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
+        try {
+            connectorService.generateFromMappings();
+        } catch (IOException e) {
+            LOGGER.log(Level.INFO, "Trouble generating configuration", e);
+        }
         initJoystickMonitor();
         initVEDirectMonitor();
     }

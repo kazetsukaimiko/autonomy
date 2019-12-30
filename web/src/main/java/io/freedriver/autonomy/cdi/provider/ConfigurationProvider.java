@@ -22,7 +22,7 @@ import java.util.Set;
 @ApplicationScoped
 public class ConfigurationProvider {
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
     @Produces @Default
     public ConnectorConfig getConfiguration() throws IOException {

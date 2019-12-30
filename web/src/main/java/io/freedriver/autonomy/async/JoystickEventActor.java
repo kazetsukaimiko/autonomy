@@ -1,5 +1,6 @@
 package io.freedriver.autonomy.async;
 
+import io.freedriver.autonomy.service.crud.PinGroupService;
 import io.freedriver.jsonlink.config.ConnectorConfig;
 import io.freedriver.autonomy.entity.event.EventType;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
@@ -32,6 +33,9 @@ public class JoystickEventActor {
     private Instance<Connector> connectors;
 
     @Inject
+    private PinGroupService groupService;
+
+    @Inject
     private ConnectorService connectorService;
 
     @Resource
@@ -43,8 +47,11 @@ public class JoystickEventActor {
             String target = joystickEvent.getNumber().equals(11L) ?
                     "hallway" : "bathroom";
             try {
-                connectorService.cyclePinGroup(target);
-            } catch (ConnectorException e) {
+                groupService.getByName(target)
+                        .ifPresentOrElse(
+                                connectorService::cyclePinGroup,
+                                () -> { throw new IllegalArgumentException("Invalid pin group name: " + target); });
+            } catch (ConnectorException | IllegalArgumentException e) {
                 LOGGER.log(Level.WARNING, e, () -> "Couldn't act on Joystick Event.");
             }
         }
