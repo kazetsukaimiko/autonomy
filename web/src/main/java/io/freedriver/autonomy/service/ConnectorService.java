@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -258,4 +259,11 @@ public class ConnectorService {
                 .findFirst();
     }
 
+    public String describeBoards() {
+        return getAllConnectors().stream()
+                .map(Connector::getUUID)
+                .sorted(Comparator.comparing(UUID::toString))
+                .map(UUID::toString)
+                .collect(Collectors.joining(","));
+    }
 }

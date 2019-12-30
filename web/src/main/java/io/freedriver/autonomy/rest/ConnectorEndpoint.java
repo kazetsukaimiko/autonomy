@@ -41,7 +41,8 @@ public class ConnectorEndpoint implements ConnectorEndpointApi {
     @Override
     public BoardNameEntity boardById(UUID boardId) {
         return connectorService.getBoardById(boardId)
-                .orElseThrow(() -> new WebApplicationException("Board Id " + boardId.toString() + " not found.", 404));
+                .orElseThrow(() -> new WebApplicationException(
+                        "Board Id " + boardId.toString() + " not found. Available Boards: " + connectorService.describeBoards(), 404));
     }
 
     @Override
