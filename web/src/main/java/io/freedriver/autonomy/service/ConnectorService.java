@@ -245,4 +245,10 @@ public class ConnectorService {
         pinNameEntity.setPosition(pinNameService.findByBoardId(boardId).count());
         return pinNameEntity;
     }
+
+    public Optional<BoardNameEntity> getBoardById(UUID boardId) {
+        return boardNameService.findByBoardId(boardId)
+                .findFirst();
+    }
+
 }

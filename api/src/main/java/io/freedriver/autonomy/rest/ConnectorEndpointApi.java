@@ -33,17 +33,20 @@ public interface ConnectorEndpointApi {
     String GROUP_ID_PATH = PIN_GROUP_PATH + "/id/{"+GROUP_ID+"}";
     String GROUP_NEXT_PATH = GROUP_ID_PATH + "/next";
 
+
+    /*
+    Matching methods: [
+    public abstract java.util.List io.freedriver.autonomy.rest.ConnectorEndpointApi.pinGroupsByBoardId(java.util.UUID),
+    public abstract java.util.List io.freedriver.autonomy.rest.ConnectorEndpointApi.permutationsByBoardId(java.util.UUID),
+    public abstract java.util.List io.freedriver.autonomy.rest.ConnectorEndpointApi.allBoardNames(),
+    public abstract java.util.List io.freedriver.autonomy.rest.ConnectorEndpointApi.pinNamesByBoardId(java.util.UUID)
+    */
     @GET
     List<BoardNameEntity> allBoardNames();
 
     @GET
     @Path(BOARD_ID_PATH)
-    default BoardNameEntity boardById(@PathParam(BOARD_ID) UUID boardId) {
-        return allBoardNames().stream()
-                .filter(boardNameEntity -> Objects.equals(boardId, boardNameEntity.getBoardId()))
-                .findFirst()
-                .orElseThrow(() -> new WebApplicationException("Invalid Board Id" + boardId.toString(), 404));
-    }
+    BoardNameEntity boardById(@PathParam(BOARD_ID) UUID boardId);
 
     @GET
     @PathParam(PIN_GROUP_PATH)
@@ -56,7 +59,6 @@ public interface ConnectorEndpointApi {
     @GET
     @PathParam(PERMUTATION_PATH)
     List<PermutationEntity> permutationsByBoardId(@PathParam(BOARD_ID) UUID boardId);
-
 
     @GET
     @Path(GROUP_ID_PATH)
