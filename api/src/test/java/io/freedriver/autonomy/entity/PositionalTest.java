@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -14,6 +15,8 @@ import java.util.stream.LongStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PositionalTest {
+
+    static final Consumer<Object> CONSUMER = (x) -> {};
 
     @Test
     public void testMove() {
@@ -36,14 +39,6 @@ public class PositionalTest {
         assertNull(Positional.reorder(null));
     }
 
-
-
-
-
-
-
-
-
     private static <T extends Positional> void testPosition(List<T> a) {
         if (a != null && !a.isEmpty()) {
             LongStream.range(0, a.size()-1)
@@ -52,7 +47,7 @@ public class PositionalTest {
     }
 
     private static void testMoveSpecific(List<PatronsInLine> a, int fromIndex, int toIndex) {
-        System.out.println("Index "+Math.min(fromIndex, a.size()-1)+" -> " + toIndex);
+        CONSUMER.accept("Index "+Math.min(fromIndex, a.size()-1)+" -> " + toIndex);
         List<PatronsInLine> b = Positional.move(a, fromIndex, toIndex);
         compareLists(a, b);
         testPosition(b);
@@ -67,7 +62,7 @@ public class PositionalTest {
                         + " (" + a.get(idx).getPosition() + ")"
                         + " : " + b.get(idx).getUuid().toString()
                         + " (" + b.get(idx).getPosition() + ")")
-                .forEach(System.out::println);
+                .forEach(CONSUMER);
     }
 
     private final class PatronsInLine implements Positional {
