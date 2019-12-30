@@ -3,6 +3,9 @@ package io.freedriver.autonomy.service.crud;
 import io.freedriver.autonomy.entity.jsonlink.BoardNameEntity;
 import io.freedriver.jsonlink.Connector;
 
+import javax.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
 public class BoardNameService extends JsonLinkCRUDService<BoardNameEntity> {
     @Override
     Class<BoardNameEntity> getKlazz() {
