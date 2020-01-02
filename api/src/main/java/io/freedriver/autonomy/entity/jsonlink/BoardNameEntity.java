@@ -2,7 +2,7 @@ package io.freedriver.autonomy.entity.jsonlink;
 
 import java.util.Objects;
 
-public class BoardNameEntity extends JsonLinkEntity<BoardNameEntity> {
+public class BoardNameEntity extends JsonLinkEntity {
     private String name;
 
     public BoardNameEntity() {

@@ -97,7 +97,7 @@ public class EventInitializationService extends BaseService {
     public void initJoystickMonitor() {
         LOGGER.info("Initializing JoystickMonitor.");
         allJoysticks = new AllJoysticks(pool, this::fireJSTestEvent);
-        pool.submit(() -> allJoysticks.populate());
+        pool.submit(() -> allJoysticks.poll());
     }
 
     public void fireJSTestEvent(JSTestEvent jsTestEvent) {

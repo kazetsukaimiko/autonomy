@@ -5,7 +5,7 @@ import io.freedriver.autonomy.entity.EntityBase;
 import java.util.Objects;
 import java.util.UUID;
 
-public abstract class JsonLinkEntity<E extends JsonLinkEntity<E>> extends EntityBase<E> {
+public abstract class JsonLinkEntity extends EntityBase {
     private UUID boardId;
 
     public JsonLinkEntity() {
@@ -23,7 +23,7 @@ public abstract class JsonLinkEntity<E extends JsonLinkEntity<E>> extends Entity
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        JsonLinkEntity<?> that = (JsonLinkEntity<?>) o;
+        JsonLinkEntity that = (JsonLinkEntity) o;
         return Objects.equals(boardId, that.boardId);
     }
 

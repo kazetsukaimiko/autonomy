@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class PinGroupEntity extends JsonLinkEntity<PinGroupEntity> {
+public class PinGroupEntity extends JsonLinkEntity {
     private String name;
     private List<NitriteId> pinIds = new ArrayList<>();
 
@@ -72,7 +72,7 @@ public class PinGroupEntity extends JsonLinkEntity<PinGroupEntity> {
         Map<NitriteId, Boolean> modeMap = response.getDigital().entrySet().stream()
                 .filter(e -> pins.containsKey(e.getKey()))
                 .collect(Collectors.toMap(
-                        e -> pins.get(e.getKey()).getNitriteId(),
+                        e -> pins.get(e.getKey()).getId(),
                         Map.Entry::getValue,
                         (a, b) -> b));
         return modeMap.entrySet().stream()
@@ -82,13 +82,13 @@ public class PinGroupEntity extends JsonLinkEntity<PinGroupEntity> {
     public PermutationEntity apply(Connector connector, PermutationEntity nextPermutation, Supplier<Stream<PinNameEntity>> pinFetcher) {
         Map<NitriteId, PinNameEntity> pins = pinFetcher.get()
                 .collect(Collectors.toMap(
-                        PinNameEntity::getNitriteId,
+                        PinNameEntity::getId,
                         Function.identity(),
                         (a, b) -> b
                 ));
 
         connector.send(new Request().digitalWrite(pinIds.stream().map(pins::get).map(pinName -> new DigitalWrite(
-                pinName.getPinNumber(), nextPermutation.getActivePins().contains(pinName.getNitriteId())
+                pinName.getPinNumber(), nextPermutation.getActivePins().contains(pinName.getId())
         ))));
 
         return nextPermutation;

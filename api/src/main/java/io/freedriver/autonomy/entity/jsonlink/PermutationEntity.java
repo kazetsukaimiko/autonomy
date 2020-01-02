@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class PermutationEntity extends JsonLinkEntity<PermutationEntity>  {
+public class PermutationEntity extends JsonLinkEntity  {
     private NitriteId groupId;
     private List<NitriteId> activePins = new ArrayList<>();
     private List<NitriteId> inactivePins = new ArrayList<>();

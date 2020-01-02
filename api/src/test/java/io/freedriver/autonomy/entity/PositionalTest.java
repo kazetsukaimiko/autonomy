@@ -15,18 +15,31 @@ import java.util.stream.LongStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PositionalTest {
-
+    // Log
     static final Consumer<Object> CONSUMER = (x) -> {};
 
-    @Test
-    public void testMove() {
-        int max = 5;
+    Random random = new Random(System.currentTimeMillis());
+    int max = 5;
 
+    @Test
+    public void testNext() {
         List<PatronsInLine> a = LongStream.range(0, max)
                 .mapToObj(PatronsInLine::new)
                 .collect(Collectors.toList());
+        a.forEach(p -> System.out.println(p.getUuid().toString() + " ("+p.getPosition()+")"));
 
-        Random random = new Random(System.currentTimeMillis());
+        assertTrue(Positional.correctOrder(a));
+        IntStream.range(0, max-1)
+                .forEach(idx -> {
+                    assertEquals(idx < max ? a.get(idx+1) : a.get(0), Positional.next(a, a.get(idx)));
+                });
+    }
+
+    @Test
+    public void testMove() {
+        List<PatronsInLine> a = LongStream.range(0, max)
+                .mapToObj(PatronsInLine::new)
+                .collect(Collectors.toList());
 
         IntStream.range(0, 10000)
                 .forEach(i -> testMoveSpecific(a, random.nextInt(max), random.nextInt(max)));

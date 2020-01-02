@@ -2,7 +2,6 @@ package io.freedriver.autonomy.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.freedriver.autonomy.cdi.provider.ConfigurationProvider;
 import io.freedriver.autonomy.entity.EntityBase;
 import io.freedriver.autonomy.entity.jsonlink.BoardNameEntity;
 import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
@@ -22,7 +21,6 @@ import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
-import org.dizitart.no2.NitriteId;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -66,7 +64,7 @@ public class ConnectorService {
     private PermutationService permutationService;
 
     public Stream<PinNameEntity> pinNamesByPinGroup(PinGroupEntity pinGroup) {
-        return pinNameService.getAllById(pinGroup.getPinIds().toArray(NitriteId[]::new));
+        return pinNameService.findAllIds(pinGroup.getPinIds().stream());
     }
 
     public PermutationEntity initialState(PinGroupEntity pinGroupEntity) {
@@ -219,14 +217,14 @@ public class ConnectorService {
 
     public Stream<PermutationEntity> permutationsOf(PinGroupEntity pinGroupEntity) {
         PermutationEntity allOn = new PermutationEntity();
-        allOn.setGroupId(pinGroupEntity.getNitriteId());
+        allOn.setGroupId(pinGroupEntity.getId());
         allOn.setActivePins(pinGroupEntity.getPinIds());
         allOn.setInactivePins(Collections.emptyList());
         allOn.setInitialState(false);
         allOn.setPosition(0);
 
         PermutationEntity allOff = new PermutationEntity();
-        allOff.setGroupId(pinGroupEntity.getNitriteId());
+        allOff.setGroupId(pinGroupEntity.getId());
         allOff.setInactivePins(pinGroupEntity.getPinIds());
         allOff.setActivePins(Collections.emptyList());
         allOff.setInitialState(false);
@@ -240,7 +238,7 @@ public class ConnectorService {
         pinGroupEntity.setBoardId(boardId);
         pinGroupEntity.setPinIds(allPins.stream()
                         .filter(p -> p.getPinName().startsWith(groupName))
-                        .map(EntityBase::getNitriteId)
+                        .map(EntityBase::getId)
                         .collect(Collectors.toList()));
         pinGroupEntity.setPosition(groupService.findByBoardId(boardId).count());
         return pinGroupEntity;

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public interface Positional {
     Comparator<Positional> EXPLICIT_ORDER = Comparator.comparingLong(Positional::getPosition);
@@ -30,14 +30,14 @@ public interface Positional {
         if (inOrder == null || inOrder.isEmpty()) {
             return inOrder;
         }
-        IntStream.range(0, inOrder.size())
-                .forEach(idx -> inOrder.get(idx).setPosition(idx));
+        LongStream.range(0, inOrder.size())
+                .forEach(idx -> inOrder.get((int) idx).setPosition(idx));
         return inOrder;
     }
 
     static <T extends Positional> boolean correctOrder(List<T> inOrder) {
-        return IntStream.range(0, inOrder.size())
-                .allMatch(idx -> Objects.equals(idx, inOrder.get(idx).getPosition()));
+        return LongStream.range(0, inOrder.size())
+                .allMatch(idx -> Objects.equals(idx, inOrder.get((int) idx).getPosition()));
     }
 
     static <T extends Positional> T next(List<T> inOrder, T current) {

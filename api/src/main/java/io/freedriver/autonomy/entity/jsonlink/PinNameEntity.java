@@ -5,7 +5,7 @@ import io.freedriver.jsonlink.jackson.schema.v1.Mode;
 
 import java.util.Objects;
 
-public class PinNameEntity extends JsonLinkEntity<PinNameEntity> {
+public class PinNameEntity extends JsonLinkEntity {
     private Identifier pinNumber;
     private String pinName;
     private Mode pinMode;

@@ -2,6 +2,7 @@ package io.freedriver.autonomy.entity.event;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import io.freedriver.autonomy.entity.EntityBase;
 import org.dizitart.no2.IndexType;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.objects.Id;
@@ -21,12 +22,7 @@ import java.util.Objects;
         @Index(value="property", type= IndexType.NonUnique),
         @Index(value="type", type= IndexType.NonUnique)
 })
-@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property="@extension")
-public abstract class Event {
-
-    @Id
-    private NitriteId id;
-
+public abstract class Event extends EntityBase {
     private Instant timestamp;
 
     @JsonUnwrapped
@@ -42,14 +38,6 @@ public abstract class Event {
         this.timestamp = timestamp;
         this.coordinate = coordinate;
         this.description = description;
-    }
-
-    public NitriteId getId() {
-        return id;
-    }
-
-    public void setId(NitriteId id) {
-        this.id = id;
     }
 
     public Instant getTimestamp() {
