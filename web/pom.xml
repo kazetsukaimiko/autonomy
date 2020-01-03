@@ -114,24 +114,6 @@
       <artifactId>victron-java</artifactId>
     </dependency>
 
-    <!--
-    -->
-
-    <!-- Arduino -->
-    <!--
-    <dependency>
-      <groupId>org.ardulink</groupId>
-      <artifactId>ardulink-core-base</artifactId>
-      <version>2.1.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.ardulink</groupId>
-      <artifactId>ardulink-core-serial-jssc</artifactId>
-      <version>2.1.0</version>
-    </dependency>
-    -->
-
     <!-- Storage Engines -->
     <dependency>
         <groupId>org.hrorm</groupId>

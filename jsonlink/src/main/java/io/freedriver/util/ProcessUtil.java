@@ -7,10 +7,15 @@ import java.io.InputStreamReader;
 import java.util.stream.Stream;
 
 public class ProcessUtil {
+    private ProcessUtil() {
+        // Prevent construction
+    }
+
     public static Stream<String> linesInputStream(InputStream inputStream) {
         return new BufferedReader(new InputStreamReader(inputStream)).lines();
     }
 
+    /*
     public static String readFromInputStream(InputStream inputStream) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder builder = new StringBuilder();
@@ -21,4 +26,6 @@ public class ProcessUtil {
         }
         return builder.toString().trim();
     }
+
+     */
 }

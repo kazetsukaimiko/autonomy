@@ -6,6 +6,9 @@ import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Mode;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 
+/**
+ * Class designed to perform atomic pin operations.
+ */
 public abstract class Pin {
     private final Connector connector;
     private final Identifier identifier;
