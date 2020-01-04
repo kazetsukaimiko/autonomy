@@ -31,7 +31,8 @@ public final class Connectors {
     private static synchronized Optional<Connector> findByDeviceId(String device) {
         return connectors(connectors -> connectors
                 .filter(connector -> Objects.equals(device, connector.device())))
-                .findFirst();
+                .findFirst()
+                .map(ConcurrentConnector::new);
     }
 
     private static synchronized Future<Connector> createConnector(String device) {
@@ -39,7 +40,7 @@ public final class Connectors {
             SerialConnector serialConnector = new SerialConnector(new SerialPort(device));
             serialConnector.getUUID();
             ALL_CONNECTORS.add(serialConnector);
-            return serialConnector;
+            return new ConcurrentConnector(serialConnector);
         });
     }
 

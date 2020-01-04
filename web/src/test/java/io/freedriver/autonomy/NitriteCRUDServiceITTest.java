@@ -3,6 +3,8 @@ package io.freedriver.autonomy;
 import io.freedriver.autonomy.entity.EntityBase;
 import io.freedriver.autonomy.service.crud.NitriteCRUDService;
 import io.freedriver.ee.prop.DeploymentProperties;
+import io.freedriver.jsonlink.Connector;
+import io.freedriver.jsonlink.Connectors;
 import org.jboss.arquillian.container.test.api.BeforeDeployment;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +12,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -19,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class NitriteCRUDServiceITTest<T extends EntityBase, CRUD extends NitriteCRUDService<T>> extends BaseITTest {
     abstract CRUD getVictim();
-    abstract T generate(int i);
+    abstract T generate(UUID boardId, int i);
 
     @BeforeDeployment
     public void assignDeployment() {
@@ -32,9 +35,13 @@ public abstract class NitriteCRUDServiceITTest<T extends EntityBase, CRUD extend
     @Before
     public void init() {
 
+        UUID validBoard = Connectors.allConnectors()
+                .map(Connector::getUUID)
+                .findFirst()
+                .orElseGet(UUID::randomUUID);
 
         context = IntStream.range(0, 10)
-                .mapToObj(this::generate)
+                .mapToObj(i -> this.generate(validBoard, i))
                 .map(getVictim()::save)
                 .collect(Collectors.toList());
 

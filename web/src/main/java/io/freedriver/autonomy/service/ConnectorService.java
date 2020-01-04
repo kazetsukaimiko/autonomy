@@ -2,18 +2,17 @@ package io.freedriver.autonomy.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.freedriver.autonomy.entity.EntityBase;
-import io.freedriver.autonomy.entity.jsonlink.BoardNameEntity;
+import io.freedriver.autonomy.entity.jsonlink.BoardEntity;
+import io.freedriver.autonomy.entity.jsonlink.DigitalPin;
+import io.freedriver.autonomy.entity.jsonlink.GroupEntity;
 import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
-import io.freedriver.autonomy.entity.jsonlink.PinGroupEntity;
-import io.freedriver.autonomy.entity.jsonlink.PinNameEntity;
+import io.freedriver.autonomy.entity.jsonlink.PinEntity;
+import io.freedriver.autonomy.entity.jsonlink.VersionEntity;
+import io.freedriver.autonomy.entity.jsonlink.WorkspaceEntity;
 import io.freedriver.autonomy.iface.Positional;
-import io.freedriver.autonomy.service.crud.BoardNameService;
-import io.freedriver.autonomy.service.crud.NitriteCRUDService;
-import io.freedriver.autonomy.service.crud.PermutationService;
-import io.freedriver.autonomy.service.crud.PinGroupService;
-import io.freedriver.autonomy.service.crud.PinNameService;
+import io.freedriver.autonomy.service.crud.WorkspaceService;
 import io.freedriver.jsonlink.Connector;
+import io.freedriver.jsonlink.ConnectorException;
 import io.freedriver.jsonlink.Connectors;
 import io.freedriver.jsonlink.config.Mappings;
 import io.freedriver.jsonlink.config.PinName;
@@ -21,6 +20,7 @@ import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import org.dizitart.no2.NitriteId;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -39,8 +39,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.freedriver.jsonlink.jackson.schema.v1.Mode.OUTPUT;
-
+/**
+ * The service by which
+ */
 @ApplicationScoped
 public class ConnectorService {
     private static final Logger LOGGER = Logger.getLogger(ConnectorService.class.getName());
@@ -50,92 +51,96 @@ public class ConnectorService {
             .registerModule(new JsonLinkModule())
             .enable(SerializationFeature.INDENT_OUTPUT);
 
-
     @Inject
-    private BoardNameService boardNameService;
+    private WorkspaceService workspaceService;
 
-    @Inject
-    private PinNameService pinNameService;
+    private WorkspaceEntity workspace;
 
-    @Inject
-    private PinGroupService groupService;
-
-    @Inject
-    private PermutationService permutationService;
-
-    public Stream<PinNameEntity> pinNamesByPinGroup(PinGroupEntity pinGroup) {
-        return pinNameService.findAllIds(pinGroup.getPinIds().stream());
+    public WorkspaceEntity getWorkspace() {
+        if (workspace == null) {
+            workspaceService.findAll()
+                    .filter(WorkspaceEntity::isCurrent)
+                    .findFirst()
+                    .ifPresentOrElse(this::setWorkspace,
+                            () -> workspaceService.findAll()
+                                .max(Comparator.comparing(WorkspaceEntity::getVersion))
+                                .ifPresent(this::configure));
+        }
+        return workspace;
     }
 
-    public PermutationEntity initialState(PinGroupEntity pinGroupEntity) {
-        List<PermutationEntity> allPermutations = permutationService.byPinGroup(pinGroupEntity)
-                .sorted(Positional.EXPLICIT_ORDER)
-                .collect(Collectors.toList());
+    public void setWorkspace(WorkspaceEntity workspace) {
+        this.workspace = configure(workspace);
+    }
 
-        // Since we fetched with the correct order explicitly, we need to re-ensure these have an order.
-        if (!Positional.correctOrder(allPermutations)) {
-            allPermutations = permutationService.saveOrder(allPermutations)
-                    .collect(Collectors.toList());
-        }
+    public Optional<WorkspaceEntity> setWorkspace(NitriteId workspaceId) {
+        return workspaceService.findOne(workspaceId)
+                .map(this::configure);
+    }
 
-        return allPermutations.stream()
+    private WorkspaceEntity configure(WorkspaceEntity workspaceEntity) {
+        workspaceEntity.setId(workspaceService.save(workspaceEntity).getId());
+
+        getAllConnectors()
+                .forEach(connector -> configure(connector, workspaceEntity));
+        workspaceService.findAll()
+                .peek(workspaceEntity1 -> workspaceEntity1.setCurrent((Objects.equals(
+                        workspaceEntity.getId(), workspaceEntity1.getId()
+                ))))
+                .forEach(workspaceService::save);
+        this.workspace = workspaceEntity;
+        return workspaceEntity;
+    }
+
+    private void configure(Connector connector, WorkspaceEntity workspace) {
+        workspace.getBoards().stream()
+                .filter(boardEntity -> Objects.equals(connector.getUUID(), boardEntity.getBoardId()))
+                .findFirst()
+                .ifPresent(boardEntity -> setupBoard(connector, boardEntity));
+
+    }
+
+    private void setupBoard(Connector connector, BoardEntity boardEntity) {
+        // Setup pins
+        connector.send(boardEntity.getPins().stream()
+                .map(pinEntity -> new ModeSet(pinEntity.getPin(), pinEntity.getMode()))
+                .reduce(new Request(), Request::modeSet, (a, b) -> b));
+        // Set pins initial states.
+        boardEntity.getGroups()
+                .forEach(groupEntity -> setupGroup(connector, groupEntity));
+    }
+
+    private void setupGroup(Connector connector, GroupEntity groupEntity) {
+        groupEntity.getPermutations().stream()
                 .filter(PermutationEntity::isInitialState)
                 .findFirst()
-                .orElse(allPermutations.isEmpty() ? null : allPermutations.get(0));
+                .ifPresent(permutation -> groupEntity.apply(connector, permutation));
     }
 
-    public PermutationEntity currentPermutation(PinGroupEntity pinGroupEntity) {
-        return readPinGroup(pinGroupEntity)
-                .flatMap(response -> matchPermutation(response, pinGroupEntity))
-                .orElse(initialState(pinGroupEntity));
+    public Optional<PermutationEntity> currentPermutation(UUID boardId, GroupEntity groupEntity) {
+        return getConnectorByBoardId(boardId)
+                .flatMap(connector -> currentPermutation(connector, groupEntity));
     }
 
-    public PermutationEntity nextPermutation(PinGroupEntity pinGroupEntity) {
-        return Positional.next(permutationService.byPinGroup(pinGroupEntity)
-                .sorted(Positional.EXPLICIT_ORDER)
-                .collect(Collectors.toList()), currentPermutation(pinGroupEntity));
+    private Optional<PermutationEntity> currentPermutation(Connector connector, GroupEntity groupEntity) {
+        return matchPermutation(groupEntity.read(connector), groupEntity);
     }
 
-    public Optional<PermutationEntity> matchPermutation(Response response, PinGroupEntity pinGroupEntity) {
-        Set<PinNameEntity> pinNames = pinNamesByPinGroup(pinGroupEntity)
-                .collect(Collectors.toSet());
-        return permutationService.byPinGroup(pinGroupEntity)
-                .filter(permutation -> pinGroupEntity.match(response, permutation, pinNames::stream))
+    public  Optional<PermutationEntity> nextPermutation(UUID boardId, GroupEntity groupEntity) {
+        return getConnectorByBoardId(boardId)
+                .flatMap(connector -> nextPermutation(connector, groupEntity));
+    }
+
+    private  Optional<PermutationEntity> nextPermutation(Connector connector, GroupEntity groupEntity) {
+        return currentPermutation(connector, groupEntity)
+                .map(permutationEntity -> Positional.next(groupEntity.getPermutations(), permutationEntity));
+    }
+
+    private Optional<PermutationEntity> matchPermutation(Response response, GroupEntity groupEntity) {
+        return groupEntity.getPermutations()
+                .stream()
+                .filter(permutationEntity -> groupEntity.match(response, permutationEntity))
                 .findFirst();
-    }
-
-    public Optional<PermutationEntity> cyclePinGroup(PinGroupEntity pinGroupEntity) {
-        Set<PinNameEntity> pinNames = pinNamesByPinGroup(pinGroupEntity)
-                .collect(Collectors.toSet());
-        return getConnectorByBoardId(pinGroupEntity.getBoardId())
-                .map(connector -> pinGroupEntity.apply(connector, nextPermutation(pinGroupEntity), pinNames::stream));
-    }
-
-    public List<PinGroupEntity> pinGroupsByBoardId(UUID boardId) {
-        return groupService.findByBoardId(boardId)
-                .collect(Collectors.toList());
-    }
-
-    public List<PinNameEntity> pinNamesByBoardId(UUID boardId) {
-        return pinNameService.findByBoardId(boardId)
-                .collect(Collectors.toList());
-    }
-
-    public List<PermutationEntity> permutationsByBoardId(UUID boardId) {
-        return permutationService.findByBoardId(boardId)
-                .collect(Collectors.toList());
-    }
-
-    public List<BoardNameEntity> allBoardNames() {
-        return getAllConnectors().stream()
-                .map(boardNameService::findOrCreate)
-                .collect(Collectors.toList());
-    }
-
-    public Optional<Response> readPinGroup(PinGroupEntity pinGroup) {
-        return getConnectorByBoardId(pinGroup.getBoardId())
-                .map(connector -> connector.send(new Request()
-                        .digitalRead(pinNamesByPinGroup(pinGroup).map(PinNameEntity::getPinNumber))));
     }
 
     /*
@@ -145,18 +150,10 @@ public class ConnectorService {
     private Set<Connector> getAllConnectors() {
         Connectors.allConnectors()
                 .filter(connector -> !ACTIVE_CONNECTORS.contains(connector))
-                .map(this::activateConnector)
                 .forEach(ACTIVE_CONNECTORS::add);
         return ACTIVE_CONNECTORS;
     }
 
-    private Connector activateConnector(Connector connector) {
-        UUID boardId = connector.getUUID();
-        Request request = new Request().modeSet(pinNameService.findByBoardId(boardId)
-                .map(pinNameEntity -> new ModeSet(pinNameEntity.getPinNumber(), pinNameEntity.getPinMode())));
-        connector.send(request);
-        return connector;
-    }
 
     private Optional<Connector> getConnectorByBoardId(UUID boardId) {
         return getAllConnectors().stream()
@@ -164,97 +161,83 @@ public class ConnectorService {
                 .findFirst();
     }
 
-    private Optional<Response> readAllDigitalPins(UUID boardId) {
-        return getConnectorByBoardId(boardId)
-                .map(connector -> connector.send(
-                        new Request().digitalRead(pinNameService.findByBoardId(boardId)
-                                .filter(pinNameEntity -> Objects.equals(OUTPUT, pinNameEntity.getPinMode()))
-                                .map(PinNameEntity::getPinNumber))));
-    }
-
     public void generateFromMappings() throws IOException {
         Path mappingsFile = inConfigDirectory("mappings.json");
         Mappings mappings = OBJECT_MAPPER.readValue(mappingsFile.toFile(), Mappings.class);
+        WorkspaceEntity workspaceEntity = new WorkspaceEntity();
+        workspaceEntity.setVersion(VersionEntity.generate("Generated by mappings file"));
 
-        Stream.of(boardNameService, pinNameService, groupService, permutationService)
-                .forEach(NitriteCRUDService::deleteAll);
-
-        mappings.getMappings().forEach(mapping -> {
-            // 1: Make board name.
-            getConnectorByBoardId(mapping.getConnectorId())
-                    .ifPresent(boardNameService::findOrCreate);
-
-            // 2: Make pin names.
-            List<PinNameEntity> pinNames = mapping.getPinNamesAsEntities()
+        workspaceEntity.setBoards(mappings.getMappings().stream().flatMap(mapping -> {
+            // 1: Make pin names.
+            List<PinEntity> pins = mapping.getPinNamesAsEntities()
                     .stream()
-                    .map(pinName -> ofPinName(pinName, mapping.getConnectorId()))
-                    .map(pinNameService::save)
+                    .map(this::ofPinName)
                     .collect(Collectors.toList());
 
-            // 3: Make pin groups.
-            List<PinGroupEntity> groupEntities = pinNames.stream()
-                    .map(PinNameEntity::getPinName)
-                    .map(name -> name.contains("_") ? name.split("_")[0] : name)
-                    .distinct()
-                    .map(groupName -> newPinGroup(groupName, mapping.getConnectorId(), pinNames))
-                    .map(groupService::save)
-                    .collect(Collectors.toList());
+            // 2: Make the board name.
+            return getConnectorByBoardId(mapping.getConnectorId())
+                    .map(connector -> {
+                        BoardEntity board = new BoardEntity();
+                        board.setBoardId(connector.getUUID());
+                        board.setName(mapping.getConnectorName());
+                        board.setPins(pins);
 
-            // 4: Make pin permutations. ALL ON, ALL OFF.
-            List<PermutationEntity> permutationEntities = groupEntities.stream()
-                    .flatMap(this::permutationsOf)
-                    .map(permutationService::save)
-                    .collect(Collectors.toList());
+                        // 3: Make pin groups.
+                        List<GroupEntity> groups = pins.stream()
+                                .map(PinEntity::getName)
+                                .map(name -> name.contains("_") ? name.split("_")[0] : name)
+                                .distinct()
+                                .map(groupName -> newPinGroup(groupName, pins))
+                                .collect(Collectors.toList());
 
-        });
+                        groups.forEach(group -> {
+                                group.setPins(pins.stream()
+                                    .filter(pin -> pin.getName().startsWith(group.getName()))
+                                    .collect(Collectors.toList()));
+                                group.setPermutations(permutationsOf(group).collect(Collectors.toList()));
+                            });
+                        board.setGroups(groups);
+                        return board;
+                    }).stream();
+        }).collect(Collectors.toList()));
+
+        // Setup the new workspace.
+        configure(workspaceEntity);
     }
 
-
-    public static Path inConfigDirectory(String name) {
+    private static Path inConfigDirectory(String name) {
         return Paths.get(CONFIG_PATH.toAbsolutePath().toString(), name);
     }
 
-
-    public Stream<PermutationEntity> permutationsOf(PinGroupEntity pinGroupEntity) {
+    private Stream<PermutationEntity> permutationsOf(GroupEntity group) {
         PermutationEntity allOn = new PermutationEntity();
-        allOn.setGroupId(pinGroupEntity.getId());
-        allOn.setActivePins(pinGroupEntity.getPinIds());
+        allOn.setActivePins(group.getPins());
         allOn.setInactivePins(Collections.emptyList());
         allOn.setInitialState(false);
         allOn.setPosition(0);
 
         PermutationEntity allOff = new PermutationEntity();
-        allOff.setGroupId(pinGroupEntity.getId());
-        allOff.setInactivePins(pinGroupEntity.getPinIds());
+        allOff.setInactivePins(group.getPins());
         allOff.setActivePins(Collections.emptyList());
         allOff.setInitialState(false);
         allOff.setPosition(1);
         return Stream.of(allOn, allOff);
     }
 
-    public PinGroupEntity newPinGroup(String groupName, UUID boardId, List<PinNameEntity> allPins) {
-        PinGroupEntity pinGroupEntity = new PinGroupEntity();
-        pinGroupEntity.setName(groupName);
-        pinGroupEntity.setBoardId(boardId);
-        pinGroupEntity.setPinIds(allPins.stream()
-                        .filter(p -> p.getPinName().startsWith(groupName))
-                        .map(EntityBase::getId)
+    private GroupEntity newPinGroup(String groupName, List<PinEntity> allPins) {
+        GroupEntity groupEntity = new GroupEntity();
+        groupEntity.setName(groupName);
+        groupEntity.setPins(allPins.stream()
+                        .filter(p -> p.getName().startsWith(groupName))
                         .collect(Collectors.toList()));
-        pinGroupEntity.setPosition(groupService.findByBoardId(boardId).count());
-        return pinGroupEntity;
-    }
-    public PinNameEntity ofPinName(PinName pinName, UUID boardId) {
-        PinNameEntity pinNameEntity = new PinNameEntity();
-        pinNameEntity.setBoardId(boardId);
-        pinNameEntity.setPinNumber(pinName.getPinNumber());
-        pinNameEntity.setPinName(pinName.getPinName());
-        pinNameEntity.setPosition(pinNameService.findByBoardId(boardId).count());
-        return pinNameEntity;
+        return groupEntity;
     }
 
-    public Optional<BoardNameEntity> getBoardById(UUID boardId) {
-        return boardNameService.findByBoardId(boardId)
-                .findFirst();
+    private PinEntity ofPinName(PinName pinName) {
+        PinEntity pinNameEntity = new DigitalPin();
+        pinNameEntity.setPin(pinName.getPinNumber());
+        pinNameEntity.setName(pinName.getPinName());
+        return pinNameEntity;
     }
 
     public String describeBoards() {

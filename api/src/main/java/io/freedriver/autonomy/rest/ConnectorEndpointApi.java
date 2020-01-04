@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.rest;
 
-import io.freedriver.autonomy.entity.jsonlink.BoardNameEntity;
+import io.freedriver.autonomy.entity.jsonlink.BoardEntity;
 import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
-import io.freedriver.autonomy.entity.jsonlink.PinGroupEntity;
-import io.freedriver.autonomy.entity.jsonlink.PinNameEntity;
+import io.freedriver.autonomy.entity.jsonlink.GroupEntity;
+import io.freedriver.autonomy.entity.jsonlink.PinEntity;
 import org.dizitart.no2.NitriteId;
 
 import javax.ws.rs.Consumes;
@@ -24,37 +24,41 @@ public interface ConnectorEndpointApi {
     String BOARD_ID_PATH = "/id/{"+BOARD_ID+"}";
     String PIN_NAMES_PATH = BOARD_ID_PATH + "/pinNames";
     String PIN_GROUP_PATH = BOARD_ID_PATH + "/pinGroups";
-    String PERMUTATION_PATH = BOARD_ID_PATH + "/permutations";
 
-    String GROUP_ID = "groupId";
-    String GROUP_ID_PATH = PIN_GROUP_PATH + "/id/{"+GROUP_ID+"}";
-    String GROUP_NEXT_PATH = GROUP_ID_PATH + "/next";
+
+    String GROUP_NAME = "groupName";
+    String GROUP_NAME_PATH = PIN_GROUP_PATH + "/name/{"+ GROUP_NAME +"}";
+    String PERMUTATION_PATH = GROUP_NAME_PATH + "/permutations";
+
+    String GROUP_NEXT_PATH = GROUP_NAME_PATH + "/next";
+
+    //@GET
 
     @GET
-    List<BoardNameEntity> allBoardNames();
+    List<BoardEntity> allBoardNames();
 
     @GET
     @Path(BOARD_ID_PATH)
-    BoardNameEntity boardById(@PathParam(BOARD_ID) UUID boardId);
+    BoardEntity boardById(@PathParam(BOARD_ID) UUID boardId);
 
     @GET
     @PathParam(PIN_GROUP_PATH)
-    List<PinGroupEntity> pinGroupsByBoardId(@PathParam(BOARD_ID) UUID boardId);
+    List<GroupEntity> pinGroupsByBoardId(@PathParam(BOARD_ID) UUID boardId);
 
     @GET
     @PathParam(PIN_NAMES_PATH)
-    List<PinNameEntity> pinNamesByBoardId(@PathParam(BOARD_ID) UUID boardId);
+    List<PinEntity> pinNamesByBoardId(@PathParam(BOARD_ID) UUID boardId);
 
     @GET
     @PathParam(PERMUTATION_PATH)
-    List<PermutationEntity> permutationsByBoardId(@PathParam(BOARD_ID) UUID boardId);
+    List<PermutationEntity> permutationsOfGroup(@PathParam(BOARD_ID) UUID boardId, @PathParam(GROUP_NAME) String groupName);
 
     @GET
-    @Path(GROUP_ID_PATH)
-    PermutationEntity readGroup(@PathParam(BOARD_ID) UUID boardId, @PathParam(GROUP_ID) NitriteId groupNitriteId);
+    @Path(GROUP_NAME_PATH)
+    PermutationEntity readGroup(@PathParam(BOARD_ID) UUID boardId, @PathParam(GROUP_NAME) String groupName);
 
     @GET
     @Path(GROUP_NEXT_PATH)
-    PermutationEntity cycleGroup(@PathParam(BOARD_ID) UUID boardId, @PathParam(GROUP_ID) NitriteId groupNitriteId);
+    PermutationEntity cycleGroup(@PathParam(BOARD_ID) UUID boardId, @PathParam(GROUP_NAME) String groupName);
 
 }

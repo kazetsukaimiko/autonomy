@@ -50,8 +50,8 @@ public class Identifier {
         return new DigitalWrite(this, b);
     }
 
-    public AnalogRead getAnalog(int resistance) {
-        return new AnalogRead(this, resistance);
+    public AnalogRead getAnalog(float voltage, float resistance) {
+        return new AnalogRead(this, voltage, resistance);
     }
 
     public ModeSet setMode(Mode mode) {

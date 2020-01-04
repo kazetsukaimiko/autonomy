@@ -13,17 +13,19 @@ public interface CRUDInterface<I, T extends Positional> {
     T save(T entity);
 
     // READ
-    T findOne(I id);
+    Optional<T> findOne(I id);
     Stream<T> findAllIds(Stream<I> ids);
     Stream<T> findAll();
 
     // UPDATE
     T update(T entity);
-    Stream<T> saveOrder(List<T> entities);
+    List<T> saveOrder(List<T> entities);
 
     // DELETE
-    I delete(T entity);
+    Optional<NitriteId> delete(T entity);
     Stream<I> deleteAll(Stream<T> entity);
     Optional<I> deleteById(I id);
     Stream<I> deleteAllById(Stream<I> ids);
+
+    long count();
 }

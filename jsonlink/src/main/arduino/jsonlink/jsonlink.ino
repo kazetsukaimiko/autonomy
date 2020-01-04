@@ -26,6 +26,11 @@ String DIGITAL = "digital";
 // READ: Array of { pinNum : resistance }; WRITE: todo
 String ANALOG = "analog";
 
+String RAW = "raw";
+String PIN = "pin";
+String VOLTAGE = "voltage";
+String RESISTANCE = "resistance";
+
 // Shortcuts
 String TURN_ON = "turn_on";
 String TURN_OFF = "turn_off";
@@ -39,30 +44,26 @@ String buffer = "";
 
 
 // TODO: analog read pins
-/*
-void analogReadMode() {
-  int analogPin= 0; // Which pin
-  int raw= 0; // Raw read value
-  int Vin= 5; // Voltage In
-  float Vout= 0; // Voltage Drop across unknown resistor.
-  float R1= 1000; // Known Resistor
-  float R2= 0; //Resistance of unknown in ohms.
-  float buffer= 0;
+// voltageIn = Volts in
+// knownResistance = ohms of known resistor
+void readAnalogPin(int analogPinRead, float voltageIn, float knownResistance) {
+  int raw = analogRead(A0);
+  if (raw) {
+    float buffer = raw * voltageIn;
+    float voltageOut = (buffer)/1024.0;
+    buffer = (voltageIn/voltageOut) - 1;
+    float unknownResistance = knownResistance * buffer;
 
-  raw = analogRead(analogPin);
-  if(raw) {
-    buffer= raw * Vin;
-    Vout= (buffer)/1024.0;
-    buffer= (Vin/Vout) -1;
-    R2= R1 * buffer;
-    Serial.print("Vout: ");
-    Serial.println(Vout);
-    Serial.print("R2: ");
-    Serial.println(R2);
-    delay(1000);
+    if (!outputDocument.containsKey(ANALOG)) {
+      outputDocument.createNestedArray(ANALOG);
+    }
+    JsonObject response = outputDocument[ANALOG].createNestedObject();
+    response[PIN] = A0;
+    response[RAW] = raw;
+    response[VOLTAGE] = voltageOut;
+    response[RESISTANCE] = unknownResistance;
   }
-}*/
-
+}
 
 void debug(String debug) {
     if (inputDocument.containsKey(DEBUG)) {
@@ -218,6 +219,19 @@ void readPins() {
       JsonArray digitalPins = inputDocument[READ][DIGITAL];
       for( const int& digitalPin : digitalPins ) {
         outputDocument[DIGITAL][String(digitalPin)] = (digitalRead(digitalPin) == HIGH);
+      }
+    }
+    if (inputDocument[READ].containsKey(ANALOG)) {
+      JsonArray analogPins = inputDocument[READ][ANALOG];
+      for (JsonObject analogPin : analogPins) {
+        if (analogPin.containsKey(PIN) && analogPin.containsKey(VOLTAGE) && analogPin.containsKey(RESISTANCE)) {
+          int analogPinNumber = analogPin[PIN];
+          float voltageIn = analogPin[VOLTAGE];
+          float knownResistance = analogPin[RESISTANCE];
+          readAnalogPin(analogPinNumber, voltageIn, knownResistance);
+        } else {
+          outputDocument[ERROR].add(String("Requested Analog Read but missing keys."));
+        }
       }
     }
   }

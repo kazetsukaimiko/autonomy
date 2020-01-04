@@ -24,8 +24,8 @@ public interface Connector extends AutoCloseable {
     default Response send(Request request) throws ConnectorException {
         try {
             String json = MAPPER.writeValueAsString(request);
-            LOGGER.info("Sending Request: ");
-            LOGGER.info(json);
+            LOGGER.finest("Sending Request: ");
+            LOGGER.finest(json);
             return sendJSONRequest(json)
                     .map(r -> r.logAnyErrors(err -> LOGGER.warning("Error from board: " + err)))
                     .get();
@@ -54,9 +54,7 @@ public interface Connector extends AutoCloseable {
 
     String device();
     Optional<Response> sendJSONRequest(String json) throws ConnectorException;
-    //Optional<Response> fetchResponse() throws ConnectorException;
     boolean isClosed();
-
 
 
 }

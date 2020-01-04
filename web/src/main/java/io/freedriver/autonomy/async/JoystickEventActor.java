@@ -1,13 +1,12 @@
 package io.freedriver.autonomy.async;
 
-import io.freedriver.autonomy.service.crud.PinGroupService;
-import io.freedriver.jsonlink.config.ConnectorConfig;
 import io.freedriver.autonomy.entity.event.EventType;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEventType;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.ConnectorException;
+import io.freedriver.jsonlink.config.ConnectorConfig;
 
 import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;
@@ -18,6 +17,7 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,9 +33,6 @@ public class JoystickEventActor {
     private Instance<Connector> connectors;
 
     @Inject
-    private PinGroupService groupService;
-
-    @Inject
     private ConnectorService connectorService;
 
     @Resource
@@ -47,10 +44,10 @@ public class JoystickEventActor {
             String target = joystickEvent.getNumber().equals(11L) ?
                     "hallway" : "bathroom";
             try {
-                groupService.getByName(target)
-                        .ifPresentOrElse(
-                                connectorService::cyclePinGroup,
-                                () -> { throw new IllegalArgumentException("Invalid pin group name: " + target); });
+                connectorService.getWorkspace()
+                        .getBoards().forEach(boardEntity -> boardEntity.getGroups().stream()
+                                    .filter(groupEntity -> Objects.equals(target, groupEntity.getName()))
+                                    .forEach(matchedGroup -> connectorService.nextPermutation(boardEntity.getBoardId(), matchedGroup)));
             } catch (ConnectorException | IllegalArgumentException e) {
                 LOGGER.log(Level.WARNING, e, () -> "Couldn't act on Joystick Event.");
             }

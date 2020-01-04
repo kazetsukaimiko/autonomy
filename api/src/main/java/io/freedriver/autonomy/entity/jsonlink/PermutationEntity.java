@@ -1,41 +1,39 @@
 package io.freedriver.autonomy.entity.jsonlink;
 
-import org.dizitart.no2.NitriteId;
+import io.freedriver.autonomy.entity.EmbeddedEntityBase;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class PermutationEntity extends JsonLinkEntity  {
-    private NitriteId groupId;
-    private List<NitriteId> activePins = new ArrayList<>();
-    private List<NitriteId> inactivePins = new ArrayList<>();
+public class PermutationEntity extends EmbeddedEntityBase {
+    private List<PinEntity> activePins = new ArrayList<>();
+    private List<PinEntity> inactivePins = new ArrayList<>();
     private boolean initialState = false;
 
     public PermutationEntity() {
     }
 
-    public NitriteId getGroupId() {
-        return groupId;
+    public PermutationEntity(PermutationEntity entity) {
+        super(entity);
+        this.activePins = entity.activePins;
+        this.inactivePins = entity.inactivePins;
+        this.initialState = entity.initialState;
     }
 
-    public void setGroupId(NitriteId groupId) {
-        this.groupId = groupId;
-    }
-
-    public List<NitriteId> getActivePins() {
+    public List<PinEntity> getActivePins() {
         return activePins;
     }
 
-    public void setActivePins(List<NitriteId> activePins) {
+    public void setActivePins(List<PinEntity> activePins) {
         this.activePins = activePins;
     }
 
-    public List<NitriteId> getInactivePins() {
+    public List<PinEntity> getInactivePins() {
         return inactivePins;
     }
 
-    public void setInactivePins(List<NitriteId> inactivePins) {
+    public void setInactivePins(List<PinEntity> inactivePins) {
         this.inactivePins = inactivePins;
     }
 
@@ -54,19 +52,17 @@ public class PermutationEntity extends JsonLinkEntity  {
         if (!super.equals(o)) return false;
         PermutationEntity that = (PermutationEntity) o;
         return initialState == that.initialState &&
-                Objects.equals(groupId, that.groupId) &&
                 Objects.equals(activePins, that.activePins);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), groupId, activePins, initialState);
+        return Objects.hash(super.hashCode(), activePins, initialState);
     }
 
     @Override
     public String toString() {
         return "PermutationEntity{" +
-                "groupId=" + groupId +
                 ", activePins=" + activePins +
                 ", initialState=" + initialState +
                 '}';

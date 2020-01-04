@@ -1,13 +1,12 @@
 package io.freedriver.jsonlink.jackson.schema.v1;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ReadRequest {
     private Set<Identifier> digital = new HashSet<>();
-    private Map<Identifier, Integer> analog = new HashMap<>();
+    private Set<AnalogRead> analog = new LinkedHashSet<>();
 
     public Set<Identifier> getDigital() {
         return digital;
@@ -17,11 +16,11 @@ public class ReadRequest {
         this.digital = digital;
     }
 
-    public Map<Identifier, Integer> getAnalog() {
+    public Set<AnalogRead> getAnalog() {
         return analog;
     }
 
-    public void setAnalog(Map<Identifier, Integer> analog) {
+    public void setAnalog(Set<AnalogRead> analog) {
         this.analog = analog;
     }
 
@@ -30,12 +29,23 @@ public class ReadRequest {
         return this;
     }
 
-    public ReadRequest readAnalog(Identifier pinNumber, Integer resistance) {
-        getAnalog().put(pinNumber, resistance);
+    public ReadRequest readAnalog(Identifier pinNumber, float voltage, float resistance) {
+        getAnalog().add(new AnalogRead(pinNumber, voltage, resistance));
         return this;
     }
 
     public ReadRequest readAnalog(AnalogRead analogRead) {
-        return readAnalog(analogRead.getPinNumber(), analogRead.getResistance());
+        return readAnalog(
+                analogRead.getPin(),
+                analogRead.getVoltage(),
+                analogRead.getResistance());
+    }
+
+    @Override
+    public String toString() {
+        return "ReadRequest{" +
+                "digital=" + digital +
+                ", analog=" + analog +
+                '}';
     }
 }

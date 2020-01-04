@@ -1,19 +1,22 @@
 package io.freedriver.autonomy.entity;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.freedriver.autonomy.iface.Positional;
 import org.dizitart.no2.NitriteId;
 import org.dizitart.no2.objects.Id;
 
 import java.util.Objects;
 
 @JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=JsonTypeInfo.As.PROPERTY, property="@entity")
-public abstract class EntityBase implements Positional {
+public abstract class EntityBase extends EmbeddedEntityBase {
     @Id
     private NitriteId id;
-    private long position = 0;
 
     public EntityBase() {
+    }
+
+
+    public EntityBase(EntityBase entityBase) {
+        this.id = entityBase.id;
     }
 
     public NitriteId getId() {
@@ -22,16 +25,6 @@ public abstract class EntityBase implements Positional {
 
     public void setId(NitriteId id) {
         this.id = id;
-    }
-
-    @Override
-    public long getPosition() {
-        return position;
-    }
-
-    @Override
-    public void setPosition(long position) {
-        this.position = position;
     }
 
     @Override
@@ -51,7 +44,6 @@ public abstract class EntityBase implements Positional {
     public String toString() {
         return "EntityBase{" +
                 "nitriteId=" + id +
-                ", position=" + position +
                 '}';
     }
 }

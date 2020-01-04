@@ -15,8 +15,10 @@ import org.dizitart.no2.objects.filters.ObjectFilters;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -30,7 +32,6 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
     }
 
 
-
     public Logger getLogger() {
         return logger;
     }
@@ -38,23 +39,13 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
         return nitrite;
     }
 
+    protected abstract Class<T> getKlazz();
 
-
-
-    abstract Class<T> getKlazz();
-
-    /*
-    public ObjectRepository<T> getRepository() {
-        return getRepository(getKlazz());
+    @Override
+    public long count() {
+        return findAll()
+                .count();
     }
-
-
-    private <X> ObjectRepository<X> getRepository(Class<X> klazz) {
-
-    }
-
-
-     */
 
     public ObjectRepository<EntityBase> getEntityRepository() {
         return getNitrite()
@@ -64,12 +55,12 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
 
     public Stream<T> findAll(ObjectFilter filter, FindOptions options) {
         getLogger().log(Level.INFO, "Getting entity " + getKlazz().getName() + " with find options and filter");
-        return streamCursor(getEntityRepository().find(filter, options), getKlazz());
+        return streamCursor(getEntityRepository().find(filter, options));
     }
 
     public Stream<T> findAll(FindOptions options) {
         getLogger().log(Level.INFO, "Getting entity " + getKlazz().getName() + " with find options");
-        return streamCursor(getEntityRepository().find(options), getKlazz());
+        return streamCursor(getEntityRepository().find(options));
     }
 
     public Stream<T> findAll(ObjectFilter filter) {
@@ -97,11 +88,10 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
     }
 
     @Override
-    public T findOne(NitriteId nitriteId) {
+    public Optional<T> findOne(NitriteId nitriteId) {
         getLogger().log(Level.INFO, "Getting entity " + getKlazz().getName() + " by id " + nitriteId.toString());
         return findAllIds(Stream.of(nitriteId))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     @Override
@@ -116,24 +106,28 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
 
     @Override
     public T update(T entity) {
-        return findOne(getEntityRepository().update(entity).iterator().next());
+        getEntityRepository().update(entity);
+        return entity;
     }
 
-    public Stream<T> saveOrder(List<T> entities) {
+    public List<T> saveOrder(List<T> entities) {
         getLogger().log(Level.INFO, "Saving entity order for " + getKlazz().getName());
         return Positional.reorder(entities)
                 .stream()
-                .map(this::save);
+                .map(this::save)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public NitriteId delete(T entity) {
-        return getEntityRepository().remove(entity).iterator().next();
+    public Optional<NitriteId> delete(T entity) {
+        return Optional.of(entity)
+                .map(EntityBase::getId)
+                .flatMap(this::deleteById);
     }
 
     @Override
     public Stream<NitriteId> deleteAll(Stream<T> entities) {
-        return entities.map(this::delete);
+        return entities.map(this::delete).flatMap(Optional::stream);
     }
 
     @Override
@@ -155,23 +149,34 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
                 .flatMap(Optional::stream);
     }
 
-
     public void deleteAll() {
         getLogger().log(Level.INFO, "Deleting all entities");
         getEntityRepository()
                 .drop();
     }
 
+    public static ObjectFilter byBoardId(UUID boardId) {
+        return ObjectFilters.eq("boardId", boardId);
+    }
+
+    public Stream<T> findByBoardId(UUID boardId) {
+        return findAll(byBoardId(boardId));
+    }
+
+    public Optional<T> findOneByBoardId(UUID boardId) {
+        return findAll(byBoardId(boardId)).findFirst();
+    }
+
     public static FindOptions sort() {
         return FindOptions.sort("position", SortOrder.Ascending);
     }
 
-    private static <X> Stream<X> streamCursor(Cursor<X> cursor) {
-        return StreamSupport.stream(cursor.spliterator(), false);
+    private <X> Stream<T> streamCursor(Cursor<EntityBase> cursor) {
+        return streamCursor(cursor, getKlazz());
     }
 
-    private static <X extends EntityBase> Stream<X> streamCursor(Cursor<EntityBase> cursor, Class<X> childClass) {
-        return streamCursor(cursor)
+    private <X extends EntityBase> Stream<X> streamCursor(Iterable<EntityBase> cursor, Class<X> childClass) {
+        return StreamSupport.stream(cursor.spliterator(), false)
                 .filter(childClass::isInstance)
                 .map(childClass::cast);
     }

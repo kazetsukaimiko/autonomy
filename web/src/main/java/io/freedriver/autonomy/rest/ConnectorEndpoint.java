@@ -1,18 +1,16 @@
 package io.freedriver.autonomy.rest;
 
-import io.freedriver.autonomy.entity.jsonlink.BoardNameEntity;
+import io.freedriver.autonomy.entity.jsonlink.BoardEntity;
+import io.freedriver.autonomy.entity.jsonlink.GroupEntity;
 import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
-import io.freedriver.autonomy.entity.jsonlink.PinGroupEntity;
-import io.freedriver.autonomy.entity.jsonlink.PinNameEntity;
+import io.freedriver.autonomy.entity.jsonlink.PinEntity;
 import io.freedriver.autonomy.service.ConnectorService;
-import io.freedriver.autonomy.service.crud.PinGroupService;
-import org.dizitart.no2.NitriteId;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.UUID;
 
 @RequestScoped
@@ -21,45 +19,58 @@ public class ConnectorEndpoint implements ConnectorEndpointApi {
     @Inject
     private ConnectorService connectorService;
 
-    @Inject
-    private PinGroupService groupService;
-
     @Override
-    public List<BoardNameEntity> allBoardNames() {
-        return Optional.ofNullable(connectorService)
-                .map(ConnectorService::allBoardNames)
-                .orElseThrow(() -> new WebApplicationException("NULL connectorService!", 500));
+    public List<BoardEntity> allBoardNames() {
+        return connectorService.getWorkspace()
+                .getBoards();
     }
 
     @Override
-    public BoardNameEntity boardById(UUID boardId) {
-        return connectorService.getBoardById(boardId)
+    public BoardEntity boardById(UUID boardId) {
+        return connectorService.getWorkspace()
+                .getBoards().stream()
+                .filter(boardEntity -> Objects.equals(boardId, boardEntity.getBoardId()))
+                .findFirst()
                 .orElseThrow(() -> new WebApplicationException(
                         "Board Id " + boardId.toString() + " not found. Available Boards: " + connectorService.describeBoards(), 404));
     }
 
     @Override
-    public List<PinGroupEntity> pinGroupsByBoardId(UUID boardId) {
-        return connectorService.pinGroupsByBoardId(boardId);
+    public List<GroupEntity> pinGroupsByBoardId(UUID boardId) {
+        return boardById(boardId)
+                .getGroups();
     }
 
     @Override
-    public List<PinNameEntity> pinNamesByBoardId(UUID boardId) {
-        return connectorService.pinNamesByBoardId(boardId);
+    public List<PinEntity> pinNamesByBoardId(UUID boardId) {
+        return boardById(boardId)
+                .getPins();
     }
 
     @Override
-    public List<PermutationEntity> permutationsByBoardId(UUID boardId) {
-        return connectorService.permutationsByBoardId(boardId);
+    public List<PermutationEntity> permutationsOfGroup(UUID boardId, String groupName) {
+        return getGroup(boardId, groupName)
+                .getPermutations();
     }
 
     @Override
-    public PermutationEntity readGroup(UUID boardId, NitriteId groupNitriteId) {
-        return connectorService.currentPermutation(groupService.findOne(groupNitriteId));
+    public PermutationEntity readGroup(UUID boardId, String groupName) {
+        return connectorService.currentPermutation(boardId, getGroup(boardId, groupName))
+                .orElseThrow(() -> new WebApplicationException("Couldn't resolve Permutation of group: "+groupName));
     }
 
     @Override
-    public PermutationEntity cycleGroup(UUID boardId, NitriteId groupNitriteId) {
-        return null;
+    public PermutationEntity cycleGroup(UUID boardId, String groupName) {
+        return connectorService.nextPermutation(boardId, getGroup(boardId, groupName))
+                .orElseThrow(() -> new WebApplicationException("Couldn't resolve Permutation of group: "+groupName));
     }
+
+    private GroupEntity getGroup(UUID boardId, String groupName) {
+        return pinGroupsByBoardId(boardId).stream()
+                .filter(groupEntity -> Objects.equals(groupName, groupEntity.getName()))
+                .findFirst()
+                .orElseThrow(() -> new WebApplicationException(
+                        "Group name \"" + groupName + "\" not found.", 404));
+    }
+
 }

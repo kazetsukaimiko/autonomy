@@ -1,5 +1,6 @@
 package io.freedriver.jsonlink;
 
+import io.freedriver.jsonlink.jackson.schema.v1.AnalogRead;
 import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Mode;
@@ -13,10 +14,12 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +38,41 @@ public class ConnectorTest {
                 .distinct()
                 .peek(uuid -> LOGGER.info(String.valueOf(uuid)))
                 .collect(Collectors.toList());
+    }
+
+    @Test
+    public void testReadAnalogs() {
+        Request readAllAnalogs = new Request();
+
+        IntStream.range(87, 89)
+                .mapToObj(Identifier::new)
+                .map(identifier -> new AnalogRead(identifier, 5.0f, 250f))
+                .peek(System.out::println)
+                .forEach(readAllAnalogs::analogRead);
+
+        /*
+        System.out.println(readAllAnalogs);
+        if (true) {
+            return;
+        }*/
+        Connectors.allConnectors()
+                .findFirst()
+                .ifPresent(connector -> {
+
+                    for(int i=0;i<10;i++) {
+                        Response r = connector.send(readAllAnalogs);
+                        r.getAnalog()
+                                .forEach(analogResponse -> {
+                                    System.out.println(analogResponse);
+
+                                });
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
     }
 
     @Test

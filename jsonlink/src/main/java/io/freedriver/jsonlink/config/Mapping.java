@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 public class Mapping {
     private UUID connectorId;
+    private String connectorName;
     private Map<Identifier, String> pinNames = new HashMap<>();
 
     public Mapping() {
@@ -24,6 +25,14 @@ public class Mapping {
 
     public void setConnectorId(UUID connectorId) {
         this.connectorId = connectorId;
+    }
+
+    public String getConnectorName() {
+        return connectorName;
+    }
+
+    public void setConnectorName(String connectorName) {
+        this.connectorName = connectorName;
     }
 
     public Map<Identifier, String> getPinNames() {

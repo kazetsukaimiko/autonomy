@@ -10,7 +10,7 @@ public class Response {
     private UUID uuid;
     private List<String> error = new ArrayList<>();
     private Map<Identifier, Boolean> digital;
-    private Map<Identifier, Integer> analog;
+    private List<AnalogResponse> analog;
 
     public UUID getUuid() {
         return uuid;
@@ -36,11 +36,11 @@ public class Response {
         this.digital = digital;
     }
 
-    public Map<Identifier, Integer> getAnalog() {
+    public List<AnalogResponse> getAnalog() {
         return analog;
     }
 
-    public void setAnalog(Map<Identifier, Integer> analog) {
+    public void setAnalog(List<AnalogResponse> analog) {
         this.analog = analog;
     }
 

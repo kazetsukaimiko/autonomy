@@ -1,5 +1,7 @@
 package io.freedriver.jsonlink.jackson.schema.v1;
 
+import io.freedriver.jsonlink.Connector;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -125,5 +127,19 @@ public class Request {
     public Request newUuid() {
         setUuid(UUID.randomUUID());
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "Request{" +
+                "uuid=" + uuid +
+                ", mode=" + mode +
+                ", read=" + read +
+                ", write=" + write +
+                '}';
+    }
+
+    public Response invoke(Connector connector) {
+        return connector.send(this);
     }
 }

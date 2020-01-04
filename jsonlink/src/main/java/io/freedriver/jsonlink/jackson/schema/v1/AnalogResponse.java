@@ -2,18 +2,13 @@ package io.freedriver.jsonlink.jackson.schema.v1;
 
 import java.util.Objects;
 
-public class AnalogRead {
+public class AnalogResponse {
     private Identifier pin;
-    private float voltage;
-    private float resistance;
+    private Integer raw;
+    private Float voltage;
+    private Float resistance;
 
-    public AnalogRead() {
-    }
-
-    public AnalogRead(Identifier pin, float voltage, float resistance) {
-        this.pin = pin;
-        this.voltage = voltage;
-        this.resistance = resistance;
+    public AnalogResponse() {
     }
 
     public Identifier getPin() {
@@ -24,19 +19,27 @@ public class AnalogRead {
         this.pin = pin;
     }
 
-    public float getVoltage() {
+    public Integer getRaw() {
+        return raw;
+    }
+
+    public void setRaw(Integer raw) {
+        this.raw = raw;
+    }
+
+    public Float getVoltage() {
         return voltage;
     }
 
-    public void setVoltage(float voltage) {
+    public void setVoltage(Float voltage) {
         this.voltage = voltage;
     }
 
-    public float getResistance() {
+    public Float getResistance() {
         return resistance;
     }
 
-    public void setResistance(float resistance) {
+    public void setResistance(Float resistance) {
         this.resistance = resistance;
     }
 
@@ -44,10 +47,8 @@ public class AnalogRead {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        AnalogRead that = (AnalogRead) o;
-        return Float.compare(that.voltage, voltage) == 0 &&
-                Float.compare(that.resistance, resistance) == 0 &&
-                Objects.equals(pin, that.pin);
+        AnalogResponse that = (AnalogResponse) o;
+        return Objects.equals(pin, that.pin);
     }
 
     @Override
@@ -57,8 +58,9 @@ public class AnalogRead {
 
     @Override
     public String toString() {
-        return "AnalogRead{" +
-                "pinNumber=" + pin +
+        return "AnalogResponse{" +
+                "pin=" + pin +
+                ", raw=" + raw +
                 ", voltage=" + voltage +
                 ", resistance=" + resistance +
                 '}';
