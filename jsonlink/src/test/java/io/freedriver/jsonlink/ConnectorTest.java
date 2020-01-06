@@ -59,7 +59,7 @@ public class ConnectorTest {
                 .findFirst()
                 .ifPresent(connector -> {
 
-                    for(int i=0;i<10;i++) {
+                    for(int i=0;i<100;i++) {
                         Response r = connector.send(readAllAnalogs);
                         r.getAnalog()
                                 .forEach(analogResponse -> {

@@ -1,7 +1,5 @@
 package io.freedriver.autonomy.util;
 
-import kaze.math.power.Power;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;

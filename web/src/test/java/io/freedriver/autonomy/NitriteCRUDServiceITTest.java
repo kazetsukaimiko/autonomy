@@ -34,6 +34,7 @@ public abstract class NitriteCRUDServiceITTest<T extends EntityBase, CRUD extend
 
     @Before
     public void init() {
+        getVictim().deleteAll();
 
         UUID validBoard = Connectors.allConnectors()
                 .map(Connector::getUUID)

@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.vedirect;
 
-import kaze.math.potential.Potential;
+import kaze.math.measurement.units.Potential;
 import kaze.victron.VEDirectMessage;
 
 import java.math.BigDecimal;

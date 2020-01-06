@@ -25,6 +25,10 @@ import java.util.Objects;
 public abstract class Event extends EntityBase {
     private Instant timestamp;
 
+    private EventPriority priority = EventPriority.STANDARD;
+
+    private EventAction action;
+
     @JsonUnwrapped
     private EventCoordinate coordinate;
 
