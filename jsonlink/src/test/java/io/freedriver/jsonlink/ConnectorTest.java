@@ -78,6 +78,7 @@ public class ConnectorTest {
     @Test
     public void allConnectorsHaveUniqueUUID() {
         assertEquals(Connectors.allConnectors().count(), allUUIDs.size());
+        allUUIDs.forEach(System.out::println);
     }
 
     @Test

@@ -51,7 +51,7 @@ public class EventInitializationService extends BaseService {
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
         try {
-            connectorService.generateFromMappings();
+            connectorService.setWorkspace(connectorService.generateFromMappings());
         } catch (IOException e) {
             LOGGER.log(Level.INFO, "Trouble generating configuration", e);
         }

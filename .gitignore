@@ -13,5 +13,6 @@ build/*
 .gradle
 .idea
 .idea/*
+ui/*
 *.iml
 dependency-reduced-pom.xml

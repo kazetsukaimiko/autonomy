@@ -4,19 +4,23 @@
         <title>Autonomy</title>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <!--<META HTTP-EQUIV="refresh" CONTENT="5">-->
+
+        <link rel="stylesheet" type="text/css" href="autonomy.css" />
+
+        <script type="text/javascript" src="genericHelpers.js"></script>
+        <script type="text/javascript" src="toggler.js"></script>
+        <script type="text/javascript" src="fsajax.js"></script>
+        <script type="text/javascript" src="autonomy.js"></script>
         <!--
         <link rel="stylesheet" type="text/css" href="toggle-switch.css" />
         <link rel="stylesheet" type="text/css" href="relayctl.css" />
         -->
-
-        <link rel="stylesheet" type="text/css" href="autonomy.css" />
         <!--
-        <script src="fsajax.js"></script>
 
-        -->
-        <script src="autonomy.js"></script>
-        <script src="genericHelpers.js"></script>
+
         <script src="toggler.js"></script>
+        <script src="relayctl.js"></script>
 
         <script type="text/javascript" src="utils.js"></script>
 
@@ -29,16 +33,80 @@
                 -ms-user-select: none;
             }
         </style>
+        -->
     </head>
     <body>
-        <div id="target">
-            <div class="label">LABEL</div>
-            <div class="bluesky background"></div>
-            <div class="sunset background"></div>
-            <div class="yugure background"></div>
-            <div class="yugured background"></div>
-            <div class="yuguredd background"></div>
-            <div class="yoru background"></div>
+        <div class="controls">
+            <div class="topBar">
+                <div class="menuButton">MENU</div>
+                <div class="logo">LOGO</div>
+                <div class="searchBar">
+                    <div class="field">
+                        <input id="searchBar" class="field" type="text" />
+                    </div>
+                    <div class="button">SEARCH</div>
+                </div>
+                <div class="controls"></div>
+            </div>
+
+            <div class="sideBar">
+                <div id="section1" data-toggle="#section1" class="section">
+                    <div class="title">Section 1 Title</div>
+                    <div class="item">
+                        <div class="icon"></div>
+                        <div class="text">Item 1 Text</div>
+                    </div>
+                    <div class="item">
+                        <div class="icon"></div>
+                        <div class="text">Item 2 Text</div>
+                    </div>
+                </div>
+                <div id="section2" data-toggle="#section2" class="section">
+                    <div class="title">Section 2 Title</div>
+                    <div class="item">
+                        <div class="icon"></div>
+                        <div class="text">Item 3 Text</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div id="workspacePane" class="pane toggle">
+                    <div class="title">Workspaces</div>
+                    <div class="list">
+                        <div class="entity workspace" id="workspace-UUIDUUIDUUIDUUID">
+                            <div class="view">
+                                <div class="name">Workspace 1 Name</div>
+                                <div class="name">Workspace 2 Name</div>
+                            </div>
+                            <div class="editor">
+                                <!-- Form -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="creator">New Workspace</div>
+                </div>
+                <div id="groupPane" class="pane toggle">
+                    <div class="list">
+                        <div class="entity group">
+                            <div class="view">
+                                <div class="name">Group 1 Name</div>
+                                <div class="name">Group 2 Name</div>
+                            </div>
+                            <div class="editor">
+                                <!-- Form -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="pinPane" class="pane">
+                    <div class="list">
+
+                    </div>
+                </div>
+                <div id="eventPane" class="pane">Event</div>
+                <div id="actionPane" class="pane">Action</div>
+            </div>
         </div>
 <!--
         <div id="controls" class="controls">

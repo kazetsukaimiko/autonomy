@@ -1,7 +1,27 @@
+function hasClass(el, name) {
+ return new RegExp('(\\s|^)'+name+'(\\s|$)').test(el.className);
+}
+
+function addClass(el, name) {
+ if (!hasClass(el, name)) { el.className += (el.className ? ' ' : '') +name; }
+}
+
+function removeClass(el, name) {
+ if (hasClass(el, name)) {
+  el.className=el.className.replace(new RegExp('(\\s|^)'+name+'(\\s|$)'),' ').replace(/^\s+|\s+$/g, '');
+ }
+}
+
+function toggleClass(el, name) {
+ if (hasClass(el, name)) {
+  removeClass(el, name);
+ } else {
+  addClass(el, name);
+ }
+}
 
 function addTogglerEvent(toggleElement, event) {
   toggleElement.toggleOn = function() {
-    var toggle = this.getAttribute("data-toggle");
     if (toggle != null) {
       var isToggledOn = getToggleState(toggle);
       if (typeof(togglerOnCallback) != "function") {
@@ -220,7 +240,7 @@ function toggleOn(query, toggleClass) {
 }
 
 window.addEventListener("load", function() {
-  document.allElements(".toggleControl", function(elem) {
+  document.allElements("[data-toggle]", function(elem) {
     addTogglerEvent(elem);
   });
 });

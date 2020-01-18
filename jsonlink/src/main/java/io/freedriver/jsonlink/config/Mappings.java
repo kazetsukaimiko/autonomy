@@ -30,4 +30,11 @@ public class Mappings {
     public int hashCode() {
         return Objects.hash(mappings);
     }
+
+    @Override
+    public String toString() {
+        return "Mappings{" +
+                "mappings=" + mappings +
+                '}';
+    }
 }

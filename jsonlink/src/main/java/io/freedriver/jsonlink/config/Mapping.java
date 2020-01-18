@@ -64,4 +64,14 @@ public class Mapping {
                 .map(PinName::fromEntry)
                 .collect(Collectors.toSet());
     }
+
+    @Override
+    public String toString() {
+        return "Mapping{" +
+                "connectorId=" + connectorId +
+                ", connectorName='" + connectorName + '\'' +
+                ", pinNames=" + pinNames +
+                ", pinNamesAsEntities=" + getPinNamesAsEntities() +
+                '}';
+    }
 }

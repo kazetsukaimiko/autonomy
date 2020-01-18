@@ -302,6 +302,37 @@ function getCookie(cname, alt) {
  }
 }
 
+
+function firstNon(list, notSomething) {
+    for(var i=0; i<list.length; i++) {
+        if (list[i] != notSomething) {
+            return list[i];
+        }
+    }
+    return notSomething;
+}
+
+function nullCompare(n1, n2) {
+    if (n1 == null && n2 == null) {
+        return 0;
+    }
+    if (n1 == null) {
+        return -1;
+    }
+    if (n2 == null) {
+        return 1;
+    }
+    return 0;
+}
+
+function compareIntegers(i1, i2) {
+    return firstNon([
+        nullCompare(i1, i2),
+        (i1 > i2)? 1 : 0,
+        (i2 > i1)? -1 : 0
+    ], 0);
+}
+
 var absolutePath = function(href) {
  var link = document.createElement("a");
  link.href = href;

@@ -1,7 +1,10 @@
 package io.freedriver.autonomy.service.crud;
 
+import io.freedriver.autonomy.ee.Autonomy;
 import io.freedriver.autonomy.entity.EntityBase;
+import io.freedriver.autonomy.entity.jsonlink.WorkspaceEntity;
 import io.freedriver.autonomy.iface.Positional;
+import io.freedriver.ee.cdi.qualifier.NitriteDatabase;
 import org.dizitart.no2.FindOptions;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteId;
@@ -12,6 +15,8 @@ import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
 import org.dizitart.no2.objects.filters.ObjectFilters;
 
+import javax.inject.Inject;
+import javax.validation.constraints.Null;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -23,20 +28,25 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDInterface<NitriteId, T> {
-    private Logger logger = Logger.getLogger(getKlazz().getName());
+    private final Logger logger = Logger.getLogger(getKlazz().getName());
 
-    private final Nitrite nitrite;
+    @Inject
+    @NitriteDatabase(deployment = Autonomy.DEPLOYMENT, database = WorkspaceEntity.class)
+    private Nitrite nitrite;
 
-    protected NitriteCRUDService(Nitrite nitrite) {
-        this.nitrite = nitrite;
+    protected NitriteCRUDService() {
+
     }
-
 
     public Logger getLogger() {
         return logger;
     }
     public Nitrite getNitrite() {
         return nitrite;
+    }
+
+    public void setNitrite(Nitrite nitrite) {
+        this.nitrite = nitrite;
     }
 
     protected abstract Class<T> getKlazz();
@@ -106,7 +116,9 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
 
     @Override
     public T update(T entity) {
-        getEntityRepository().update(entity);
+        WriteResult writeResult = getEntityRepository().update(entity);
+        long affected = streamWriteResult(writeResult).count();
+        getLogger().log(Level.INFO, "Updated " + affected + " entities");
         return entity;
     }
 
@@ -120,9 +132,17 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
 
     @Override
     public Optional<NitriteId> delete(T entity) {
-        return Optional.of(entity)
-                .map(EntityBase::getId)
-                .flatMap(this::deleteById);
+        try {
+            return Optional.of(entity)
+                    .map(getEntityRepository()::remove)
+                    .map(WriteResult::iterator)
+                    .filter(Iterator::hasNext)
+                    .map(Iterator::next);
+        }catch (NullPointerException npe) {
+            logger.log(Level.SEVERE, "Nitrite BUG: NPE On Delete Iterator", npe);
+            return Optional.ofNullable(entity)
+                    .map(EntityBase::getId);
+        }
     }
 
     @Override
@@ -132,15 +152,22 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
 
     @Override
     public Optional<NitriteId> deleteById(NitriteId id) {
-        return Optional.of(id)
-                .map(this::nitriteIdFilter)
-                .map(getEntityRepository()::remove)
-                .map(WriteResult::iterator)
-                .map(Iterator::next);
+        logger.info("Deleting id: " + String.valueOf(id));
+        try {
+            return Optional.of(id)
+                    .map(this::nitriteIdFilter)
+                    .map(getEntityRepository()::remove)
+                    .map(WriteResult::iterator)
+                    .filter(Iterator::hasNext)
+                    .map(Iterator::next);
+        } catch (NullPointerException npe) {
+            logger.log(Level.SEVERE, "Nitrite BUG: NPE On Delete Iterator", npe);
+            return Optional.ofNullable(id);
+        }
     }
 
     private ObjectFilter nitriteIdFilter(NitriteId nitriteId) {
-        return ObjectFilters.eq("nitriteId", nitriteId);
+        return ObjectFilters.eq("id", nitriteId);
     }
 
     @Override
@@ -169,6 +196,10 @@ public abstract class NitriteCRUDService<T extends EntityBase> implements CRUDIn
 
     public static FindOptions sort() {
         return FindOptions.sort("position", SortOrder.Ascending);
+    }
+
+    private Stream<NitriteId> streamWriteResult(WriteResult writeResult) {
+        return StreamSupport.stream(writeResult.spliterator(), false);
     }
 
     private <X> Stream<T> streamCursor(Cursor<EntityBase> cursor) {
