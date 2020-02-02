@@ -8,8 +8,6 @@ import javax.enterprise.context.ApplicationScoped;
 public class WorkspaceService extends NitriteCRUDService<WorkspaceEntity> {
 
     public WorkspaceService() {
-
-        getNitrite().getRepository(WorkspaceEntity.class).find().firstOrDefault()
     }
 
     @Override
