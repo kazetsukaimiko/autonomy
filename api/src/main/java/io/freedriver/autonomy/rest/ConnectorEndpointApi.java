@@ -1,10 +1,9 @@
 package io.freedriver.autonomy.rest;
 
 import io.freedriver.autonomy.entity.jsonlink.BoardEntity;
-import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
 import io.freedriver.autonomy.entity.jsonlink.GroupEntity;
+import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
 import io.freedriver.autonomy.entity.jsonlink.PinEntity;
-import org.dizitart.no2.NitriteId;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;

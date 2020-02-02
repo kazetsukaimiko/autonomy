@@ -2,7 +2,7 @@ package io.freedriver.autonomy.entity.event.input.joystick.jstest;
 
 import io.freedriver.autonomy.entity.event.EventCoordinate;
 import io.freedriver.autonomy.entity.event.EventDescription;
-import io.freedriver.autonomy.entity.event.EventType;
+import io.freedriver.autonomy.entity.event.StateType;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEventType;
 
 import java.time.Instant;
@@ -135,7 +135,7 @@ public class JSTestEvent {
     public EventDescription describe() {
         return new EventDescription(
                 jsTestEventType.isInitial(getJsTestEventType()) ?
-                        EventType.INITIAL_STATE : EventType.CHANGE_STATE,
+                        StateType.INITIAL_STATE : StateType.CHANGE_STATE,
                 JoystickEventType.of(this)
         );
     }

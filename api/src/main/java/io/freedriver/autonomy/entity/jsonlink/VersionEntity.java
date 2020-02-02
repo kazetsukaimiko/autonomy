@@ -3,9 +3,7 @@ package io.freedriver.autonomy.entity.jsonlink;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.freedriver.autonomy.entity.EmbeddedEntityBase;
 
-import java.util.Comparator;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

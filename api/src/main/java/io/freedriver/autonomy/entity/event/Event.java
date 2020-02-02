@@ -1,11 +1,8 @@
 package io.freedriver.autonomy.entity.event;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import io.freedriver.autonomy.entity.EntityBase;
 import org.dizitart.no2.IndexType;
-import org.dizitart.no2.NitriteId;
-import org.dizitart.no2.objects.Id;
 import org.dizitart.no2.objects.Index;
 import org.dizitart.no2.objects.Indices;
 
@@ -25,23 +22,31 @@ import java.util.Objects;
 public abstract class Event extends EntityBase {
     private Instant timestamp;
 
-    private EventPriority priority = EventPriority.STANDARD;
-
-    private EventAction action;
-
     @JsonUnwrapped
     private EventCoordinate coordinate;
 
     @JsonUnwrapped
     private EventDescription description;
 
+    private SourceType sourceType;
+
+    private EventPriority priority = EventPriority.STANDARD;
+
+    private EventAction action;
+
     protected Event() {
     }
 
-    protected Event(Instant timestamp, EventCoordinate coordinate, EventDescription description) {
+    public Event(Instant timestamp, EventCoordinate coordinate, EventDescription description, SourceType sourceType, EventPriority priority) {
         this.timestamp = timestamp;
         this.coordinate = coordinate;
         this.description = description;
+        this.sourceType = sourceType;
+        this.priority = priority;
+    }
+
+    public Event(Instant timestamp, EventCoordinate coordinate, EventDescription description, SourceType sourceType) {
+        this(timestamp, coordinate, description, sourceType, EventPriority.STANDARD);
     }
 
     public Instant getTimestamp() {
@@ -66,6 +71,30 @@ public abstract class Event extends EntityBase {
 
     public void setDescription(EventDescription description) {
         this.description = description;
+    }
+
+    public SourceType getSourceType() {
+        return sourceType;
+    }
+
+    public void setSourceType(SourceType sourceType) {
+        this.sourceType = sourceType;
+    }
+
+    public EventPriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(EventPriority priority) {
+        this.priority = priority;
+    }
+
+    public EventAction getAction() {
+        return action;
+    }
+
+    public void setAction(EventAction action) {
+        this.action = action;
     }
 
     @Override

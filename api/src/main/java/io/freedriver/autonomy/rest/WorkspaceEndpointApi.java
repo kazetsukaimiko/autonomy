@@ -1,7 +1,6 @@
 package io.freedriver.autonomy.rest;
 
 import io.freedriver.autonomy.entity.jsonlink.WorkspaceEntity;
-import io.freedriver.autonomy.rest.view.WorkspaceView;
 import org.dizitart.no2.NitriteId;
 
 import javax.ws.rs.Consumes;
@@ -14,7 +13,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Path(WorkspaceEndpointApi.ROOT)
 @Produces(MediaType.APPLICATION_JSON)

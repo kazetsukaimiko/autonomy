@@ -3,27 +3,27 @@ package io.freedriver.autonomy.entity.event;
 import java.util.Objects;
 
 public class EventDescription {
-    private EventType type;
+    private StateType type;
     private String state;
 
     public EventDescription() {
     }
 
-    public EventDescription(EventType type, String state) {
+    public EventDescription(StateType type, String state) {
         this.type = type;
         this.state = state;
     }
 
-    public <E extends Enum<E>> EventDescription(EventType type, E enumState) {
+    public <E extends Enum<E>> EventDescription(StateType type, E enumState) {
         this.type = type;
         this.state = enumState.name();
     }
 
-    public EventType getType() {
+    public StateType getType() {
         return type;
     }
 
-    public void setType(EventType type) {
+    public void setType(StateType type) {
         this.type = type;
     }
 

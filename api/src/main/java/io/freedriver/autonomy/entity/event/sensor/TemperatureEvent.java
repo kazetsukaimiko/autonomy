@@ -4,10 +4,10 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import io.freedriver.autonomy.entity.event.Event;
 import io.freedriver.autonomy.entity.event.EventCoordinate;
 import io.freedriver.autonomy.entity.event.EventDescription;
-import io.freedriver.autonomy.entity.event.EventType;
+import io.freedriver.autonomy.entity.event.SourceType;
+import io.freedriver.autonomy.entity.event.StateType;
 import org.dizitart.no2.objects.InheritIndices;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 @InheritIndices
@@ -19,7 +19,7 @@ public class TemperatureEvent extends Event {
     }
 
     public TemperatureEvent(Instant timestamp, EventCoordinate coordinate, EventDescription description, TemperatureValue temperature) {
-        super(timestamp, coordinate, description);
+        super(timestamp, coordinate, description, SourceType.AUTOMATIC);
         this.temperature = temperature;
     }
 
@@ -27,7 +27,7 @@ public class TemperatureEvent extends Event {
         this(
                 Instant.now(),
                 new EventCoordinate(null, "TEMPERATURE"),
-                new EventDescription(EventType.CHANGE_STATE,
+                new EventDescription(StateType.CHANGE_STATE,
                         String.valueOf(temperature)
                         ),
                     temperature

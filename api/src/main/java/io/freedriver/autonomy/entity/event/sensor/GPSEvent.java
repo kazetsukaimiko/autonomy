@@ -3,7 +3,8 @@ package io.freedriver.autonomy.entity.event.sensor;
 import io.freedriver.autonomy.entity.event.Event;
 import io.freedriver.autonomy.entity.event.EventCoordinate;
 import io.freedriver.autonomy.entity.event.EventDescription;
-import io.freedriver.autonomy.entity.event.EventType;
+import io.freedriver.autonomy.entity.event.SourceType;
+import io.freedriver.autonomy.entity.event.StateType;
 import org.dizitart.no2.objects.InheritIndices;
 
 import java.math.BigDecimal;
@@ -18,7 +19,7 @@ public class GPSEvent extends Event {
     }
 
     public GPSEvent(Instant timestamp, EventCoordinate coordinate, EventDescription description, BigDecimal latitude, BigDecimal longitude) {
-        super(timestamp, coordinate, description);
+        super(timestamp, coordinate, description, SourceType.AUTOMATIC);
         this.latitude = latitude;
         this.longitude = longitude;
     }
@@ -27,7 +28,7 @@ public class GPSEvent extends Event {
         this(
                 Instant.now(),
                 new EventCoordinate(null, "GPS_LOCATION"),
-                new EventDescription(EventType.CHANGE_STATE,
+                new EventDescription(StateType.CHANGE_STATE,
                         "lat:" + String.valueOf(latitude) +
                                 ";lon:" + String.valueOf(longitude)
                         ),

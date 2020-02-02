@@ -3,6 +3,7 @@ package io.freedriver.autonomy.entity.event.input.joystick;
 import io.freedriver.autonomy.entity.event.Event;
 import io.freedriver.autonomy.entity.event.EventCoordinate;
 import io.freedriver.autonomy.entity.event.EventDescription;
+import io.freedriver.autonomy.entity.event.SourceType;
 import io.freedriver.autonomy.entity.event.input.joystick.jstest.JSTestEvent;
 import org.dizitart.no2.objects.InheritIndices;
 
@@ -18,7 +19,7 @@ public class JoystickEvent extends Event {
     }
 
     public JoystickEvent(Instant timestamp, EventCoordinate coordinate, EventDescription description, Long number, Long value, JoystickEventType joystickEventType) {
-        super(timestamp, coordinate, description);
+        super(timestamp, coordinate, description, SourceType.HUMAN);
         this.number = number;
         this.value = value;
         this.joystickEventType = joystickEventType;
