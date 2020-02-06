@@ -4,6 +4,7 @@ import io.freedriver.autonomy.async.VEDirectDeviceService;
 import io.freedriver.autonomy.vedirect.VEDirectMessageService;
 import kaze.victron.VEDirectDevice;
 import kaze.victron.VEDirectMessage;
+import kaze.victron.VictronDevice;
 import kaze.victron.VictronProduct;
 
 import javax.enterprise.context.RequestScoped;
@@ -26,15 +27,15 @@ public class VictronView {
     @Inject
     private VEDirectMessageService messageService;
 
-    public List<VictronProduct> getProducts() {
-        return messageService.products()
+    public List<VictronDevice> getProducts() {
+        return messageService.devices()
                 .stream()
-                .sorted(Comparator.comparing(VictronProduct::getSerialNumber))
+                .sorted(Comparator.comparing(VictronDevice::getSerialNumber))
                 .collect(Collectors.toList());
     }
 
-    public VEDirectMessage getLastMessage(VictronProduct victronProduct) {
-        return messageService.last(victronProduct, Duration.of(1, SECONDS))
+    public VEDirectMessage getLastMessage(VictronDevice victronDevice) {
+        return messageService.last(victronDevice, Duration.of(1, SECONDS))
                 .max(Comparator.comparing(VEDirectMessage::getTimestamp))
                 .map(VEDirectMessage.class::cast)
                 .orElseGet(VEDirectMessage::new);

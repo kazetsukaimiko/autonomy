@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.rest;
 
 import kaze.victron.VEDirectMessage;
-import kaze.victron.VictronProduct;
+import kaze.victron.VictronDevice;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -20,28 +20,28 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Consumes(APPLICATION_JSON)
 public interface VEDirectEndpointApi {
     String ROOT = "/vedirect";
-    String PRODUCT_PATH = "/product";
-    String PRODUCT_SERIAL = "productSerial";
-    String PRODUCT_SERIAL_PATH = PRODUCT_PATH + "/{"+PRODUCT_SERIAL+"}";
+    String DEVICE_PATH = "/device";
+    String DEVICE_SERIAL = "deviceSerial";
+    String DEVICE_SERIAL_PATH = DEVICE_PATH + "/{"+DEVICE_SERIAL+"}";
     String NUMBER = "number";
     String UNITS = "units";
-    String MESSAGE_TIME_PATH = PRODUCT_SERIAL_PATH + "/last/{"+NUMBER+"}/{"+UNITS+"}";
+    String MESSAGE_TIME_PATH = DEVICE_SERIAL_PATH + "/last/{"+NUMBER+"}/{"+UNITS+"}";
     String FIELD = "field";
     String FIELD_DATA_PATH = MESSAGE_TIME_PATH + "/{"+FIELD+"}";
 
     @GET
-    @Path(PRODUCT_PATH)
-    Set<VictronProduct> getProducts();
+    @Path(DEVICE_PATH)
+    Set<VictronDevice> getDevices();
 
     @GET
-    @Path(PRODUCT_SERIAL_PATH)
-    List<VEDirectMessage> getProducts(@PathParam(PRODUCT_SERIAL) String serial);
+    @Path(DEVICE_SERIAL_PATH)
+    List<VEDirectMessage> getDevices(@PathParam(DEVICE_SERIAL) String serial);
 
     @GET
     @Path(MESSAGE_TIME_PATH)
-    List<VEDirectMessage> getProductsFrom(@PathParam(PRODUCT_SERIAL) String serial, @PathParam(NUMBER) Integer number, @PathParam(UNITS) ChronoUnit chronoUnit);
+    List<VEDirectMessage> getDevicesFrom(@PathParam(DEVICE_SERIAL) String serial, @PathParam(NUMBER) Integer number, @PathParam(UNITS) ChronoUnit chronoUnit);
 
     @GET
     @Path(FIELD_DATA_PATH)
-    List<BigDecimal> getFieldData(@PathParam(PRODUCT_SERIAL) String serial, @PathParam(NUMBER) Integer number, @PathParam(UNITS) ChronoUnit chronoUnit, @PathParam(FIELD) String field);
+    List<BigDecimal> getFieldData(@PathParam(DEVICE_SERIAL) String serial, @PathParam(NUMBER) Integer number, @PathParam(UNITS) ChronoUnit chronoUnit, @PathParam(FIELD) String field);
 }

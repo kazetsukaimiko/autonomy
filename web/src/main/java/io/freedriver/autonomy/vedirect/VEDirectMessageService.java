@@ -4,6 +4,7 @@ import io.freedriver.autonomy.ee.Autonomy;
 import io.freedriver.ee.cdi.qualifier.NitriteDatabase;
 import io.undertow.servlet.api.Deployment;
 import kaze.victron.VEDirectMessage;
+import kaze.victron.VictronDevice;
 import kaze.victron.VictronProduct;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.objects.ObjectFilter;
@@ -26,13 +27,13 @@ import java.util.stream.StreamSupport;
 @ApplicationScoped
 public class VEDirectMessageService {
 
-    private static final Set<VictronProduct> PRODUCT_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Set<VictronDevice> DEVICE_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Inject @NitriteDatabase(database = NitriteVEDirectMessage.class, deployment = Autonomy.DEPLOYMENT)
     private Nitrite nitrite;
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
-        products();
+        devices();
     }
 
 
@@ -43,8 +44,8 @@ public class VEDirectMessageService {
      */
     public NitriteVEDirectMessage save(VEDirectMessage veDirectMessage) {
         // Add to Cache.
-        VictronProduct.of(veDirectMessage)
-                .ifPresent(PRODUCT_CACHE::add);
+        VictronDevice.of(veDirectMessage)
+                .ifPresent(DEVICE_CACHE::add);
         // Upgrade to a NitriteEntity.
         NitriteVEDirectMessage nitriteVEDirectMessage = new NitriteVEDirectMessage(veDirectMessage);
         // Transfer nitriteId if needed.
@@ -72,51 +73,51 @@ public class VEDirectMessageService {
     }
 
     /**
-     * Get last Duration of messages for the given product.
-     * @param product
+     * Get last Duration of messages for the given device.
+     * @param device
      * @param duration
      * @return
      */
-    public Stream<NitriteVEDirectMessage> last(VictronProduct product, Duration duration) {
+    public Stream<NitriteVEDirectMessage> last(VictronDevice device, Duration duration) {
         return query(
                 ObjectFilters.gte("timestamp", ZonedDateTime.now().minus(duration)),
-                ObjectFilters.eq("productType", product.getType()),
-                ObjectFilters.eq("serialNumber", product.getSerialNumber()));
+                ObjectFilters.eq("deviceType", device.getType()),
+                ObjectFilters.eq("serialNumber", device.getSerialNumber()));
     }
 
     /**
-     * Get messages for the given product.
-     * @param product
+     * Get messages for the given device.
+     * @param device
      * @return
      */
-    public Stream<NitriteVEDirectMessage> byProduct(VictronProduct product) {
+    public Stream<NitriteVEDirectMessage> byDevice(VictronDevice device) {
         return query(
-                ObjectFilters.eq("productType", product.getType()),
-                ObjectFilters.eq("serialNumber", product.getSerialNumber()));
+                ObjectFilters.eq("deviceType", device.getType()),
+                ObjectFilters.eq("serialNumber", device.getSerialNumber()));
     }
 
     /**
-     * Update the Product Cache.
+     * Update the Device Cache.
      * @return
      */
-    private Set<VictronProduct> updateProductCache() {
+    private Set<VictronDevice> updateDeviceCache() {
         query()
-            .map(VictronProduct::of)
+            .map(VictronDevice::of)
             .flatMap(Optional::stream)
             .distinct()
-            .forEach(PRODUCT_CACHE::add);
-        return PRODUCT_CACHE;
+            .forEach(DEVICE_CACHE::add);
+        return DEVICE_CACHE;
     }
 
     /**
-     * Get all known VictronProducts.
+     * Get all known VictronDevices.
      * @return
      */
-    public Set<VictronProduct> products() {
-        if (PRODUCT_CACHE.isEmpty()) {
-            return updateProductCache();
+    public Set<VictronDevice> devices() {
+        if (DEVICE_CACHE.isEmpty()) {
+            return updateDeviceCache();
         }
-        return PRODUCT_CACHE;
+        return DEVICE_CACHE;
     }
 
     /**

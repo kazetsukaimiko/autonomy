@@ -1,6 +1,7 @@
 package io.freedriver.autonomy.cdi.qualifier;
 
-import kaze.victron.VictronProductType;
+
+import kaze.victron.VictronProduct;
 
 import javax.enterprise.util.Nonbinding;
 import javax.inject.Qualifier;
@@ -11,7 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface VEProduct {
     @Nonbinding
-    VictronProductType value();
+    VictronProduct value();
     @Nonbinding
     String serial();
 }

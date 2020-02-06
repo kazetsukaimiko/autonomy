@@ -2,8 +2,8 @@ package io.freedriver.autonomy.vedirect;
 
 import io.freedriver.autonomy.cdi.qualifier.VEProduct;
 import kaze.victron.VEDirectMessage;
+import kaze.victron.VictronDevice;
 import kaze.victron.VictronProduct;
-import kaze.victron.VictronProductType;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 @ApplicationScoped
 public class VEDirectMessageActor {
     private static final Logger LOGGER = Logger.getLogger(VEDirectMessageActor.class.getName());
-    private static final Map<VictronProduct, VEDirectMessage> lastMessage = new ConcurrentHashMap<>();
+    private static final Map<VictronDevice, VEDirectMessage> lastMessage = new ConcurrentHashMap<>();
 
     @Inject
     private VEDirectMessageService messageService;
@@ -31,11 +31,11 @@ public class VEDirectMessageActor {
     /*
      * SERVICE METHODS
      */
-    public Map<VictronProduct, VEDirectMessage> getSummary() {
+    public Map<VictronDevice, VEDirectMessage> getSummary() {
         return new HashMap<>(lastMessage);
     }
 
-    public Set<VictronProduct> getProducts() {
+    public Set<VictronDevice> getProducts() {
         return lastMessage.keySet();
     }
 
@@ -45,11 +45,11 @@ public class VEDirectMessageActor {
      * EVENT HANDLERS
      */
     public synchronized void actOnVEDirectMessage(@Observes @Default VEDirectMessage veDirectMessage) throws IOException {
-        VictronProduct.of(veDirectMessage)
+        VictronDevice.of(veDirectMessage)
                 .ifPresent(product -> handleProductMessage(product, veDirectMessage));
     }
 
-    public synchronized void handleProductMessage(VictronProduct product, VEDirectMessage veDirectMessage) {
+    public synchronized void handleProductMessage(VictronDevice product, VEDirectMessage veDirectMessage) {
         if (lastMessage.containsKey(product)) {
             Stream.of(VEDirectMessageChange.values())
                     .forEach(field ->
@@ -67,7 +67,7 @@ public class VEDirectMessageActor {
     }
 
     /*
-    public synchronized void handleHistory(VictronProduct product, VEDirectMessage newMessage) {
+    public synchronized void handleHistory(VictronDevice product, VEDirectMessage newMessage) {
         if (!lastMessages.containsKey(product)) {
             lastMessages.put(product, new ArrayList<>());
         }
@@ -83,13 +83,13 @@ public class VEDirectMessageActor {
 
      */
 
-    @Produces @VEProduct(value = VictronProductType.UNKNOWN, serial = "")
+    @Produces @VEProduct(value = VictronProduct.UNKNOWN, serial = "")
     public Optional<VEDirectMessage> getLastMessage(InjectionPoint injectionPoint) {
         return injectionPoint.getQualifiers().stream()
                 .filter(VEProduct.class::isInstance)
                 .map(VEProduct.class::cast)
                 .findFirst()
-                .map(productQualifier -> new VictronProduct(productQualifier.value(), productQualifier.serial()))
+                .map(productQualifier -> new VictronDevice(productQualifier.value(), productQualifier.serial()))
                 .filter(lastMessage::containsKey)
                 .map(lastMessage::get);
     }

@@ -2,7 +2,7 @@ package io.freedriver.autonomy.vedirect;
 
 import io.freedriver.autonomy.rest.VEDirectEndpointApi;
 import kaze.victron.VEDirectMessage;
-import kaze.victron.VictronProduct;
+import kaze.victron.VictronDevice;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -21,22 +21,22 @@ public class VEDirectEndpoint implements VEDirectEndpointApi {
     private VEDirectMessageService messageService;
 
     @Override
-    public Set<VictronProduct> getProducts() {
-        return messageService.products();
+    public Set<VictronDevice> getDevices() {
+        return messageService.devices();
     }
 
     @Override
-    public List<VEDirectMessage> getProducts(String serial) {
+    public List<VEDirectMessage> getDevices(String serial) {
         return bySerial(serial)
-                .flatMap(messageService::byProduct)
+                .flatMap(messageService::byDevice)
                 .map(VEDirectMessage.class::cast)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<VEDirectMessage> getProductsFrom(String serial, Integer number, ChronoUnit chronoUnit) {
+    public List<VEDirectMessage> getDevicesFrom(String serial, Integer number, ChronoUnit chronoUnit) {
         return bySerial(serial)
-                .flatMap(product -> messageService.last(product, Duration.of(number, chronoUnit)))
+                .flatMap(device -> messageService.last(device, Duration.of(number, chronoUnit)))
                 .collect(Collectors.toList());
     }
 
@@ -45,8 +45,8 @@ public class VEDirectEndpoint implements VEDirectEndpointApi {
         return null;
     }
 
-    private Stream<VictronProduct> bySerial(String serial) {
-        return getProducts().stream()
-                .filter(product -> Objects.equals(serial, product.getSerialNumber()));
+    private Stream<VictronDevice> bySerial(String serial) {
+        return getDevices().stream()
+                .filter(device -> Objects.equals(serial, device.getSerialNumber()));
     }
 }
