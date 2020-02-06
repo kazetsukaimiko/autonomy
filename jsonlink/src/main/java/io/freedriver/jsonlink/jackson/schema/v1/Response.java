@@ -1,6 +1,7 @@
 package io.freedriver.jsonlink.jackson.schema.v1;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,7 +30,7 @@ public class Response {
     }
 
     public Map<Identifier, Boolean> getDigital() {
-        return digital;
+        return digital != null ? digital : Collections.emptyMap();
     }
 
     public void setDigital(Map<Identifier, Boolean> digital) {
@@ -37,7 +38,7 @@ public class Response {
     }
 
     public List<AnalogResponse> getAnalog() {
-        return analog;
+        return analog != null ? analog : Collections.emptyList();
     }
 
     public void setAnalog(List<AnalogResponse> analog) {
