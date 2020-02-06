@@ -41,6 +41,10 @@ public class ReadRequest {
                 analogRead.getResistance());
     }
 
+    public boolean isEmpty() {
+        return digital.isEmpty() && analog.isEmpty();
+    }
+
     @Override
     public String toString() {
         return "ReadRequest{" +

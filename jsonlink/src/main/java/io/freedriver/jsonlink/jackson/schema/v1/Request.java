@@ -129,6 +129,11 @@ public class Request {
         return this;
     }
 
+    public boolean isEmpty() {
+        return (read == null || read.isEmpty()) && (write == null || write.isEmpty()) &&
+               (mode.isEmpty()) && turn_on.isEmpty() && turn_off.isEmpty();
+    }
+
     @Override
     public String toString() {
         return "Request{" +

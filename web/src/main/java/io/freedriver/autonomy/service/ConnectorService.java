@@ -17,6 +17,7 @@ import io.freedriver.jsonlink.Connectors;
 import io.freedriver.jsonlink.config.Mappings;
 import io.freedriver.jsonlink.config.PinName;
 import io.freedriver.jsonlink.jackson.JsonLinkModule;
+import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
@@ -24,16 +25,20 @@ import org.dizitart.no2.NitriteId;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -252,5 +257,17 @@ public class ConnectorService {
                 .sorted(Comparator.comparing(UUID::toString))
                 .map(UUID::toString)
                 .collect(Collectors.joining(","));
+    }
+
+    public synchronized Response send(UUID uuid, Request request) {
+        return getConnectorByBoardId(uuid)
+                .map(connector -> connector.send(request))
+                .orElseThrow(() -> new WebApplicationException("Board not found", 404));
+    }
+
+    public synchronized Map<Identifier, Boolean> readDigital(UUID boardId, Collection<Identifier> pins) {
+        return send(boardId, pins.stream()
+                .reduce(new Request(), Request::digitalRead, (a, b) -> a))
+                .getDigital();
     }
 }

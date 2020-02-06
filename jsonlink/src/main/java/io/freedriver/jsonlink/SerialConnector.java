@@ -53,7 +53,7 @@ public class SerialConnector implements Connector, AutoCloseable {
     }
 
     @Override
-    public Optional<Response> sendJSONRequest(String requestJSON) throws ConnectorException {
+    public synchronized Optional<Response> sendJSONRequest(String requestJSON) throws ConnectorException {
         try {
             LOGGER.log(Level.FINEST, requestJSON);
             serialPort.writeString(requestJSON);
@@ -69,11 +69,11 @@ public class SerialConnector implements Connector, AutoCloseable {
     }
 
     @Override
-    public boolean isClosed() {
+    public synchronized boolean isClosed() {
         return !serialPort.isOpened();
     }
 
-    private Optional<String> pollUntilFinish() throws SerialPortException {
+    private synchronized Optional<String> pollUntilFinish() throws SerialPortException {
         boolean invalidBuffer = buffer.length() > 0 && !buffer.toString().startsWith("{");
         while (true) {
             Optional<String> response = poll(10);
@@ -134,7 +134,7 @@ public class SerialConnector implements Connector, AutoCloseable {
         return Optional.empty();
     }
 
-    private String readUntil(String delimiter) throws SerialPortException {
+    private synchronized String readUntil(String delimiter) throws SerialPortException {
         long startTime = System.currentTimeMillis();
         StringBuilder sb = new StringBuilder();
         while (true) {
@@ -150,7 +150,7 @@ public class SerialConnector implements Connector, AutoCloseable {
 
 
     @Override
-    public void close() throws Exception {
+    public synchronized void close() throws Exception {
         if (!isClosed()) {
             LOGGER.log(Level.WARNING, "Closing serialPort.");
             poll(100);

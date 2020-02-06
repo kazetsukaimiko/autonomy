@@ -17,6 +17,11 @@
             <artifactId>javafx-controls</artifactId>
             <version>11</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.freedriver.autonomy</groupId>
+            <artifactId>autonomy-api</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

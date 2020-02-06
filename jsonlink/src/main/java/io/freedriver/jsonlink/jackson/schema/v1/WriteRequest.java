@@ -18,4 +18,8 @@ public class WriteRequest {
         getDigital().put(pinWrite.getPinNumber(), pinWrite.isOperation());
         return this;
     }
+
+    public boolean isEmpty() {
+        return digital.isEmpty();
+    }
 }

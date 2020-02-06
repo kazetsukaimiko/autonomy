@@ -29,6 +29,19 @@ public class GroupEntity extends EmbeddedEntityBase {
         this.permutations = entity.permutations;
     }
 
+    public GroupEntity(String name, List<PinEntity> pins, List<PermutationEntity> permutations) {
+        this.name = name;
+        this.pins = pins;
+        this.permutations = permutations;
+    }
+
+    public GroupEntity(EmbeddedEntityBase base, String name, List<PinEntity> pins, List<PermutationEntity> permutations) {
+        super(base);
+        this.name = name;
+        this.pins = pins;
+        this.permutations = permutations;
+    }
+
     public String getName() {
         return name;
     }

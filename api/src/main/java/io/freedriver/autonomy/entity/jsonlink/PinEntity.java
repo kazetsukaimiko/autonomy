@@ -19,6 +19,16 @@ public abstract class PinEntity extends EmbeddedEntityBase {
     public PinEntity() {
     }
 
+    public PinEntity(int pin, String name, Mode mode) {
+        this(Identifier.of(pin), name, mode);
+    }
+
+    public PinEntity(Identifier pin, String name, Mode mode) {
+        this.pin = pin;
+        this.name = name;
+        this.mode = mode;
+    }
+
     public PinEntity(PinEntity entity) {
         super(entity);
         this.pin = entity.pin;
