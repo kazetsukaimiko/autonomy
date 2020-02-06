@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public final class Connectors {
-    private static final ExecutorService THREADPOOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private static final ExecutorService THREADPOOL = Executors.newSingleThreadExecutor();
     private static final Set<Connector> ALL_CONNECTORS = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final Logger LOGGER = Logger.getLogger(Connectors.class.getName());
 
@@ -45,7 +45,6 @@ public final class Connectors {
     }
 
     private static synchronized Optional<Connector> findOrOpen(String device) {
-
         Optional<Connector> found = findByDeviceId(device);
         if (found.isPresent()) {
             Connector inQuestion = found.get();
