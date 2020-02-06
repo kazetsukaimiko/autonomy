@@ -184,8 +184,17 @@ public class ConnectorService {
 
             System.out.println(pins);
 
+
+            UUID boardUUID = mapping.getConnectorId();
+            if (boardUUID == null) {
+                boardUUID = getAllConnectors().stream()
+                        .findFirst()
+                        .map(Connector::getUUID)
+                        .orElse(null);
+            }
+
             // 2: Make the board name.
-            return getConnectorByBoardId(mapping.getConnectorId())
+            return getConnectorByBoardId(boardUUID)
                     .map(connector -> {
                         BoardEntity board = new BoardEntity();
                         board.setBoardId(connector.getUUID());
