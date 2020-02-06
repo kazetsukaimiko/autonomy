@@ -188,8 +188,8 @@ public class ConnectorService {
             UUID boardUUID = mapping.getConnectorId();
             if (boardUUID == null) {
                 boardUUID = getAllConnectors().stream()
-                        .findFirst()
                         .map(Connector::getUUID)
+                        .findFirst()
                         .orElse(null);
             }
 
