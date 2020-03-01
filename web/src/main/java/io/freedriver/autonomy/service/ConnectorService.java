@@ -17,10 +17,7 @@ import io.freedriver.jsonlink.Connectors;
 import io.freedriver.jsonlink.config.Mappings;
 import io.freedriver.jsonlink.config.PinName;
 import io.freedriver.jsonlink.jackson.JsonLinkModule;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import io.freedriver.jsonlink.jackson.schema.v1.*;
 import org.dizitart.no2.NitriteId;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -29,15 +26,7 @@ import javax.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -50,7 +39,7 @@ import java.util.stream.Stream;
 @ApplicationScoped
 public class ConnectorService {
     private static final Logger LOGGER = Logger.getLogger(ConnectorService.class.getName());
-    private static final Set<Connector> ACTIVE_CONNECTORS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Map<UUID, Connector> ACTIVE_CONNECTORS = new ConcurrentHashMap<>();
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .registerModule(new JsonLinkModule())
@@ -87,7 +76,7 @@ public class ConnectorService {
         workspaceEntity.setId(workspaceService.save(workspaceEntity).getId());
 
         getAllConnectors()
-                .forEach(connector -> configure(connector, workspaceEntity));
+                .forEach((boardId, connector) -> configure(connector, workspaceEntity));
         workspaceService.findAll()
                 .peek(workspaceEntity1 -> workspaceEntity1.setCurrent((Objects.equals(
                         workspaceEntity.getId(), workspaceEntity1.getId()
@@ -148,20 +137,24 @@ public class ConnectorService {
                 .findFirst();
     }
 
+    public List<UUID> getConnectedBoards() {
+        return new ArrayList<>(getAllConnectors().keySet());
+    }
+
     /*
      * INTERNALS / HELPERS
      */
 
-    private Set<Connector> getAllConnectors() {
+    private Map<UUID, Connector> getAllConnectors() {
         Connectors.allConnectors()
-                .filter(connector -> !ACTIVE_CONNECTORS.contains(connector))
-                .forEach(ACTIVE_CONNECTORS::add);
+                .filter(connector -> !ACTIVE_CONNECTORS.containsKey(connector.getUUID()))
+                .forEach(connector -> ACTIVE_CONNECTORS.put(connector.getUUID(), connector));
         return ACTIVE_CONNECTORS;
     }
 
 
     private Optional<Connector> getConnectorByBoardId(UUID boardId) {
-        return getAllConnectors().stream()
+        return getAllConnectors().values().stream()
                 .filter(connector -> Objects.equals(boardId, connector.getUUID()))
                 .findFirst();
     }
@@ -187,7 +180,7 @@ public class ConnectorService {
 
             UUID boardUUID = mapping.getConnectorId();
             if (boardUUID == null) {
-                boardUUID = getAllConnectors().stream()
+                boardUUID = getAllConnectors().values().stream()
                         .map(Connector::getUUID)
                         .findFirst()
                         .orElse(null);
@@ -261,7 +254,7 @@ public class ConnectorService {
     }
 
     public String describeBoards() {
-        return getAllConnectors().stream()
+        return getAllConnectors().values().stream()
                 .map(Connector::getUUID)
                 .sorted(Comparator.comparing(UUID::toString))
                 .map(UUID::toString)
@@ -277,6 +270,13 @@ public class ConnectorService {
     public synchronized Map<Identifier, Boolean> readDigital(UUID boardId, Collection<Identifier> pins) {
         return send(boardId, pins.stream()
                 .reduce(new Request(), Request::digitalRead, (a, b) -> a))
+                .getDigital();
+    }
+
+    public synchronized Map<Identifier, Boolean> writeDigital(UUID boardId, Map<Identifier, Boolean> state) {
+        Request request = new Request();
+        state.forEach((pin, pinState) -> request.digitalWrite(new DigitalWrite(pin, pinState)));
+        return send(boardId, request)
                 .getDigital();
     }
 }

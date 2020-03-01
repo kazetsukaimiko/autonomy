@@ -114,6 +114,13 @@
       <artifactId>victron-java</artifactId>
     </dependency>
 
+    <!-- Desktop notification -->
+    <dependency>
+      <groupId>com.dorkbox</groupId>
+      <artifactId>Notify</artifactId>
+      <version>3.7</version>
+    </dependency>
+
     <!-- Storage Engines -->
     <dependency>
         <groupId>org.hrorm</groupId>

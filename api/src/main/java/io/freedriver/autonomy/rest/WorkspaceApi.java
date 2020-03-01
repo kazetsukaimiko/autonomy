@@ -14,10 +14,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Path(WorkspaceEndpointApi.ROOT)
+@Path(WorkspaceApi.ROOT)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface WorkspaceEndpointApi {
+public interface WorkspaceApi {
     String ROOT = "/workspaces";
     String WORKSPACE_ID = "workspaceId";
     String BY_ID = "/id/{"+WORKSPACE_ID+"}";

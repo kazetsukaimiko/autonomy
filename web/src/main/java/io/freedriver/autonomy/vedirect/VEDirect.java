@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.vedirect;
 
-import io.freedriver.autonomy.rest.VEDirectEndpointApi;
+import io.freedriver.autonomy.rest.VEDirectApi;
 import kaze.victron.VEDirectMessage;
 import kaze.victron.VictronDevice;
 
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RequestScoped
-public class VEDirectEndpoint implements VEDirectEndpointApi {
+public class VEDirect implements VEDirectApi {
     @Inject
     private VEDirectMessageService messageService;
 

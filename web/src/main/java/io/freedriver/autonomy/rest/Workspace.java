@@ -1,7 +1,6 @@
 package io.freedriver.autonomy.rest;
 
 import io.freedriver.autonomy.entity.jsonlink.WorkspaceEntity;
-import io.freedriver.autonomy.rest.view.WorkspaceView;
 import io.freedriver.autonomy.service.crud.WorkspaceService;
 import org.dizitart.no2.NitriteId;
 
@@ -9,10 +8,9 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RequestScoped
-public class WorkspaceEndpoint implements WorkspaceEndpointApi {
+public class Workspace implements WorkspaceApi {
     @Inject
     private WorkspaceService service;
 

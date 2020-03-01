@@ -15,10 +15,10 @@ import java.util.Set;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-@Path(VEDirectEndpointApi.ROOT)
+@Path(VEDirectApi.ROOT)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-public interface VEDirectEndpointApi {
+public interface VEDirectApi {
     String ROOT = "/vedirect";
     String DEVICE_PATH = "/device";
     String DEVICE_SERIAL = "deviceSerial";

@@ -1,4 +1,4 @@
 package io.freedriver.autonomy.rest;
 
-public interface UpdateEndpoint {
+public interface UpdateApi {
 }

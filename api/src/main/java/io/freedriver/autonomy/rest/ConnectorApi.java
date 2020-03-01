@@ -5,7 +5,6 @@ import io.freedriver.autonomy.entity.jsonlink.GroupEntity;
 import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
 import io.freedriver.autonomy.entity.jsonlink.PinEntity;
 import io.freedriver.jsonlink.config.Operation;
-import io.freedriver.jsonlink.config.Operator;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 
 import javax.ws.rs.Consumes;
@@ -14,18 +13,16 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-@Path(ConnectorEndpointApi.ROOT)
+@Path(ConnectorApi.ROOT)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ConnectorEndpointApi {
+public interface ConnectorApi {
     String ROOT = "/connectors";
     String BOARD_ID = "board";
     String BOARD_ID_PATH = "/id/{"+BOARD_ID+"}";

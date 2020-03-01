@@ -11,7 +11,7 @@ import javax.inject.Inject;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class NitriteEventEndpoint implements EventEndpoint<NitriteId> {
+public class NitriteEventApi implements EventApi<NitriteId> {
 
     @Inject
     @NitriteDatabase(deployment = Autonomy.DEPLOYMENT, database = Event.class)

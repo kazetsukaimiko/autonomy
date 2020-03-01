@@ -8,9 +8,9 @@ import javax.ws.rs.Produces;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-@Path(EventEndpoint.ROOT)
+@Path(EventApi.ROOT)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-public interface EventEndpoint<ID> extends CRUDEndpoint<Event, ID> {
+public interface EventApi<ID> extends CRUDApi<Event, ID> {
     public static final String ROOT = "/event";
 }

@@ -18,12 +18,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static io.freedriver.jsonlink.config.Operation.ON;
 
 @RequestScoped
-public class ConnectorEndpoint implements ConnectorEndpointApi {
+public class Connector implements ConnectorApi {
 
     @Inject
     private ConnectorService connectorService;
