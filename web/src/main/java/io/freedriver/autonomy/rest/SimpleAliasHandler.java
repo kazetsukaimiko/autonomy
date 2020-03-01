@@ -7,6 +7,7 @@ import io.freedriver.jsonlink.config.Mappings;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.util.file.FileProviders;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+@RequestScoped
 public class SimpleAliasHandler implements SimpleAliasApi {
     @Inject
     private ConnectorService connectorService;
