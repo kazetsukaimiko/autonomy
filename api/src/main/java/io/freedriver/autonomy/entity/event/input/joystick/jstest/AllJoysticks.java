@@ -36,7 +36,7 @@ public class AllJoysticks implements AutoCloseable {
         while (open) {
             populate();
             try {
-                Thread.sleep(10);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 throw new JSTestException("Interrupted: ", e);
             }
