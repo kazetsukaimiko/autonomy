@@ -59,24 +59,23 @@ public class AllJoysticks implements AutoCloseable {
     private void populate() {
         JSTestReader.getJoysticksPaths().stream()
                 .filter(path -> !activeJoysticks.containsKey(path) || !activeJoysticks.get(path).isDone())
+                .filter(path -> !getFailedJoystickMap().containsKey(path))
                 .forEach(this::constructFromPool);
     }
 
     private synchronized void constructFromPool(Path path) {
-        if (!getFailedJoystickMap().containsKey(path)) {
-            LOGGER.info("Joystick " + path.toString() + " joining pool");
-            try {
-                activeJoysticks.put(
-                        path,
-                        executorService.submit(() -> addOns.apply(JSTestReader.ofJoystick(path)).forEach(sink)));
-            } catch (Exception e) {
-                FailedJoystick failedJoystick = new FailedJoystick(path);
-                LOGGER.log(Level.SEVERE, e, () -> "Failed to assemble Joystick at "
-                        + path.toString() + " into the pool. "
-                        + "Will retry in " + failedJoystick.getDelay().toMillis() + "ms");
-                getFailedJoystickMap()
-                        .put(path, failedJoystick);
-            }
+        LOGGER.info("Joystick " + path.toString() + " joining pool");
+        try {
+            activeJoysticks.put(
+                    path,
+                    executorService.submit(() -> addOns.apply(JSTestReader.ofJoystick(path)).forEach(sink)));
+        } catch (Exception e) {
+            FailedJoystick failedJoystick = new FailedJoystick(path);
+            LOGGER.log(Level.SEVERE, e, () -> "Failed to assemble Joystick at "
+                    + path.toString() + " into the pool. "
+                    + "Will retry in " + failedJoystick.getDelay().toMillis() + "ms");
+            getFailedJoystickMap()
+                    .put(path, failedJoystick);
         }
     }
 
