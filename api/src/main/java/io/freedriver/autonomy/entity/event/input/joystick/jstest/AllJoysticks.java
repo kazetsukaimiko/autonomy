@@ -73,6 +73,9 @@ public class AllJoysticks implements AutoCloseable {
                 .forEach(this::constructFromPool);
     }
 
+    /**
+     * Decides if we should add the discovered joystick device file to the pool.
+     */
     private boolean shouldCreateReader(Path path) {
         if (!getActiveJoysticks().containsKey(path)) {
             if (!getFailedJoystickMap().containsKey(path)) {
@@ -83,6 +86,9 @@ public class AllJoysticks implements AutoCloseable {
         return false;
     }
 
+    /**
+     * Creates a thread for submitting joystick events to the pool.
+     */
     private synchronized void constructFromPool(Path path) {
         LOGGER.info("Joystick " + path.toString() + " joining pool");
         try {
