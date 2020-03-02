@@ -5,7 +5,7 @@ function logger(log) {
 function loadWorkspaces(uuid) {
   var ajax = fs.ajax()
     //.POST("/rest/workspaces")
-    .GET("http://localhost:18080/rest/simple/id/"+uuid)
+    .GET("/rest/simple/id/"+uuid)
     .accept("application/json")
     .handle(200, function(xhr, request) {
       //window.location.hash = query;
@@ -32,7 +32,7 @@ function setState(uuid, key, state) {
   payload[key] = state;
   var ajax = fs.ajax()
     //.POST("/rest/workspaces")
-    .POST("http://localhost:18080/rest/simple/id/"+uuid)
+    .POST("/rest/simple/id/"+uuid)
     .accept("application/json")
     .handle(200, function(xhr, request) {
       //window.location.hash = query;
@@ -63,25 +63,43 @@ function createButton(uuid, key, initialValue) {
         var checkbox = document.createElement("input");
         checkbox.setAttribute("type", "checkbox");
         checkbox.checked = initialValue;
-        checkbox.addEventListener("click", function(evt) {
-            //console.log(key, checkbox.checked);
-            evt.preventDefault();
-            evt.stopPropagation();
-            setState(uuid, key, checkbox.checked);
-            return false;
-        });
         checkbox.id = elementId;
-        var text = document.createElement("span");
+        var text = document.createElement("strong");
         text.textContent = key;
+        text.setAttribute("style", "color:white");
 
-        var container = document.createElement("div");
-        container.appendChild(text);
+        var container = document.createElement("label");
+        addClass(container, "switch-light switch-holo");
+
+        var span = document.createElement("span");
+        var on = document.createElement("span");
+        on.textContent = "On";
+        var off = document.createElement("span");
+        off.textContent = "Off";
+        span.appendChild(off);
+        span.appendChild(on);
+
+        span.appendChild(document.createElement("a"));
+
+        container.setAttribute("style", "display:inline-block;margin: 10px;width: 200px;");
+
         container.appendChild(checkbox);
+        container.appendChild(text);
+        container.appendChild(span);
+
+        container.addEventListener("click", function(evt) {
+                              //console.log(key, checkbox.checked);
+                              evt.preventDefault();
+                              evt.stopPropagation();
+                              setState(uuid, key, !document.getElementById(elementId).checked);
+                              return false;
+                          });
         return container;
     } else {
-        console.log("Setting existing control " + key + " to " + initialValue);
-        existing.checked = initialValue;
-        console.log("Existing");
+        if (existing.checked != initialValue) {
+            console.log("Setting existing control " + key + " to " + initialValue);
+            existing.checked = initialValue;
+        }
         return null;
     }
 }

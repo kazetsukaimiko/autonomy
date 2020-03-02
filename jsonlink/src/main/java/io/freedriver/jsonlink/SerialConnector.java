@@ -128,6 +128,11 @@ public class SerialConnector implements Connector, AutoCloseable {
                 LOGGER.warning("Request expired");
                 break;
             }
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                throw new ConnectorException("Sleep failure", e);
+            }
         }
         return Optional.empty();
     }
