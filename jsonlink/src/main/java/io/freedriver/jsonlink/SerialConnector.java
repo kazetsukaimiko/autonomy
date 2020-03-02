@@ -19,6 +19,7 @@ import static java.time.temporal.ChronoUnit.MINUTES;
 
 public class SerialConnector implements Connector, AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(SerialConnector.class.getName());
+    public static final Duration RESPONSE_EXPIRY = Duration.of(1, MINUTES);
 
     private final String device;
     private final SerialPort serialPort;
@@ -52,7 +53,7 @@ public class SerialConnector implements Connector, AutoCloseable {
     private Map<UUID, Response> getResponseMap() {
         Set<UUID> expired = responseMap.values()
                 .stream()
-                .filter(response -> Instant.now().isAfter(response.getCreated().plus(Duration.of(1, MINUTES))))
+                .filter(response -> Instant.now().isAfter(response.getCreated().plus(RESPONSE_EXPIRY)))
                 .map(Response::getRequestId)
                 .collect(Collectors.toSet());
         expired.stream()
@@ -99,9 +100,14 @@ public class SerialConnector implements Connector, AutoCloseable {
         return !serialPort.isOpened();
     }
 
+
     private Optional<Response> pollUntil(UUID requestId) throws SerialPortException {
         Instant start = Instant.now();
         while (true) {
+            if (getResponseMap().containsKey(requestId)) {
+                LOGGER.info("Found request");
+                return Optional.of(getResponseMap().remove(requestId));
+            }
             Optional<String> json = pollUntilFinish();
             if (json.isPresent()) {
                 LOGGER.info("Json Payload received.");
@@ -117,11 +123,8 @@ public class SerialConnector implements Connector, AutoCloseable {
                     throw new ConnectorException("Couldn't consume JSON", e);
                 }
             }
-            if (getResponseMap().containsKey(requestId)) {
-                LOGGER.info("Found request");
-                return Optional.of(getResponseMap().remove(requestId));
-            }
-            if (Instant.now().isAfter(start.plus(Duration.of(1, MINUTES)))) {
+
+            if (Instant.now().isAfter(start.plus(RESPONSE_EXPIRY))) {
                 LOGGER.warning("Request expired");
                 break;
             }
