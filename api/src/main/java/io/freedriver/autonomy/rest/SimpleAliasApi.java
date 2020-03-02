@@ -1,7 +1,5 @@
 package io.freedriver.autonomy.rest;
 
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
@@ -16,6 +14,7 @@ public interface SimpleAliasApi {
     String ROOT = "/simple";
     String BOARD_ID = "board";
     String BOARD_ID_PATH = "/id/{"+BOARD_ID+"}";
+    String SETUP_PATH = BOARD_ID_PATH + "/setup";
 
     @GET
     List<UUID> getBoards();
@@ -23,6 +22,10 @@ public interface SimpleAliasApi {
     @GET
     @Path(BOARD_ID_PATH)
     Map<String, Boolean> getState(@PathParam(BOARD_ID) UUID boardId) throws IOException;
+
+    @GET
+    @Path(SETUP_PATH)
+    Map<String, Boolean> setupBoard(@PathParam(BOARD_ID) UUID boardId) throws IOException;
 
     @POST
     @Path(BOARD_ID_PATH)

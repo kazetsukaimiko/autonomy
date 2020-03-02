@@ -5,7 +5,7 @@ function logger(log) {
 function loadWorkspaces(uuid) {
   var ajax = fs.ajax()
     //.POST("/rest/workspaces")
-    .GET("/rest/simple/id/"+uuid)
+    .GET("/rest/simple/id/"+uuid+"/setup")
     .accept("application/json")
     .handle(200, function(xhr, request) {
       //window.location.hash = query;

@@ -5,7 +5,11 @@ import io.freedriver.autonomy.rest.provider.ObjectMapperContextResolver;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.jsonlink.config.Mapping;
 import io.freedriver.jsonlink.config.Mappings;
+import io.freedriver.jsonlink.config.PinName;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
+import io.freedriver.jsonlink.jackson.schema.v1.Mode;
+import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
+import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.util.file.DirectoryProviders;
 
 import javax.enterprise.context.RequestScoped;
@@ -35,6 +39,19 @@ public class SimpleAliasHandler implements SimpleAliasApi {
     public Map<String, Boolean> getState(UUID boardId) throws IOException {
         LOGGER.info("Getting state of " + boardId);
         return aliases(boardId, connectorService.readDigital(boardId, getMapping(boardId).getPinNames().keySet()));
+    }
+
+    @Override
+    public Map<String, Boolean> setupBoard(UUID boardId) throws IOException {
+        Request request = new Request();
+        getMapping(boardId)
+                .getPinNamesAsEntities()
+                .stream()
+                .map(PinName::getPinNumber)
+                .map(id -> new ModeSet(id, Mode.OUTPUT))
+                .forEach(request::modeSet);
+        connectorService.send(boardId, request);
+        return getState(boardId);
     }
 
     @Override
