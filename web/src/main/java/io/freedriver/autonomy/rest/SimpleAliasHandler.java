@@ -1,11 +1,12 @@
 package io.freedriver.autonomy.rest;
 
+import io.freedriver.autonomy.ee.Autonomy;
 import io.freedriver.autonomy.rest.provider.ObjectMapperContextResolver;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.jsonlink.config.Mapping;
 import io.freedriver.jsonlink.config.Mappings;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.util.file.FileProviders;
+import io.freedriver.util.file.DirectoryProviders;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -46,10 +47,12 @@ public class SimpleAliasHandler implements SimpleAliasApi {
 
     private Mappings getMappings() throws IOException {
         return ObjectMapperContextResolver.getMapper().readValue(
-                FileProviders.MAPPINGS
-                    .getProvider()
-                    .get()
-                    .toFile(),
+                DirectoryProviders.CONFIG
+                        .getProvider()
+                        .subdir(Autonomy.DEPLOYMENT)
+                        .file("mappings.json")
+                        .get()
+                        .toFile(),
                 Mappings.class);
     }
 }

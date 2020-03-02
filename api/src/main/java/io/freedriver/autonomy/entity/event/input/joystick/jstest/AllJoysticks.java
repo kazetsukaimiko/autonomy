@@ -1,7 +1,9 @@
 package io.freedriver.autonomy.entity.event.input.joystick.jstest;
 
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -9,12 +11,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AllJoysticks implements AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(AllJoysticks.class.getName());
 
     private final Map<Path, Future<?>> activeJoysticks = new ConcurrentHashMap<>();
+    private final Map<Path, FailedJoystick> failedJoystickMap = new ConcurrentHashMap<>();
     private final ExecutorService executorService;
     private final Consumer<JSTestEvent> sink;
     private final Function<Stream<JSTestEvent>, Stream<JSTestEvent>> addOns;
@@ -29,6 +33,15 @@ public class AllJoysticks implements AutoCloseable {
         this.executorService = executorService;
         this.sink = sink;
         this.addOns = addOns;
+    }
+
+    public synchronized Map<Path, FailedJoystick> getFailedJoystickMap() {
+        Set<FailedJoystick> toRemove = new HashSet<>(failedJoystickMap.values());
+        toRemove.stream()
+                .filter(FailedJoystick::failureExpired)
+                .map(FailedJoystick::getPath)
+                .forEach(failedJoystickMap::remove);
+        return failedJoystickMap;
     }
 
     public void poll() {
@@ -50,11 +63,18 @@ public class AllJoysticks implements AutoCloseable {
     }
 
     private synchronized void constructFromPool(Path path) {
-        LOGGER.info("Joystick " + path.toString() + " joining pool");
-        try {
-            executorService.submit(() -> addOns.apply(JSTestReader.ofJoystick(path)).forEach(sink));
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, e, e::getMessage);
+        if (!getFailedJoystickMap().containsKey(path)) {
+            LOGGER.info("Joystick " + path.toString() + " joining pool");
+            try {
+                executorService.submit(() -> addOns.apply(JSTestReader.ofJoystick(path)).forEach(sink));
+            } catch (Exception e) {
+                FailedJoystick failedJoystick = new FailedJoystick(path);
+                LOGGER.log(Level.SEVERE, e, () -> "Failed to assemble Joystick at "
+                        + path.toString() + " into the pool. "
+                        + "Will retry in " + failedJoystick.getDelay().toMillis() + "ms");
+                getFailedJoystickMap()
+                        .put(path, failedJoystick);
+            }
         }
     }
 
