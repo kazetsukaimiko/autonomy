@@ -103,15 +103,20 @@ public class SerialConnector implements Connector, AutoCloseable {
     private synchronized Optional<Response> pollUntil(UUID requestId) throws SerialPortException {
         Instant start = Instant.now();
         while (true) {
-            pollUntilFinish().ifPresent(responseJSON -> {
+            Optional<String> json = pollUntilFinish();
+            if (json.isPresent()) {
+                String responseJSON = json.get();
                 try {
                     Response response = MAPPER.readValue(responseJSON, Response.class);
                     LOGGER.info("New response: " + response.getRequestId());
                     getResponseMap().put(response.getRequestId(), response);
+                    if (Objects.equals(requestId, response.getRequestId())) {
+                        return Optional.of(response);
+                    }
                 } catch (JsonProcessingException e) {
                     throw new ConnectorException("Couldn't consume JSON", e);
                 }
-            });
+            }
             if (getResponseMap().containsKey(requestId)) {
                 LOGGER.info("Found request");
                 return Optional.of(getResponseMap().remove(requestId));
