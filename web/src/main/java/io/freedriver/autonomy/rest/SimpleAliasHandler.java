@@ -39,13 +39,11 @@ public class SimpleAliasHandler implements SimpleAliasApi {
 
     @Override
     public Map<String, Boolean> setState(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
-
         if (!desiredState.isEmpty()) {
             LOGGER.info("Setting states:");
             desiredState.forEach((k, v) -> LOGGER.info(k+": " + (v ? "true":"false")));
             return aliases(boardId, connectorService.writeDigital(boardId, identifiers(boardId, desiredState)));
         }
-
         return getState(boardId);
     }
 

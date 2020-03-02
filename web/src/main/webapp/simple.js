@@ -28,6 +28,8 @@ function loadWorkspaces(uuid) {
 }
 
 function setState(uuid, key, state) {
+  var payload = {};
+  payload[key] = state;
   var ajax = fs.ajax()
     //.POST("/rest/workspaces")
     .POST("http://localhost:18080/rest/simple/id/"+uuid)
@@ -49,7 +51,7 @@ function setState(uuid, key, state) {
       */
       // TODO: Recover the UI state somehow.
     })
-    .json({key: state});
+    .json(payload);
 }
 
 
@@ -58,6 +60,7 @@ function createButton(uuid, key, initialValue) {
     var existing = document.getElementById(elementId);
     if (existing) {
         existing.checked = initialValue;
+        return false;
     } else {
         var checkbox = document.createElement("input");
         checkbox.setAttribute("type", "checkbox");
@@ -66,14 +69,20 @@ function createButton(uuid, key, initialValue) {
             console.log(key, checkbox.checked);
             setState(uuid, key, checkbox.checked);
         });
-        return checkbox;
+        var text = document.createElement("span");
+        text.textContent = key;
+
+        var container = document.createElement("div");
+        container.appendChild(text);
+        container.appendChild(checkbox);
+        return container;
     }
 }
 
 function populateToggles(controlsPane, uuid, state) {
     for(key in state) {
         button = createButton(uuid, key, state[key]);
-        if (button != null) {
+        if (button) {
             controlsPane.appendChild(button);
         }
     }
