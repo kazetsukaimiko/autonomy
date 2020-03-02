@@ -43,11 +43,6 @@ public class ConcurrentConnector implements Connector {
     }
 
     @Override
-    public synchronized Optional<Response> sendJSONRequest(String json) throws ConnectorException {
-        return delegate.sendJSONRequest(json);
-    }
-
-    @Override
     public synchronized boolean isClosed() {
         return delegate.isClosed();
     }
