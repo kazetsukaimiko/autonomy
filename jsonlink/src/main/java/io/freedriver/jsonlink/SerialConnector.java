@@ -57,7 +57,7 @@ public class SerialConnector implements Connector, AutoCloseable {
                 .map(Response::getRequestId)
                 .collect(Collectors.toSet());
         expired.stream()
-            .peek(requestId -> LOGGER.warning("Request Id " + requestId + " was never consumed")) // TODO: Event
+            .peek(requestId -> LOGGER.warning("Request Id " + requestId + " (board "+responseMap.get(requestId).getUuid()+") was never consumed")) // TODO: Event
             .forEach(responseMap::remove);
         return responseMap;
     }
@@ -115,9 +115,10 @@ public class SerialConnector implements Connector, AutoCloseable {
                 try {
                     Response response = MAPPER.readValue(responseJSON, Response.class);
                     LOGGER.info("New response: " + response.getRequestId());
-                    getResponseMap().put(response.getRequestId(), response);
                     if (Objects.equals(requestId, response.getRequestId())) {
                         return Optional.of(response);
+                    } else {
+                        getResponseMap().put(response.getRequestId(), response);
                     }
                 } catch (JsonProcessingException e) {
                     throw new ConnectorException("Couldn't consume JSON", e);
