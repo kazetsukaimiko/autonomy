@@ -35,6 +35,17 @@ public class AllJoysticks implements AutoCloseable {
         this.addOns = addOns;
     }
 
+    public synchronized Map<Path, Future<?>> getActiveJoysticks() {
+        Set<Path> toRemove = new HashSet<>();
+        activeJoysticks.forEach((path, future) -> {
+            if (future.isDone()) {
+                toRemove.add(path);
+            }
+        });
+        toRemove.forEach(activeJoysticks::remove);
+        return activeJoysticks;
+    }
+
     public synchronized Map<Path, FailedJoystick> getFailedJoystickMap() {
         Set<FailedJoystick> toRemove = new HashSet<>(failedJoystickMap.values());
         toRemove.stream()
@@ -58,9 +69,18 @@ public class AllJoysticks implements AutoCloseable {
 
     private void populate() {
         JSTestReader.getJoysticksPaths().stream()
-                .filter(path -> !activeJoysticks.containsKey(path) || !activeJoysticks.get(path).isDone())
-                .filter(path -> !getFailedJoystickMap().containsKey(path))
+                .filter(this::shouldCreateReader)
                 .forEach(this::constructFromPool);
+    }
+
+    private boolean shouldCreateReader(Path path) {
+        if (!getActiveJoysticks().containsKey(path)) {
+            if (!getFailedJoystickMap().containsKey(path)) {
+                LOGGER.info("New Joystick: " + path.toString());
+                return true;
+            }
+        }
+        return false;
     }
 
     private synchronized void constructFromPool(Path path) {
