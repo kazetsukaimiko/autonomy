@@ -21,8 +21,13 @@ public interface Connector extends AutoCloseable {
     /**
      * Send a request, receiving a response.
      */
+    Response send(Request request) throws ConnectorException;
+
+    /*
     default Response send(Request request) throws ConnectorException {
         try {
+            UUID requestId = UUID.randomUUID();
+            request.setRequestId(requestId);
             String json = MAPPER.writeValueAsString(request);
             LOGGER.finest("Sending Request: ");
             LOGGER.finest(json);
@@ -33,6 +38,8 @@ public interface Connector extends AutoCloseable {
             throw new ConnectorException("Couldn't marshall JSON", e);
         }
     }
+
+     */
 
     /**
      * Setup the board's UUID.
@@ -53,8 +60,5 @@ public interface Connector extends AutoCloseable {
     }
 
     String device();
-    Optional<Response> sendJSONRequest(String json) throws ConnectorException;
     boolean isClosed();
-
-
 }

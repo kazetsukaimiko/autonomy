@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 public class Request {
     private UUID uuid;
+    private UUID requestId;
     private Map<Identifier, Mode> mode = new HashMap<>();
     private ReadRequest read;
     private WriteRequest write;
@@ -72,6 +73,14 @@ public class Request {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public UUID getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(UUID requestId) {
+        this.requestId = requestId;
     }
 
     public ReadRequest getRead() {

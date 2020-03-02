@@ -1,5 +1,8 @@
 package io.freedriver.jsonlink.jackson.schema.v1;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,9 +12,13 @@ import java.util.function.Consumer;
 
 public class Response {
     private UUID uuid;
+    private UUID requestId;
     private List<String> error = new ArrayList<>();
     private Map<Identifier, Boolean> digital;
     private List<AnalogResponse> analog;
+
+    @JsonIgnore
+    private final Instant created = Instant.now();
 
     public UUID getUuid() {
         return uuid;
@@ -19,6 +26,14 @@ public class Response {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public UUID getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(UUID requestId) {
+        this.requestId = requestId;
     }
 
     public List<String> getError() {
@@ -48,6 +63,10 @@ public class Response {
     public Response logAnyErrors(Consumer<String> errorLogger) {
         getError().forEach(errorLogger);
         return this;
+    }
+
+    public Instant getCreated() {
+        return created;
     }
 
     @Override

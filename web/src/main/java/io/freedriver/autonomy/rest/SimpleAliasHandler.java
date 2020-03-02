@@ -69,7 +69,6 @@ public class SimpleAliasHandler implements SimpleAliasApi {
                 ));
     }
 
-
     private Mapping getMapping(UUID boardId) throws IOException {
         return getMappings()
                 .getMappings()

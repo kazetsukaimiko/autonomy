@@ -10,13 +10,15 @@ import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import static java.time.temporal.ChronoUnit.MINUTES;
 
 public class SerialConnector implements Connector, AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(SerialConnector.class.getName());
@@ -25,6 +27,9 @@ public class SerialConnector implements Connector, AutoCloseable {
     private final SerialPort serialPort;
 
     private StringBuilder buffer = new StringBuilder();
+
+    // Buffer to fetch responses
+    private final Map<UUID, Response> responseMap = new ConcurrentHashMap<>();
 
     public SerialConnector(SerialPort serialPort) {
         this.device = serialPort.getPortName();
@@ -47,23 +52,45 @@ public class SerialConnector implements Connector, AutoCloseable {
         }
     }
 
+    private Map<UUID, Response> getResponseMap() {
+        Set<UUID> expired = responseMap.values()
+                .stream()
+                .filter(response -> Instant.now().plus(Duration.of(1, MINUTES)).isAfter(response.getCreated()))
+                .map(Response::getRequestId)
+                .collect(Collectors.toSet());
+        expired.stream()
+            .peek(requestId -> LOGGER.warning("Request Id " + requestId + " was never consumed")) // TODO: Event
+            .forEach(responseMap::remove);
+        return responseMap;
+    }
+
+    @Override
+    public Response send(Request request) throws ConnectorException {
+        try {
+            UUID requestId = UUID.randomUUID();
+            request.setRequestId(requestId);
+            String json = MAPPER.writeValueAsString(request);
+            LOGGER.finest("Sending Request: ");
+            LOGGER.finest(json);
+            sendJSONRequest(json);
+            return pollUntil(requestId)
+                    .map(r -> r.logAnyErrors(err -> LOGGER.warning("Error from board: " + err)))
+                    .orElseThrow(() -> new ConnectorException("Couldn't get response."));
+        } catch (JsonProcessingException | SerialPortException e) {
+            throw new ConnectorException("Couldn't marshall JSON", e);
+        }
+    }
+
     @Override
     public String device() {
         return device;
     }
 
-    @Override
-    public synchronized Optional<Response> sendJSONRequest(String requestJSON) throws ConnectorException {
+    private synchronized void sendJSONRequest(String requestJSON) throws ConnectorException {
         try {
             LOGGER.log(Level.FINEST, requestJSON);
             serialPort.writeString(requestJSON);
-            Optional<String> responseJSON = pollUntilFinish();
-            if (responseJSON.isPresent()) {
-                return Optional.of(MAPPER.readValue(responseJSON.get(), Response.class));
-            } else {
-                return Optional.empty();
-            }
-        } catch (IOException | SerialPortException e) {
+        } catch (SerialPortException e) {
             throw new ConnectorException("Couldn't consume JSON", e);
         }
     }
@@ -71,6 +98,27 @@ public class SerialConnector implements Connector, AutoCloseable {
     @Override
     public synchronized boolean isClosed() {
         return !serialPort.isOpened();
+    }
+
+    private synchronized Optional<Response> pollUntil(UUID requestId) throws SerialPortException {
+        Instant start = Instant.now();
+        while (true) {
+            pollUntilFinish().ifPresent(responseJSON -> {
+                try {
+                    Response response = MAPPER.readValue(responseJSON, Response.class);
+                    getResponseMap().put(response.getRequestId(), response);
+                } catch (JsonProcessingException e) {
+                    throw new ConnectorException("Couldn't consume JSON", e);
+                }
+            });
+            if (getResponseMap().containsKey(requestId)) {
+                return Optional.of(getResponseMap().remove(requestId));
+            }
+            if (Instant.now().isAfter(start.plus(Duration.of(1, MINUTES)))) {
+                break;
+            }
+        }
+        return Optional.empty();
     }
 
     private synchronized Optional<String> pollUntilFinish() throws SerialPortException {

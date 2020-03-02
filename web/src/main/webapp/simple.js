@@ -58,17 +58,19 @@ function setState(uuid, key, state) {
 function createButton(uuid, key, initialValue) {
     var elementId = uuid + "_" + key;
     var existing = document.getElementById(elementId);
-    if (existing) {
-        existing.checked = initialValue;
-        return false;
-    } else {
+    if (existing === null) {
+        console.log("Creating control for " + key);
         var checkbox = document.createElement("input");
         checkbox.setAttribute("type", "checkbox");
         checkbox.checked = initialValue;
-        checkbox.addEventListener("change", function(evt) {
-            console.log(key, checkbox.checked);
+        checkbox.addEventListener("click", function(evt) {
+            //console.log(key, checkbox.checked);
+            evt.preventDefault();
+            evt.stopPropagation();
             setState(uuid, key, checkbox.checked);
+            return false;
         });
+        checkbox.id = elementId;
         var text = document.createElement("span");
         text.textContent = key;
 
@@ -76,13 +78,18 @@ function createButton(uuid, key, initialValue) {
         container.appendChild(text);
         container.appendChild(checkbox);
         return container;
+    } else {
+        console.log("Setting existing control " + key + " to " + initialValue);
+        existing.checked = initialValue;
+        console.log("Existing");
+        return null;
     }
 }
 
 function populateToggles(controlsPane, uuid, state) {
     for(key in state) {
         button = createButton(uuid, key, state[key]);
-        if (button) {
+        if (button !== null) {
             controlsPane.appendChild(button);
         }
     }

@@ -6,12 +6,13 @@ StaticJsonDocument<2048> inputDocument;
 StaticJsonDocument<2048> outputDocument;
 static char NEWLINE = '\n';
 
-
 char UUID_ADDRESS = 0;
 // Debug
 String DEBUG = "debug";
 // Errors
 String ERROR = "error";
+// Request ID
+String REQUEST_ID = "requestId";
 // Board ID
 String UUID = "uuid";
 // Stuff to return
@@ -124,6 +125,12 @@ void setupUUID() {
         }
     }
     readUUID();
+}
+
+void setupRequestId() {
+    if (inputDocument.containsKey(REQUEST_ID)) {
+        outputDocument[REQUEST_ID] = inputDocument[REQUEST_ID];
+    }
 }
 
 boolean validDigitalPin(int pinNum) {
@@ -240,6 +247,7 @@ void readPins() {
 
 void processJson() {
   setupUUID();
+  setupRequestId();
   modePins();
   writePins();
   readPins();
