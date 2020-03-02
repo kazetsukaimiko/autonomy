@@ -73,11 +73,11 @@ public final class Connectors {
                 //throw new ConnectorException("Couldn't create connector " + device, e);
                 LOGGER.log(Level.SEVERE, "Failed building connector " + device, e);
                 getFailedConnectors()
-                        .put(device, new FailedConnector(device));
+                        .put(device, FailedConnector.failed(device));
             } catch (TimeoutException e) {
                 LOGGER.log(Level.WARNING, "Timed out building connector " + device, e);
                 getFailedConnectors()
-                        .put(device, new FailedConnector(device));
+                        .put(device, FailedConnector.timedOut(device));
             }
         }
         return Optional.empty();
