@@ -66,13 +66,14 @@ public class SerialConnector implements Connector, AutoCloseable {
     @Override
     public Response send(Request request) throws ConnectorException {
         try {
-            UUID requestId = UUID.randomUUID();
-            request.setRequestId(requestId);
+            if (request.getRequestId() == null) {
+                request.setRequestId(UUID.randomUUID());
+            }
             String json = MAPPER.writeValueAsString(request);
             LOGGER.finest("Sending Request: ");
             LOGGER.finest(json);
             sendJSONRequest(json);
-            return pollUntil(requestId)
+            return pollUntil(request.getRequestId())
                     .map(r -> r.logAnyErrors(err -> LOGGER.warning("Error from board: " + err)))
                     .orElseThrow(() -> new ConnectorException("Couldn't get response."));
         } catch (JsonProcessingException | SerialPortException e) {
