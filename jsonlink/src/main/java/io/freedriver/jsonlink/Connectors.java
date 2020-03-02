@@ -107,6 +107,8 @@ public final class Connectors {
     }
 
     private static ConnectorConfig getConfig() {
-        return ConnectorConfig.load();
+        ConnectorConfig connectorConfig = ConnectorConfig.load();
+        LOGGER.info("Ignored devices: " + String.join(",", connectorConfig.getIgnoreDevices()));
+        return connectorConfig;
     }
 }
