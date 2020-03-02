@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequestScoped
 public class SimpleAliasHandler implements SimpleAliasApi {
@@ -27,14 +28,37 @@ public class SimpleAliasHandler implements SimpleAliasApi {
     }
 
     @Override
-    public Map<Identifier, Boolean> getState(UUID boardId) throws IOException {
-        return connectorService.readDigital(boardId, getMapping(boardId).getPinNames().keySet());
+    public Map<String, Boolean> getState(UUID boardId) throws IOException {
+        return aliases(boardId, connectorService.readDigital(boardId, getMapping(boardId).getPinNames().keySet()));
     }
 
     @Override
-    public Map<Identifier, Boolean> setState(UUID boardId, Map<Identifier, Boolean> desiredState) {
-        return connectorService.writeDigital(boardId, desiredState);
+    public Map<String, Boolean> setState(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
+        return aliases(boardId, connectorService.writeDigital(boardId, identifiers(boardId, desiredState)));
     }
+
+    private Map<Identifier, Boolean> identifiers(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
+        Map<String, Identifier> namedPins = getMapping(boardId).getNamedPins();
+        return desiredState.keySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        namedPins::get,
+                        desiredState::get,
+                        (a, b) -> a
+                ));
+    }
+
+    private Map<String, Boolean> aliases(UUID boardId, Map<Identifier, Boolean> actualState) throws IOException {
+        Map<Identifier, String> pinNames = getMapping(boardId).getPinNames();
+        return actualState.keySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        pinNames::get,
+                        actualState::get,
+                        (a, b) -> a
+                ));
+    }
+
 
     private Mapping getMapping(UUID boardId) throws IOException {
         return getMappings()

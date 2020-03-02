@@ -22,20 +22,20 @@ public interface SimpleAliasApi {
 
     @GET
     @Path(BOARD_ID_PATH)
-    Map<Identifier, Boolean> getState(@PathParam(BOARD_ID) UUID boardId) throws IOException;
+    Map<String, Boolean> getState(@PathParam(BOARD_ID) UUID boardId) throws IOException;
 
     @POST
     @Path(BOARD_ID_PATH)
-    Map<Identifier, Boolean> setState(@PathParam(BOARD_ID) UUID boardId, Map<Identifier, Boolean> desiredState);
+    Map<String, Boolean> setState(@PathParam(BOARD_ID) UUID boardId, Map<String, Boolean> desiredState) throws IOException;
 
-    default Map<Identifier, Boolean> on(UUID boardId, List<Identifier> pins) throws IOException {
-        Map<Identifier, Boolean> state = getState(boardId);
+    default Map<String, Boolean> on(UUID boardId, List<String> pins) throws IOException {
+        Map<String, Boolean> state = getState(boardId);
         pins.forEach(pin -> state.put(pin, true));
         return setState(boardId, state);
     }
 
-    default Map<Identifier, Boolean> off(UUID boardId, List<Identifier> pins) throws IOException {
-        Map<Identifier, Boolean> state = getState(boardId);
+    default Map<String, Boolean> off(UUID boardId, List<String> pins) throws IOException {
+        Map<String, Boolean> state = getState(boardId);
         pins.forEach(pin -> state.put(pin, false));
         return setState(boardId, state);
     }

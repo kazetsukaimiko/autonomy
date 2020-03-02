@@ -39,6 +39,17 @@ public class Mapping {
         return pinNames;
     }
 
+    @JsonIgnore
+    public Map<String, Identifier> getNamedPins() {
+        return pinNames.keySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        k -> pinNames.get(k),
+                        k -> k,
+                        (a,b) -> a
+                ));
+    }
+
     public void setPinNames(Map<Identifier, String> pinNames) {
         this.pinNames = pinNames;
     }
