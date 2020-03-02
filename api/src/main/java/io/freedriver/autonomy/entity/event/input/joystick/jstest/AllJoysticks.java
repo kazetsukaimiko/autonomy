@@ -66,7 +66,9 @@ public class AllJoysticks implements AutoCloseable {
         if (!getFailedJoystickMap().containsKey(path)) {
             LOGGER.info("Joystick " + path.toString() + " joining pool");
             try {
-                executorService.submit(() -> addOns.apply(JSTestReader.ofJoystick(path)).forEach(sink));
+                activeJoysticks.put(
+                        path,
+                        executorService.submit(() -> addOns.apply(JSTestReader.ofJoystick(path)).forEach(sink)));
             } catch (Exception e) {
                 FailedJoystick failedJoystick = new FailedJoystick(path);
                 LOGGER.log(Level.SEVERE, e, () -> "Failed to assemble Joystick at "
