@@ -52,7 +52,7 @@ public class SerialConnector implements Connector, AutoCloseable {
     private Map<UUID, Response> getResponseMap() {
         Set<UUID> expired = responseMap.values()
                 .stream()
-                .filter(response -> Instant.now().plus(Duration.of(1, MINUTES)).isAfter(response.getCreated()))
+                .filter(response -> Instant.now().isAfter(response.getCreated().plus(Duration.of(1, MINUTES))))
                 .map(Response::getRequestId)
                 .collect(Collectors.toSet());
         expired.stream()
