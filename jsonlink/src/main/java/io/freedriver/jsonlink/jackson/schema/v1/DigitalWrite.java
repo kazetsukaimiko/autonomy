@@ -4,14 +4,18 @@ import java.util.Objects;
 
 public class DigitalWrite {
     private Identifier pinNumber;
-    private boolean operation;
+    private DigitalState operation;
 
     public DigitalWrite() {
     }
 
-    public DigitalWrite(Identifier pinNumber, boolean operation) {
+    public DigitalWrite(Identifier pinNumber, DigitalState operation) {
         this.pinNumber = pinNumber;
         this.operation = operation;
+    }
+
+    public DigitalWrite(Identifier pinNumber, boolean operation) {
+        this(pinNumber, DigitalState.fromBoolean(operation));
     }
 
     public Identifier getPinNumber() {
@@ -22,11 +26,11 @@ public class DigitalWrite {
         this.pinNumber = pinNumber;
     }
 
-    public boolean isOperation() {
+    public DigitalState getOperation() {
         return operation;
     }
 
-    public void setOperation(boolean operation) {
+    public void setOperation(DigitalState operation) {
         this.operation = operation;
     }
 

@@ -46,6 +46,10 @@ public class Identifier {
      * Convenience methods
      */
 
+    public DigitalWrite setDigital(DigitalState b) {
+        return new DigitalWrite(this, b);
+    }
+
     public DigitalWrite setDigital(boolean b) {
         return new DigitalWrite(this, b);
     }

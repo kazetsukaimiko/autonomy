@@ -86,12 +86,12 @@ public class ConnectorTest {
                         .anyMatch(errorString -> errorString.toLowerCase()
                                 .contains("invalid digital pin")));
                     IntStream.range(0, 10)
-                            .forEach(i -> setStatus(connector, i % 2 == 0));
+                            .forEach(i -> setStatus(connector, DigitalState.fromBoolean(i % 2 == 0)));
                 }));
     }
 
-    public static Response setStatus(Connector connector, boolean pinState) {
-        LOGGER.info("Setting status : " + (pinState ? "TRUE":"FALSE"));
+    public static Response setStatus(Connector connector, DigitalState pinState) {
+        LOGGER.info("Setting status : " + pinState);
         Response r = connector.send(new Request()
                 .digitalWrite(new DigitalWrite(LED_PIN, pinState)));
         delay(Duration.of(250, MILLIS));

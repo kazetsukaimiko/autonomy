@@ -4,18 +4,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class WriteRequest {
-    private Map<Identifier, Boolean> digital = new HashMap<>();
+    private Map<Identifier, DigitalState> digital = new HashMap<>();
 
-    public Map<Identifier, Boolean> getDigital() {
+    public Map<Identifier, DigitalState> getDigital() {
         return digital;
     }
 
-    public void setDigital(Map<Identifier, Boolean> digital) {
+    public void setDigital(Map<Identifier, DigitalState> digital) {
         this.digital = digital;
     }
 
     public WriteRequest writeDigital(DigitalWrite pinWrite) {
-        getDigital().put(pinWrite.getPinNumber(), pinWrite.isOperation());
+        getDigital().put(pinWrite.getPinNumber(), pinWrite.getOperation());
         return this;
     }
 
