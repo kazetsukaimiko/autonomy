@@ -15,26 +15,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @RequestScoped
 public class SimpleAliasHandler implements SimpleAliasApi {
+    private static final Logger LOGGER = Logger.getLogger(SimpleAliasHandler.class.getName());
+
     @Inject
     private ConnectorService connectorService;
 
     @Override
     public List<UUID> getBoards() {
+        LOGGER.info("Getting boards");
         return connectorService.getConnectedBoards();
     }
 
     @Override
     public Map<String, Boolean> getState(UUID boardId) throws IOException {
+        LOGGER.info("Getting state of " + boardId);
         return aliases(boardId, connectorService.readDigital(boardId, getMapping(boardId).getPinNames().keySet()));
     }
 
     @Override
     public Map<String, Boolean> setState(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
-        return aliases(boardId, connectorService.writeDigital(boardId, identifiers(boardId, desiredState)));
+
+        if (!desiredState.isEmpty()) {
+            LOGGER.info("Setting states:");
+            desiredState.forEach((k, v) -> LOGGER.info(k+": " + (v ? "true":"false")));
+            return aliases(boardId, connectorService.writeDigital(boardId, identifiers(boardId, desiredState)));
+        }
+
+        return getState(boardId);
     }
 
     private Map<Identifier, Boolean> identifiers(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
