@@ -197,9 +197,9 @@ void writePins() {
       for( JsonPair digitalPin : digitalPins ) {
         int digitalPinNumber = atoi(digitalPin.key().c_str());
         bool value = digitalPin.value();
-        digitalWrite(digitalPinNumber, value ? HIGH : LOW);
+        digitalWrite(digitalPinNumber, value ? LOW : HIGH);
         outputDocument[DIGITAL][String(digitalPinNumber)] = value;
-        debug("Set:" + String(digitalPinNumber) + ":" + value ? "HIGH": "LOW");
+        debug("Set:" + String(digitalPinNumber) + ":" + value ? "LOW" : "HIGH");
       }
     }
   }
@@ -225,7 +225,7 @@ void readPins() {
     if (inputDocument[READ].containsKey(DIGITAL)) {
       JsonArray digitalPins = inputDocument[READ][DIGITAL];
       for( const int& digitalPin : digitalPins ) {
-        outputDocument[DIGITAL][String(digitalPin)] = (digitalRead(digitalPin) == HIGH);
+        outputDocument[DIGITAL][String(digitalPin)] = (digitalRead(digitalPin) == LOW);
       }
     }
     if (inputDocument[READ].containsKey(ANALOG)) {
