@@ -44,9 +44,8 @@ public class SerialConnector implements Connector, AutoCloseable {
                         SerialPort.STOPBITS_1,
                         SerialPort.PARITY_NONE
                 );
-                Thread.sleep(1000);
-
-            } catch (SerialPortException | InterruptedException e) {
+                //Thread.sleep(1000);
+            } catch (SerialPortException e) {
                 throw new ConnectorException(e);
             }
         }
