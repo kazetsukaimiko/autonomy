@@ -1,25 +1,15 @@
 package io.freedriver.jsonlink;
 
-import io.freedriver.jsonlink.jackson.schema.v1.AnalogRead;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Mode;
-import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
-import io.freedriver.jsonlink.pin.Pin;
-import org.junit.jupiter.api.BeforeAll;
+import io.freedriver.jsonlink.jackson.schema.v1.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -73,6 +63,12 @@ public class ConnectorTest {
                         }
                     }
                 });
+    }
+
+    @Test
+    public void testGetConnectors() {
+        Connectors.allConnectors()
+                .forEach(connector -> System.out.println(connector.getUUID()));
     }
 
     @Test

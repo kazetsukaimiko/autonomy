@@ -1,15 +1,12 @@
 package io.freedriver.jsonlink;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -44,8 +41,9 @@ public class SerialConnector implements Connector, AutoCloseable {
                         SerialPort.STOPBITS_1,
                         SerialPort.PARITY_NONE
                 );
-                //Thread.sleep(1000);
-            } catch (SerialPortException e) {
+                // THIS _IS_ NEEDED!
+                Thread.sleep(1000);
+            } catch (SerialPortException | InterruptedException e) {
                 throw new ConnectorException(e);
             }
         }
@@ -68,11 +66,12 @@ public class SerialConnector implements Connector, AutoCloseable {
         try {
             if (request.getRequestId() == null) {
                 request.setRequestId(UUID.randomUUID());
+                LOGGER.info("Randomized requestId to: " + request.getRequestId());
             }
             String json = MAPPER.writeValueAsString(request);
-            LOGGER.finest("Sending Request: ");
-            LOGGER.finest(json);
+            LOGGER.info("Sending Request: ");
             sendJSONRequest(json);
+            LOGGER.info("Getting responses");
             return pollUntil(request.getRequestId())
                     .map(r -> r.logAnyErrors(err -> LOGGER.warning("Error from board: " + err)))
                     .orElseThrow(() -> new ConnectorException("Couldn't get response."));
@@ -86,7 +85,7 @@ public class SerialConnector implements Connector, AutoCloseable {
         return device;
     }
 
-    private synchronized void sendJSONRequest(String requestJSON) throws ConnectorException {
+    private void sendJSONRequest(String requestJSON) throws ConnectorException {
         try {
             LOGGER.log(Level.FINEST, requestJSON);
             serialPort.writeString(requestJSON);
@@ -96,15 +95,16 @@ public class SerialConnector implements Connector, AutoCloseable {
     }
 
     @Override
-    public synchronized boolean isClosed() {
+    public boolean isClosed() {
         return !serialPort.isOpened();
     }
 
-    private synchronized Optional<Response> pollUntil(UUID requestId) throws SerialPortException {
+    private Optional<Response> pollUntil(UUID requestId) throws SerialPortException {
         Instant start = Instant.now();
         while (true) {
             Optional<String> json = pollUntilFinish();
             if (json.isPresent()) {
+                LOGGER.info("Json Payload received.");
                 String responseJSON = json.get();
                 try {
                     Response response = MAPPER.readValue(responseJSON, Response.class);
@@ -129,7 +129,7 @@ public class SerialConnector implements Connector, AutoCloseable {
         return Optional.empty();
     }
 
-    private synchronized Optional<String> pollUntilFinish() throws SerialPortException {
+    private Optional<String> pollUntilFinish() throws SerialPortException {
         boolean invalidBuffer = buffer.length() > 0 && !buffer.toString().startsWith("{");
         while (true) {
             Optional<String> response = poll(10);
@@ -137,7 +137,7 @@ public class SerialConnector implements Connector, AutoCloseable {
                 if (validate(response.get())) {
                     return response;
                 } else {
-                    LOGGER.warning("Invalid");
+                    LOGGER.warning("Invalid response");
                 }
             } else if (invalidBuffer && buffer.length() == 0) { // If we reset polling...
                 return Optional.empty();
@@ -174,7 +174,7 @@ public class SerialConnector implements Connector, AutoCloseable {
         return om;
     }
 
-    private synchronized Optional<String> poll(int timeout) throws SerialPortException {
+    private Optional<String> poll(int timeout) throws SerialPortException {
         try {
             String character = serialPort.readString(1, timeout);
             buffer.append(character);
@@ -190,7 +190,7 @@ public class SerialConnector implements Connector, AutoCloseable {
         return Optional.empty();
     }
 
-    private synchronized String readUntil(String delimiter) throws SerialPortException {
+    private String readUntil(String delimiter) throws SerialPortException {
         long startTime = System.currentTimeMillis();
         StringBuilder sb = new StringBuilder();
         while (true) {
@@ -206,7 +206,7 @@ public class SerialConnector implements Connector, AutoCloseable {
 
 
     @Override
-    public synchronized void close() throws Exception {
+    public void close() throws Exception {
         if (!isClosed()) {
             LOGGER.log(Level.WARNING, "Closing serialPort.");
             poll(100);

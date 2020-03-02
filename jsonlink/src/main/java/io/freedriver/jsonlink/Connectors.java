@@ -4,8 +4,6 @@ import io.freedriver.jsonlink.config.ConnectorConfig;
 import jssc.SerialPort;
 import jssc.SerialPortList;
 
-import java.nio.file.Path;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -39,8 +37,10 @@ public final class Connectors {
     }
 
     private static synchronized Future<Connector> createConnector(String device) {
+        LOGGER.info("Creating connector: " + device);
         return THREADPOOL.submit(() -> {
             SerialConnector serialConnector = new SerialConnector(new SerialPort(device));
+            LOGGER.info("Getting UUID:");
             serialConnector.getUUID();
             ALL_CONNECTORS.add(serialConnector);
             return new ConcurrentConnector(serialConnector);
