@@ -8,7 +8,11 @@
  * to set pin modes, read and write from digital pins, and read analog pin values
  * via JSON commands.
  *
- *
+ * The idea here is that because the microcontroller requires flashing, it is
+ * impossible to reconfigure it through user input. By boiling its usefulness down
+ * to its I/O and leaving more complex decision logic to a general purpose computer,
+ * you can reconfigure behavior based on user settings rather than hard-coded values,
+ * or relying on state within the microcontroller itself.
  *
  */
 
