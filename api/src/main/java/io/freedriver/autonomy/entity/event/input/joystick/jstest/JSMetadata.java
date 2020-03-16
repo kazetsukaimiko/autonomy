@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
+/**
+ * Metadata container for a joystick device.
+ */
 public class JSMetadata {
     private String title;
     private String hardwareType;
@@ -15,10 +18,16 @@ public class JSMetadata {
 
     }
 
+    /**
+     * Simple method to read metadata strings into a JSMetadata container.
+     */
     public static void index(String source, BiConsumer<Integer, String> putter) {
         index(source.split(",\\s*"), putter);
     }
 
+    /**
+     * Simple method to read metadata strings into a JSMetadata container.
+     */
     public static void index(String[] source, BiConsumer<Integer, String> putter) {
         for(int i = 0; i<source.length; i++) {
             putter.accept(i, source[i]);

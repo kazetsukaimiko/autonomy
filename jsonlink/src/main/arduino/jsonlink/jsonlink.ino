@@ -1,54 +1,110 @@
 #include <Arduino.h>
-
 #include <EEPROM.h>
 #include <ArduinoJson.h>
-StaticJsonDocument<2048> inputDocument;
-StaticJsonDocument<2048> outputDocument;
+
+/*
+ * JSONLink for Arduino Mega2560
+ * This sketch speaks a protocol I call "jsonlink" over serial. It allows you
+ * to set pin modes, read and write from digital pins, and read analog pin values
+ * via JSON commands.
+ *
+ *
+ *
+ */
+
+/*
+ * CONSTANTS - general
+ */
+// A convenience newline character.
 static char NEWLINE = '\n';
+// Where to find the UUID of the board in eeprom.
+static char UUID_ADDRESS = 0;
+// How long the UUID is (String)
+static int UUID_LENGTH = 64;
+// Version of JSONLink
+static String JSONLINK_VERSION = "1.0.0";
 
-char UUID_ADDRESS = 0;
-// Debug
-String DEBUG = "debug";
-// Errors
-String ERROR = "error";
-// Request ID
-String REQUEST_ID = "requestId";
-// Board ID
-String UUID = "uuid";
-// Stuff to return
-String READ = "read";
-// Stuff to change
-String WRITE = "write";
-// Stuff to manage
-String MODE = "mode";
 
-// READ: Array of pinNum; WRITE: Array of { pinNum : boolean }
-String DIGITAL = "digital";
-// READ: Array of { pinNum : resistance }; WRITE: todo
-String ANALOG = "analog";
+/*
+ * CONSTANTS - jsonlink properties
+ */
 
-String RAW = "raw";
-String PIN = "pin";
-String VOLTAGE = "voltage";
-String RESISTANCE = "resistance";
+// Json property to read the version from.
+static String VERSION = "version";
 
-// Shortcuts
-String TURN_ON = "turn_on";
-String TURN_OFF = "turn_off";
+// Json property to request debug information with. Set to true if you want debugging output.
+// Will return an array of the same name containing strings of debugging information.
+static String DEBUG = "debug";
 
-// Arduino Mega2560
-int ANALOG_PINS[] = {82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97};
+// Json property containing errors.
+static String ERROR = "error";
+
+// Json property containing the Request ID. This allows you to pool responses- critically important in
+// multithreaded environments and asynchronous operations. Whatever you send as the request id is returned
+// in the corresponding response.
+static String REQUEST_ID = "requestId";
+
+// Json property containing the Board ID. This allows you to differentiate between multiple boards
+// connected to the same machine, regardless of connection order or other factors.
+static String UUID = "uuid";
+
+// Json property requesting the state of digital/analog pins.
+static String READ = "read";
+
+// Json property to write digital pin states to.
+static String WRITE = "write";
+
+// Json property to set a pins mode (read/write).
+static String MODE = "mode";
+
+// A Json property under READ: Array of pinNum; WRITE: Array of { pinNum : boolean }
+static String DIGITAL = "digital";
+
+// A Json property under READ: Array of { pinNum : resistance }; WRITE: todo
+static String ANALOG = "analog";
+
+// Shortcut Json properties to set pin states for digital pins set to write mode.
+static String TURN_ON = "turn_on";
+static String TURN_OFF = "turn_off";
+
+// A response property containing the raw value of analog read.
+static String RAW = "raw";
+
+// A response property specifying a pin number.
+static String PIN = "pin";
+
+// A response property specifying the voltage for an analog read.
+static String VOLTAGE = "voltage";
+
+// A response property specifying the resistance.
+static String RESISTANCE = "resistance";
+
+/*
+ * JSON Documents
+ */
+
+// The document received by serial.
+StaticJsonDocument<2048> inputDocument;
+// The document this sketch populates to write to serial.
+StaticJsonDocument<2048> outputDocument;
+
+
+
+// Known "good" pins for the Arduino Mega2560.
+// Some of these are probably incorrect.
+int ANALOG_PINS[] = {A0,A1,A2,A3,A4,A5,A6,A7,A8,A9};
 int DIGITAL_PINS[] = {1,2,3,5,6,7,12,13,15,16,17,18,19,20,21,22,23,24,25,26,35,36,37,38,39,40,41,42,43,44,45,46,50,51,52,53,54,55,56,57,58,59,60,63,64,70,71,72,73,74,75,76,77,78};
 
-// Buffer
+// Buffer for reading from Serial.
 String buffer = "";
 
 
-// TODO: analog read pins
-// voltageIn = Volts in
-// knownResistance = ohms of known resistor
+// Reads an analog pin using resistance given :
+// The (int) pin number,
+// The (float) voltage input,
+// The (float) ohms value of the known resistor connected.
 void readAnalogPin(int analogPinRead, float voltageIn, float knownResistance) {
-  int raw = analogRead(A0);
+  int raw = analogRead(analogPinRead);
   if (raw) {
     float buffer = raw * voltageIn;
     float voltageOut = (buffer)/1024.0;
@@ -59,13 +115,14 @@ void readAnalogPin(int analogPinRead, float voltageIn, float knownResistance) {
       outputDocument.createNestedArray(ANALOG);
     }
     JsonObject response = outputDocument[ANALOG].createNestedObject();
-    response[PIN] = A0;
+    response[PIN] = analogPinRead;
     response[RAW] = raw;
     response[VOLTAGE] = voltageOut;
     response[RESISTANCE] = unknownResistance;
   }
 }
 
+// Convenience function to write a string to the debug property.
 void debug(String debug) {
     if (inputDocument.containsKey(DEBUG)) {
         if (!outputDocument.containsKey(DEBUG)) {
@@ -75,6 +132,9 @@ void debug(String debug) {
     }
 }
 
+// This writes non-json output straight to the Serial port.
+// The java implementation of JSONLink writes non-json responses directly to the logger,
+// so this is a great way to get good debug integrations.
 void debugOutput(String debug) {
   for (int i=0; i< debug.length(); i++) {
     Serial.write(debug.charAt(i));
@@ -82,24 +142,30 @@ void debugOutput(String debug) {
   Serial.write(NEWLINE);
 }
 
-
+// Function to write a string to EEPROM.
+// add - the address to write to.
+// data - the String to write.
+// Used primarily to write the board id on first setup.
 void writeToEEPROM(char add,String data) {
   int _size = data.length();
   int i;
   for(i=0;i<_size;i++) {
     EEPROM.update(add+i,data[i]);
   }
-  EEPROM.update(add+_size,'\0');   //Add termination null character for String Data
-  //EEPROM.
+  // Add termination null character for String Data
+  EEPROM.update(add+_size,'\0');
 }
 
+// Function to read from EEPROM.
+// add - the address to read from.
+// Used primarily to read the board id.
 String readFromEEPROM(char add) {
   int i;
-  char data[64]; //Max 64 Bytes
+  char data[UUID_LENGTH]; //Max 64 Bytes
   int len=0;
   unsigned char k;
   k=EEPROM.read(add);
-  while(k != '\0' && len<=63) {   //Read until null character
+  while(k != '\0' && len<UUID_LENGTH) {   //Read until null character
     k=EEPROM.read(add+len);
     data[len]=k;
     len++;
@@ -108,13 +174,15 @@ String readFromEEPROM(char add) {
   return String(data);
 }
 
+// Function to read the board id from EEPROM and write it to the outputDocument.
 void readUUID() {
     String uuid = readFromEEPROM(UUID_ADDRESS);
-    if (uuid.length() == 36) {
+    if (uuid.length() == UUID_LENGTH) {
         outputDocument[UUID] = uuid;
     }
 }
 
+// Function to setup the board id. Disallows multiple writes to preserve EEPROM.
 void setupUUID() {
     if (inputDocument.containsKey(UUID)) {
         if (outputDocument.containsKey(UUID)) {
@@ -127,12 +195,14 @@ void setupUUID() {
     readUUID();
 }
 
+// Function to pass the request Id through for multi-threaded and asynchronous environments.
 void setupRequestId() {
     if (inputDocument.containsKey(REQUEST_ID)) {
         outputDocument[REQUEST_ID] = inputDocument[REQUEST_ID];
     }
 }
 
+// Is the pinNum a valid digital pin?
 boolean validDigitalPin(int pinNum) {
   for(int pin : DIGITAL_PINS) {
     if (pin == pinNum) {
@@ -142,6 +212,7 @@ boolean validDigitalPin(int pinNum) {
   return false;
 }
 
+// Is the pinNum a valid analog pin?
 boolean validAnalogPin(int pinNum) {
   for(int pin : ANALOG_PINS) {
     if (pin == pinNum) {
@@ -151,7 +222,7 @@ boolean validAnalogPin(int pinNum) {
   return false;
 }
 
-
+// Is the pinNum a valid pin?
 boolean validPin(int pinNum) {
   return validDigitalPin(pinNum) || validAnalogPin(pinNum);
 }
@@ -164,6 +235,8 @@ boolean getPinMode(int pinNum) {
   return (*reg & bit) ? OUTPUT : INPUT;
 }
 
+// Reads modeset commands from the JSON inputDocument, and acts upon them.
+// Writes any errors to outputDocument.
 void modePins() {
   if (inputDocument.containsKey(MODE)) {
     JsonObject pinsToMode = inputDocument[MODE];
@@ -190,6 +263,8 @@ void modePins() {
 }
 
 
+// Reads digital write commands from the JSON inputDocument, and acts upon them.
+// Writes the state of any pins set back to the outputDocument.
 void writePins() {
   if (inputDocument.containsKey(WRITE)) {
     if (inputDocument[WRITE].containsKey(DIGITAL)) {
@@ -220,6 +295,9 @@ void writePins() {
   }
 }
 
+
+// Reads digital and analog read commands from the JSON inputDocument, and acts upon them.
+// Writes the state of any requested pins back to the outputDocument.
 void readPins() {
   if (inputDocument.containsKey(READ)) {
     if (inputDocument[READ].containsKey(DIGITAL)) {
@@ -244,67 +322,62 @@ void readPins() {
   }
 }
 
-
+// The general JSON processing loop.
 void processJson() {
+  // Set Board Id
   setupUUID();
+  // Set Request Id
   setupRequestId();
+  // Enact any pin modesets.
   modePins();
+  // Write any digital pins set
   writePins();
+  // Read any pins requested
   readPins();
 }
 
+// Arduino Loop.
 void loop() {
   // Reset the output
   deserializeJson(outputDocument, "{}");
   outputDocument.createNestedArray(ERROR);
 
-  /*
-  String packet = Serial.readString();
-  debugOutput(packet);
-  int delimiter = packet.indexOf(NEWLINE);
-  if (delimiter > -1) {
-    debugOutput("FOUND");
-    while (delimiter != -1) {
-      int startPos = 0;
-      buffer = buffer + packet.substring(startPos, delimiter);
-      startPos = delimiter+1;
-      packet = packet.substring(startPos);
-      delimiter = packet.indexOf(NEWLINE);
-      processBuffer();
-    }
-  }
-  buffer = buffer + packet;
-  */
-
+  // Read the buffer and process it.
   buffer = Serial.readStringUntil(NEWLINE);
   processBuffer();
-  
 }
 
-
+// Processing the JSON buffer.
 void processBuffer() {
+    // We don't have a JSON request if the payload doesn't begin with { and end with }.
     if (buffer.startsWith("{") && buffer.endsWith("}")) {
+      // Attempt to deserialize the json buffer. If it is malformed, keep the error.
       DeserializationError error = deserializeJson(inputDocument, buffer);
-      // If no error, process
+      // If no error, process the buffer.
       if (!error) {
         processJson();
       } else {
+        // If an error occurred processing the JSON, set the board id and respond with the error.
         readUUID();
         outputDocument[ERROR].add(error.c_str());
       }
+      // Write the outputDocument JSON to serial, with a newline to hint we're done.
       serializeJson(outputDocument, Serial);
       Serial.write(NEWLINE);
     } else if (buffer.length() > 0) {
+      // Log any bad input.
       debugOutput("Bad Input.");
       debugOutput(buffer);
     }
     buffer = "";
 }
 
-
+// Arduino setup.
 void setup() {
   // Initialize Serial port
   Serial.begin(115200);
   Serial.setTimeout(50);
+
+  // Clear the buffer.
   buffer = "";
 }

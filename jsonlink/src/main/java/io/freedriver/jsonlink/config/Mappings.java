@@ -1,10 +1,14 @@
 package io.freedriver.jsonlink.config;
 
+import io.freedriver.jsonlink.config.v2.Appliance;
+
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class Mappings {
+public class Mappings extends ConfigFile implements Migration<io.freedriver.jsonlink.config.v2.Mappings> {
     private Set<Mapping> mappings = new HashSet<>();
 
     public Mappings() {
@@ -36,5 +40,31 @@ public class Mappings {
         return "Mappings{" +
                 "mappings=" + mappings +
                 '}';
+    }
+
+    @Override
+    public io.freedriver.jsonlink.config.v2.Mappings migrate() {
+        io.freedriver.jsonlink.config.v2.Mappings mappings = new io.freedriver.jsonlink.config.v2.Mappings();
+        mappings.setMappings(getMappings().stream()
+                .map(this::migrateMapping).collect(Collectors.toSet()));
+        return mappings;
+    }
+
+    public io.freedriver.jsonlink.config.v2.Mapping migrateMapping(Mapping config) {
+        io.freedriver.jsonlink.config.v2.Mapping mapping = new io.freedriver.jsonlink.config.v2.Mapping();
+        mapping.setConnectorId(config.getConnectorId());
+        mapping.setConnectorName(config.getConnectorName());
+        mapping.setPinNames(config.getPinNames().entrySet()
+                .stream().collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> new Appliance(e.getValue()),
+                        (a, b) -> a
+                )));
+        return mapping;
+    }
+
+    @Override
+    public String getFileName() {
+        return "mappings.json";
     }
 }

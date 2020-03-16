@@ -6,6 +6,7 @@ import org.dizitart.no2.IndexType;
 import org.dizitart.no2.objects.Index;
 import org.dizitart.no2.objects.Indices;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -19,7 +20,9 @@ import java.util.Objects;
         @Index(value="property", type= IndexType.NonUnique),
         @Index(value="type", type= IndexType.NonUnique)
 })
-public abstract class Event extends EntityBase {
+public abstract class Event extends EntityBase implements Serializable {
+    public static final long serialVersionUID = -1L;
+
     private Instant timestamp;
 
     @JsonUnwrapped

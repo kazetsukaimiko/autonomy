@@ -1,6 +1,9 @@
 package io.freedriver.autonomy.entity.event.input.joystick.jstest;
 
+import io.freedriver.autonomy.util.Delayable;
+
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -11,9 +14,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Single point to discover and monitor all joystick devices on a system.
+ */
 public class AllJoysticks implements AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(AllJoysticks.class.getName());
 
@@ -25,16 +30,32 @@ public class AllJoysticks implements AutoCloseable {
 
     private boolean open = true;
 
+
+    /**
+     * Constructor.
+     * @param executorService The Thread pool to spawn readers on.
+     * @param sink Where the readers write events to.
+     */
     public AllJoysticks(ExecutorService executorService, Consumer<JSTestEvent> sink) {
         this(executorService, sink, Function.identity());
     }
 
+    /**
+     * Constructor.
+     * @param executorService The Thread pool to spawn readers on.
+     * @param sink Where the readers write to.
+     * @param addOns Stream chain modifiers to add
+     */
     public AllJoysticks(ExecutorService executorService, Consumer<JSTestEvent> sink, Function<Stream<JSTestEvent>, Stream<JSTestEvent>> addOns) {
         this.executorService = executorService;
         this.sink = sink;
         this.addOns = addOns;
     }
 
+    /**
+     * Gets a Map of active Joystick readers keyed by their device path.
+     * The value is the Future (thread) handling the reader.
+     */
     public synchronized Map<Path, Future<?>> getActiveJoysticks() {
         Set<Path> toRemove = new HashSet<>();
         activeJoysticks.forEach((path, future) -> {
@@ -46,6 +67,10 @@ public class AllJoysticks implements AutoCloseable {
         return activeJoysticks;
     }
 
+    /**
+     * Gets a map of Joystick devices that failed to spawn, keyed by their device path.
+     * The value is an expiry for retrying the device.
+     */
     public synchronized Map<Path, FailedJoystick> getFailedJoystickMap() {
         Set<FailedJoystick> toRemove = new HashSet<>(failedJoystickMap.values());
         toRemove.stream()
@@ -55,18 +80,20 @@ public class AllJoysticks implements AutoCloseable {
         return failedJoystickMap;
     }
 
+    /**
+     * Continuously poll for new joysticks, and add them to the pool.
+     */
     public void poll() {
         LOGGER.info("Polling Joysticks.");
         while (open) {
             populate();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                throw new JSTestException("Interrupted: ", e);
-            }
+            Delayable.wait(Duration.ofMillis(100));
         }
     }
 
+    /**
+     * Look for new joysticks to add to the pool.
+     */
     private void populate() {
         JSTestReader.getJoysticksPaths().stream()
                 .filter(this::shouldCreateReader)
@@ -94,7 +121,10 @@ public class AllJoysticks implements AutoCloseable {
         try {
             activeJoysticks.put(
                     path,
-                    executorService.submit(() -> addOns.apply(JSTestReader.ofJoystick(path)).forEach(sink)));
+                    executorService.submit(() -> addOns
+                            .apply(JSTestReader
+                                    .ofJoystick(path)
+                                    .takeWhile(l -> open)).forEach(sink)));
         } catch (Exception e) {
             FailedJoystick failedJoystick = new FailedJoystick(path);
             LOGGER.log(Level.SEVERE, e, () -> "Failed to assemble Joystick at "
@@ -105,6 +135,9 @@ public class AllJoysticks implements AutoCloseable {
         }
     }
 
+    /**
+     * Waits for
+     */
     public void waitForAllToClose() {
         while (true) {
             if (activeJoysticks.size() == 0 || activeJoysticks.entrySet().stream()

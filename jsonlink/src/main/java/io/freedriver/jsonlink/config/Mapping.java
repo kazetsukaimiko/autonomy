@@ -3,8 +3,7 @@ package io.freedriver.jsonlink.config;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
 public class Mapping {
     private UUID connectorId;
     private String connectorName;
-    private Map<Identifier, String> pinNames = new HashMap<>();
+    private Map<Identifier, String> pinNames = new LinkedHashMap<>();
 
     public Mapping() {
     }
@@ -46,7 +45,7 @@ public class Mapping {
                 .collect(Collectors.toMap(
                         k -> pinNames.get(k),
                         k -> k,
-                        (a,b) -> a
+                        (a, b) -> a
                 ));
     }
 
@@ -85,4 +84,6 @@ public class Mapping {
                 ", pinNamesAsEntities=" + getPinNamesAsEntities() +
                 '}';
     }
+
+
 }

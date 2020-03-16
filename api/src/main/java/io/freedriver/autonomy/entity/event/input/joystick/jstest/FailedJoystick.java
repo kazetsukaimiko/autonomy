@@ -7,6 +7,9 @@ import java.util.Objects;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
 
+/**
+ * Convenience class to keep track of joystick devices that failed to spawn readers.
+ */
 public class FailedJoystick {
     private static final Duration DEFAULT_DURATION = Duration.of(5, MINUTES);
 

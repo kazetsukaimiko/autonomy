@@ -2,6 +2,7 @@ package io.freedriver.autonomy.entity.event;
 
 import java.util.Objects;
 
+
 public class EventCoordinate {
     private String subject;
     private String property;

@@ -1,6 +1,13 @@
 package io.freedriver.jsonlink;
 
-import io.freedriver.jsonlink.jackson.schema.v1.*;
+import io.freedriver.jsonlink.jackson.schema.v1.AnalogRead;
+import io.freedriver.jsonlink.jackson.schema.v1.DigitalState;
+import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
+import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
+import io.freedriver.jsonlink.jackson.schema.v1.Mode;
+import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
+import io.freedriver.jsonlink.jackson.schema.v1.Request;
+import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,11 +47,6 @@ public class ConnectorTest {
                 .peek(System.out::println)
                 .forEach(readAllAnalogs::analogRead);
 
-        /*
-        System.out.println(readAllAnalogs);
-        if (true) {
-            return;
-        }*/
         Connectors.allConnectors()
                 .findFirst()
                 .ifPresent(connector -> {
@@ -52,10 +54,7 @@ public class ConnectorTest {
                     for(int i=0;i<10;i++) {
                         Response r = connector.send(readAllAnalogs);
                         r.getAnalog()
-                                .forEach(analogResponse -> {
-                                    System.out.println(analogResponse);
-
-                                });
+                                .forEach(System.out::println);
                         try {
                             Thread.sleep(50);
                         } catch (InterruptedException e) {

@@ -9,9 +9,9 @@ function loadWorkspaces(uuid) {
     .accept("application/json")
     .handle(200, function(xhr, request) {
       //window.location.hash = query;
-      var state = JSON.parse(xhr.responseText);
+      var aliasView = JSON.parse(xhr.responseText);
       toggleOff("#controls");
-      populateToggles(document.getElementById("controls"), uuid, state);
+      populateToggles(document.getElementById("controls"), uuid, aliasView);
 
       toggleOn(".controls"); // TODO : Activate Section.
     })
@@ -104,7 +104,8 @@ function createButton(uuid, key, initialValue) {
     }
 }
 
-function populateToggles(controlsPane, uuid, state) {
+function populateToggles(controlsPane, uuid, aliasView) {
+    var state = aliasView.applianceStates;
     for(key in state) {
         button = createButton(uuid, key, state[key]);
         if (button !== null) {

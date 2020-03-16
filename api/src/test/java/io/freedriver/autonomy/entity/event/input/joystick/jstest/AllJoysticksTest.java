@@ -1,7 +1,6 @@
 package io.freedriver.autonomy.entity.event.input.joystick.jstest;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +12,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class AllJoysticksTest {
 
@@ -73,7 +74,7 @@ public class AllJoysticksTest {
     @Test
     public void simulationTest() {
         simulate().forEach(System.out::println);
-        List<JSTestEvent> jsTestEvents = JSTestReader.reduce(simulate())
+        List<JSTestEvent> jsTestEvents = JSTestReader.readEvents(simulate())
                 .collect(Collectors.toList());
 
         jsTestEvents.stream().map(JSTestEvent::getMetadata)

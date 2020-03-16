@@ -4,8 +4,10 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public enum JSTestEventType {
+    // Value changes
     BUTTON(1),
     AXIS(2),
+    // Initial values
     BUTTON_INITIAL(129),
     AXIS_INITIAL(130);
 

@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Container for Joystick Event Data.
+ */
 public class JSTestEvent {
     private JSMetadata metadata;
     private Instant now;
@@ -44,11 +47,17 @@ public class JSTestEvent {
         this(joystickMetadata, jstestEventMap(jstestEvent));
     }
 
+    /**
+     * Predicate method to detect valid joystick events.
+     */
     public static boolean validEvent(String jstestEvent) {
         return jstestEvent != null &&
                 jstestEvent.startsWith("Event: ");
     }
 
+    /**
+     * Reads a jstest event string into a map.
+     */
     private static Map<String, Long> jstestEventMap(String jstestEvent) {
         return Stream.of(jstestEvent)
                 .filter(JSTestEvent::validEvent)
@@ -124,17 +133,23 @@ public class JSTestEvent {
                 '}';
     }
 
+    /**
+     * Returns the source of the event/
+     */
     public EventCoordinate locate() {
         return new EventCoordinate(
                 getMetadata().getTitle(),
-                (jsTestEventType.isButton(getJsTestEventType()) ?
+                (JSTestEventType.isButton(getJsTestEventType()) ?
                         "BUTTON_" : "AXIS_") + getNumber()
         );
     }
 
+    /**
+     * Returns a description of the event.
+     */
     public EventDescription describe() {
         return new EventDescription(
-                jsTestEventType.isInitial(getJsTestEventType()) ?
+                JSTestEventType.isInitial(getJsTestEventType()) ?
                         StateType.INITIAL_STATE : StateType.CHANGE_STATE,
                 JoystickEventType.of(this)
         );

@@ -15,10 +15,16 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Optional;
 
+/**
+ * Serializable lambdas.
+ * For Jackson, use Java Serialization combined with Base64 encoding to convert the lambda into a string.
+ */
 @JsonSerialize(using = EventAction.Serializer.class)
 @JsonDeserialize(using = EventAction.Deserializer.class)
 @FunctionalInterface
 public interface EventAction extends Serializable {
+    long serialVersionUID = -1L;
+
     Optional<Event> fire(Event sourceEvent);
 
     class Serializer extends JsonSerializer<EventAction> {

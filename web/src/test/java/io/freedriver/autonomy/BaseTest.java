@@ -9,7 +9,9 @@ import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
 import io.freedriver.autonomy.entity.jsonlink.PinEntity;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Mode;
+import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -20,6 +22,36 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class BaseTest {
+
+    @Test
+    public void testReduceBehavior() {
+        List<Integer> order = new ArrayList<>();
+
+        IntStream.range(0, 100)
+                .boxed()
+                .peek(order::add)
+                .reduce(Stream.empty(), BaseTest::modTen, Stream::concat)
+                .forEach(order::add);
+
+        order.forEach(System.out::println);
+
+        order = new ArrayList<>();
+        IntStream.range(0, 100)
+                .boxed()
+                .peek(order::add)
+                .filter(i -> i % 10 == 0)
+                .forEach(order::add);
+        order.forEach(System.out::println);
+
+    }
+
+    public static Stream<Integer> modTen(Stream<Integer> stream, Integer i) {
+        if (i % 10 == 0) {
+            return Stream.concat(stream, Stream.of(i));
+        }
+        return stream;
+    }
+
     protected static final Random RANDOM = new Random(System.currentTimeMillis());
     private static final List<String> NAMES = Stream.of(
             "Donut",

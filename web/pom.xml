@@ -26,7 +26,7 @@
   </properties>
 
   <build>
-    <finalName>demo</finalName>
+    <finalName>autonomy</finalName>
     <plugins>
       <plugin>
         <groupId>io.thorntail</groupId>
