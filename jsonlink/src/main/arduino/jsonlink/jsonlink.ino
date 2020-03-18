@@ -24,7 +24,7 @@ static char NEWLINE = '\n';
 // Where to find the UUID of the board in eeprom.
 static char UUID_ADDRESS = 0;
 // How long the UUID is (String)
-static int UUID_LENGTH = 64;
+static int UUID_LENGTH = 36;
 // Version of JSONLink
 int JSONLINK_VERSION[] = {1,0,0};
 
@@ -42,6 +42,9 @@ static String DEBUG = "debug";
 
 // Json property containing errors.
 static String ERROR = "error";
+
+// Json property containing errors.
+static String INFO = "info";
 
 // Json property containing the Request ID. This allows you to pool responses- critically important in
 // multithreaded environments and asynchronous operations. Whatever you send as the request id is returned
@@ -88,19 +91,17 @@ static String RESISTANCE = "resistance";
  */
 
 // The speed of the connection.
-const long BAUD = 500000;
+const long BAUD = 115200;
 // The size of the StaticJsonDocuments to allocate.
 const int JSONSIZE = 2048;
 // The timeout value for serial- at maximum size, how long to wait for serial data.
 // This is so that the controller is as responsive as possible.
-static long TIMEOUT = (JSONSIZE*1.5)/(BAUD/1000);
+static long TIMEOUT = (JSONSIZE*2)/(BAUD/1000);
 
 // The document received by serial.
 StaticJsonDocument<JSONSIZE> inputDocument;
 // The document this sketch populates to write to serial.
 StaticJsonDocument<JSONSIZE> outputDocument;
-
-
 
 // Known "good" pins for the Arduino Mega2560.
 // Some of these are probably incorrect.
@@ -132,16 +133,6 @@ void readAnalogPin(int analogPinRead, float voltageIn, float knownResistance) {
     response[VOLTAGE] = voltageOut;
     response[RESISTANCE] = unknownResistance;
   }
-}
-
-// Convenience function to write a string to the debug property.
-void debug(String debug) {
-    if (inputDocument.containsKey(DEBUG)) {
-        if (!outputDocument.containsKey(DEBUG)) {
-            outputDocument.createNestedArray(DEBUG);
-        }
-        outputDocument[DEBUG].add(debug);
-    }
 }
 
 // This writes non-json output straight to the Serial port.
@@ -298,10 +289,11 @@ void writePins() {
         bool value = digitalPin.value();
         digitalWrite(digitalPinNumber, value ? LOW : HIGH);
         outputDocument[DIGITAL][String(digitalPinNumber)] = value;
-        debug("Set:" + String(digitalPinNumber) + ":" + value ? "LOW" : "HIGH");
+        appendDebug("Set:" + String(digitalPinNumber) + ":" + value ? "LOW" : "HIGH");
       }
     }
   }
+
   if (inputDocument.containsKey(TURN_ON)) {
     JsonArray pinsToTurnOn = inputDocument[TURN_ON];
     for (int pinToTurnOn : pinsToTurnOn) {
@@ -346,12 +338,28 @@ void readPins() {
   }
 }
 
-void appendError(String message) {
-    if (!outputDocument.containsKey(ERROR)) {
-        outputDocument.createNestedArray(ERROR);
-    }
-    outputDocument[ERROR].add(message);
+void appendInfo(String message) {
+    appendLog(message, INFO);
 }
+
+void appendError(String message) {
+    appendLog(message, ERROR);
+}
+
+void appendDebug(String message) {
+    if (inputDocument.containsKey(DEBUG)) {
+        appendLog(message, DEBUG);
+    }
+}
+
+
+void appendLog(String message, String key) {
+    if (!outputDocument.containsKey(key)) {
+        outputDocument.createNestedArray(key);
+    }
+    outputDocument[key].add(message);
+}
+
 
 // The general JSON processing loop.
 void processJson() {

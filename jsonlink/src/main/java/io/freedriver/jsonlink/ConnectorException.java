@@ -1,7 +1,5 @@
 package io.freedriver.jsonlink;
 
-import java.io.IOException;
-
 public class ConnectorException extends RuntimeException {
     public ConnectorException() {
     }

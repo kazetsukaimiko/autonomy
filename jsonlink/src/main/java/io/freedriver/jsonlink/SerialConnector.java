@@ -42,7 +42,7 @@ public class SerialConnector implements Connector, AutoCloseable {
             try {
                 serialPort.openPort();
                 serialPort.setParams(
-                        500000,
+                        SerialPort.BAUDRATE_115200,
                         SerialPort.DATABITS_8,
                         SerialPort.STOPBITS_1,
                         SerialPort.PARITY_NONE
@@ -68,7 +68,7 @@ public class SerialConnector implements Connector, AutoCloseable {
     }
 
     @Override
-    public Response send(Request request) throws ConnectorException {
+    public Response send(Request request, Duration maxwait) throws ConnectorException {
         try {
             if (request.getRequestId() == null) {
                 request.setRequestId(UUID.randomUUID());
@@ -78,7 +78,7 @@ public class SerialConnector implements Connector, AutoCloseable {
             LOGGER.finer("Sending Request: ");
             sendJSONRequest(json);
             LOGGER.finer("Getting responses");
-            return pollUntil(request.getRequestId())
+            return pollUntil(request.getRequestId(), maxwait)
                     .map(r -> r.logAnyErrors(err -> LOGGER.warning("Error from board: " + err)))
                     .orElseThrow(() -> new ConnectorException("Couldn't get response."));
         } catch (JsonProcessingException | SerialPortException e) {
@@ -106,14 +106,14 @@ public class SerialConnector implements Connector, AutoCloseable {
     }
 
 
-    private Optional<Response> pollUntil(UUID requestId) throws SerialPortException {
+    private Optional<Response> pollUntil(UUID requestId, Duration maxwait) throws SerialPortException {
         Instant start = Instant.now();
         while (true) {
             if (getResponseMap().containsKey(requestId)) {
                 LOGGER.info("Found request");
                 return Optional.of(getResponseMap().remove(requestId));
             }
-            Optional<String> json = pollUntilFinish();
+            Optional<String> json = pollUntilFinish(maxwait);
             if (json.isPresent()) {
                 LOGGER.info("Json Payload received.");
                 String responseJSON = json.get();
@@ -121,9 +121,16 @@ public class SerialConnector implements Connector, AutoCloseable {
                     Response response = MAPPER.readValue(responseJSON, Response.class);
                     LOGGER.info("New response: " + response.getRequestId());
                     if (Objects.equals(requestId, response.getRequestId())) {
+                        response.getError()
+                                .forEach(error -> LOGGER
+                                        .warning("Board Id ("+response.getUuid()+")returned error: \n"+error));
                         return Optional.of(response);
                     } else {
-                        getResponseMap().put(response.getRequestId(), response);
+                        if (response.getRequestId() != null) {
+                            getResponseMap().put(response.getRequestId(), response);
+                        } else {
+                            LOGGER.warning("Valid payload returned with no requestId.");
+                        }
                     }
                 } catch (JsonProcessingException e) {
                     throw new ConnectorException("Couldn't consume JSON", e);
@@ -143,9 +150,10 @@ public class SerialConnector implements Connector, AutoCloseable {
         return Optional.empty();
     }
 
-    private Optional<String> pollUntilFinish() throws SerialPortException {
+    private Optional<String> pollUntilFinish(Duration maxwait) throws SerialPortException {
+        Instant start = Instant.now();
         boolean invalidBuffer = buffer.length() > 0 && !buffer.toString().startsWith("{");
-        while (true) {
+        while (start.plus(maxwait).isAfter(Instant.now())) {
             Optional<String> response = poll(10);
             if (response.isPresent()) {
                 if (validate(response.get())) {
@@ -157,6 +165,7 @@ public class SerialConnector implements Connector, AutoCloseable {
                 return Optional.empty();
             }
         }
+        throw new ConnectorTimeoutException("polling for message", maxwait);
     }
 
     private static boolean validate(String input) {

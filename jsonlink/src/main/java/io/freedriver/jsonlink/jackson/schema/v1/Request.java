@@ -1,5 +1,6 @@
 package io.freedriver.jsonlink.jackson.schema.v1;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.freedriver.jsonlink.Connector;
 
 import java.util.ArrayList;
@@ -138,6 +139,7 @@ public class Request {
         return this;
     }
 
+    @JsonIgnore
     public boolean isEmpty() {
         return (read == null || read.isEmpty()) && (write == null || write.isEmpty()) &&
                (mode.isEmpty()) && turn_on.isEmpty() && turn_off.isEmpty();

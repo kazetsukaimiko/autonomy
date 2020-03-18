@@ -3,7 +3,7 @@ package io.freedriver.jsonlink;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 
-import java.util.Optional;
+import java.time.Duration;
 import java.util.UUID;
 
 public class ConcurrentConnector implements Connector {
@@ -15,8 +15,8 @@ public class ConcurrentConnector implements Connector {
     }
 
     @Override
-    public synchronized Response send(Request request) throws ConnectorException {
-        return delegate.send(request);
+    public synchronized Response send(Request request, Duration maxwait) throws ConnectorException {
+        return delegate.send(request, maxwait);
     }
 
     @Override

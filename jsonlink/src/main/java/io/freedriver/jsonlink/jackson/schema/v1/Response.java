@@ -14,7 +14,9 @@ import java.util.function.Consumer;
 public class Response extends BaseResponse {
     private UUID uuid;
     private UUID requestId;
+    private List<String> info = new ArrayList<>();
     private List<String> error = new ArrayList<>();
+    private List<String> debug = new ArrayList<>();
     private Map<Identifier, Boolean> digital;
     private List<AnalogResponse> analog;
 
@@ -37,12 +39,34 @@ public class Response extends BaseResponse {
         this.requestId = requestId;
     }
 
+    public List<String> getInfo() {
+        return info != null
+                ? info
+                : Collections.emptyList();
+    }
+
+    public void setInfo(List<String> info) {
+        this.info = info;
+    }
+
     public List<String> getError() {
-        return error;
+        return error != null
+                ? error
+                : Collections.emptyList();
     }
 
     public void setError(List<String> error) {
         this.error = error;
+    }
+
+    public List<String> getDebug() {
+        return debug != null
+                ? debug
+                : Collections.emptyList();
+    }
+
+    public void setDebug(List<String> debug) {
+        this.debug = debug;
     }
 
     public Map<Identifier, Boolean> getDigital() {

@@ -1,15 +1,17 @@
 package io.freedriver.jsonlink;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
-import io.freedriver.jsonlink.jackson.JsonLinkModule;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
+
+import static java.time.temporal.ChronoUnit.SECONDS;
 
 public interface Connector extends AutoCloseable {
     Logger LOGGER = Logger.getLogger(Connector.class.getName());
@@ -21,7 +23,15 @@ public interface Connector extends AutoCloseable {
     /**
      * Send a request, receiving a response.
      */
-    Response send(Request request) throws ConnectorException;
+    default Response send(Request request) throws ConnectorException {
+        return send(request, Duration.of(10, SECONDS));
+    }
+
+
+    /**
+     * Send a request, receiving a response.
+     */
+    Response send(Request request, Duration maxwait) throws ConnectorException;
 
     /*
     default Response send(Request request) throws ConnectorException {
