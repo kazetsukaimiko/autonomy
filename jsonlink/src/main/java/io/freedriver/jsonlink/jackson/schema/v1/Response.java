@@ -1,6 +1,7 @@
 package io.freedriver.jsonlink.jackson.schema.v1;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.freedriver.jsonlink.jackson.schema.base.BaseResponse;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class Response {
+public class Response extends BaseResponse {
     private UUID uuid;
     private UUID requestId;
     private List<String> error = new ArrayList<>();

@@ -9,7 +9,12 @@ import jssc.SerialPortTimeoutException;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +42,7 @@ public class SerialConnector implements Connector, AutoCloseable {
             try {
                 serialPort.openPort();
                 serialPort.setParams(
-                        SerialPort.BAUDRATE_115200,
+                        500000,
                         SerialPort.DATABITS_8,
                         SerialPort.STOPBITS_1,
                         SerialPort.PARITY_NONE

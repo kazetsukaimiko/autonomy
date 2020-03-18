@@ -26,7 +26,7 @@ static char UUID_ADDRESS = 0;
 // How long the UUID is (String)
 static int UUID_LENGTH = 64;
 // Version of JSONLink
-static String JSONLINK_VERSION = "1.0.0";
+int JSONLINK_VERSION[] = {1,0,0};
 
 
 /*
@@ -84,13 +84,21 @@ static String VOLTAGE = "voltage";
 static String RESISTANCE = "resistance";
 
 /*
- * JSON Documents
+ * Critical Constants for Serial
  */
 
+// The speed of the connection.
+const long BAUD = 500000;
+// The size of the StaticJsonDocuments to allocate.
+const int JSONSIZE = 2048;
+// The timeout value for serial- at maximum size, how long to wait for serial data.
+// This is so that the controller is as responsive as possible.
+static long TIMEOUT = (JSONSIZE*1.5)/(BAUD/1000);
+
 // The document received by serial.
-StaticJsonDocument<2048> inputDocument;
+StaticJsonDocument<JSONSIZE> inputDocument;
 // The document this sketch populates to write to serial.
-StaticJsonDocument<2048> outputDocument;
+StaticJsonDocument<JSONSIZE> outputDocument;
 
 
 
@@ -178,6 +186,18 @@ String readFromEEPROM(char add) {
   return String(data);
 }
 
+
+// Function to read the board id from EEPROM and write it to the outputDocument.
+void setupVersion() {
+    if (!outputDocument.containsKey(UUID)) {
+        outputDocument.createNestedArray(VERSION);
+        int size = sizeof(JSONLINK_VERSION) / sizeof(int);
+        for (int i=0; i < size; i++) {
+            outputDocument[VERSION].add(JSONLINK_VERSION[i]);
+        }
+    }
+}
+
 // Function to read the board id from EEPROM and write it to the outputDocument.
 void readUUID() {
     String uuid = readFromEEPROM(UUID_ADDRESS);
@@ -190,7 +210,7 @@ void readUUID() {
 void setupUUID() {
     if (inputDocument.containsKey(UUID)) {
         if (outputDocument.containsKey(UUID)) {
-          outputDocument[ERROR].add("UUID Already set.");
+          appendError("UUID Already set.");
         } else {
           String newUUID = inputDocument[UUID];
           writeToEEPROM(UUID_ADDRESS, newUUID);
@@ -252,11 +272,11 @@ void modePins() {
 
       // If we're setting as output (digital) and not a valid digital pin
       if (value && !validDigitalPin(pinToModeNumber)) {
-        outputDocument[ERROR].add(String("Cannot set OUTPUT, Invalid Digital Pin: ") + pinToMode.key().c_str());
+        appendError(String("Cannot set OUTPUT, Invalid Digital Pin: ") + pinToMode.key().c_str());
       }
 
       if (!value && !validAnalogPin(pinToModeNumber)) {
-        outputDocument[ERROR].add(String("Cannot set INPUT, Invalid Analog Pin: ") + pinToMode.key().c_str());
+        appendError(String("Cannot set INPUT, Invalid Analog Pin: ") + pinToMode.key().c_str());
       }
       pinMode(pinToModeNumber, value ? OUTPUT : INPUT);
       if (value) {
@@ -319,15 +339,24 @@ void readPins() {
           float knownResistance = analogPin[RESISTANCE];
           readAnalogPin(analogPinNumber, voltageIn, knownResistance);
         } else {
-          outputDocument[ERROR].add(String("Requested Analog Read but missing keys."));
+          appendError(String("Requested Analog Read but missing keys."));
         }
       }
     }
   }
 }
 
+void appendError(String message) {
+    if (!outputDocument.containsKey(ERROR)) {
+        outputDocument.createNestedArray(ERROR);
+    }
+    outputDocument[ERROR].add(message);
+}
+
 // The general JSON processing loop.
 void processJson() {
+  // Set Version
+  setupVersion();
   // Set Board Id
   setupUUID();
   // Set Request Id
@@ -338,13 +367,15 @@ void processJson() {
   writePins();
   // Read any pins requested
   readPins();
+  
+  
+  // outputDocument["TIMEOUT"] = TIMEOUT;
 }
 
 // Arduino Loop.
 void loop() {
   // Reset the output
   deserializeJson(outputDocument, "{}");
-  outputDocument.createNestedArray(ERROR);
 
   // Read the buffer and process it.
   buffer = Serial.readStringUntil(NEWLINE);
@@ -363,7 +394,7 @@ void processBuffer() {
       } else {
         // If an error occurred processing the JSON, set the board id and respond with the error.
         readUUID();
-        outputDocument[ERROR].add(error.c_str());
+        appendError(error.c_str());
       }
       // Write the outputDocument JSON to serial, with a newline to hint we're done.
       serializeJson(outputDocument, Serial);
@@ -373,15 +404,16 @@ void processBuffer() {
       debugOutput("Bad Input.");
       debugOutput(buffer);
     }
+    
     buffer = "";
 }
 
 // Arduino setup.
 void setup() {
-  // Initialize Serial port
-  Serial.begin(115200);
-  Serial.setTimeout(50);
+    // Initialize Serial port
+    Serial.begin(BAUD);
+    Serial.setTimeout(TIMEOUT);
 
-  // Clear the buffer.
-  buffer = "";
+    // Clear the buffer.
+    buffer = "";
 }

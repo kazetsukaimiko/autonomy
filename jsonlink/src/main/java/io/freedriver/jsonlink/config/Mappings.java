@@ -3,7 +3,6 @@ package io.freedriver.jsonlink.config;
 import io.freedriver.jsonlink.config.v2.Appliance;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,12 +53,10 @@ public class Mappings extends ConfigFile implements Migration<io.freedriver.json
         io.freedriver.jsonlink.config.v2.Mapping mapping = new io.freedriver.jsonlink.config.v2.Mapping();
         mapping.setConnectorId(config.getConnectorId());
         mapping.setConnectorName(config.getConnectorName());
-        mapping.setPinNames(config.getPinNames().entrySet()
-                .stream().collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> new Appliance(e.getValue()),
-                        (a, b) -> a
-                )));
+        mapping.setAppliances(config.getPinNames().entrySet()
+                .stream()
+                .map(e -> new Appliance(e.getKey(), e.getValue()))
+                .collect(Collectors.toList()));
         return mapping;
     }
 
