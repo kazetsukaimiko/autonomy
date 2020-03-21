@@ -102,6 +102,7 @@ public class EventInitializationService extends BaseService {
 
     public void fireJSTestEvent(JSTestEvent jsTestEvent) {
         try {
+            LOGGER.warning("Firing JOYSTICK " + jsTestEvent);
             joystickEvents.fire(new JoystickEvent(Instant.now(), jsTestEvent));
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to fire JoystickEvent: ", e);

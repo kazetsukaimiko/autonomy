@@ -25,8 +25,11 @@ public class JSTestReader {
     private static final String NUM_BUTTONS = "numbuttons";
     private static final String BUTTON_NAMES = "buttonnames";
 
-    private static final Pattern DETAILS = Pattern.compile("(?<"+HW_TYPE+">[a-zA-Z]+)\\s+\\((?<"+TITLE+">[a-zA-Z\\s\\d+]+)\\)\\s+has\\s+(?<"+NUM_AXES+">\\d+)\\s+axes\\s+\\((?<"+AXIS_NAMES+">[a-zA-Z\\d\\s,]+)\\)", Pattern.CASE_INSENSITIVE);
+    private static final String DRIVERVER = "driverver";
+
+    private static final Pattern DETAILS = Pattern.compile("(?<"+HW_TYPE+">[a-zA-Z]+)\\s+\\((?<"+TITLE+">[a-zA-Z\\s\\d+\\.]+)\\)\\s+has\\s+(?<"+NUM_AXES+">\\d+)\\s+axes\\s+\\((?<"+AXIS_NAMES+">[a-zA-Z\\d\\s,]+)\\)", Pattern.CASE_INSENSITIVE);
     private static final Pattern DESCRIPTION = Pattern.compile("and\\s+(?<"+NUM_BUTTONS+">\\d+) buttons \\((?<"+BUTTON_NAMES+">[a-zA-Z\\d\\s+,]+)\\)\\.", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DRIVER_VERSION = Pattern.compile("Driver version is (?<"+DRIVERVER+">[\\d\\.]+)\\.", Pattern.CASE_INSENSITIVE);
 
     private JSTestReader() {
     }
@@ -103,20 +106,22 @@ public class JSTestReader {
             }
             Matcher detailsMatcher = DETAILS.matcher(event);
             Matcher descriptionMatcher = DESCRIPTION.matcher(event);
+            Matcher driverMatcher = DRIVER_VERSION.matcher(event);
             if (detailsMatcher.matches()) {
                 jsMetadata.setTitle(detailsMatcher.group(TITLE));
                 jsMetadata.setHardwareType(detailsMatcher.group(HW_TYPE));
                 JSMetadata.index(detailsMatcher.group(AXIS_NAMES), jsMetadata.getAxisNames()::put);
+            } else if (descriptionMatcher.matches()) {
+                JSMetadata.index(descriptionMatcher.group(BUTTON_NAMES), jsMetadata.getButtonNames()::put);
+            } else if (driverMatcher.matches()) {
+                jsMetadata.setDriverVersion(driverMatcher.group(DRIVERVER));
             } else {
                 LOGGER.warning("Not details:");
                 LOGGER.log(Level.WARNING, event);
             }
-            if (descriptionMatcher.matches()) {
-                JSMetadata.index(descriptionMatcher.group(BUTTON_NAMES), jsMetadata.getButtonNames()::put);
-            }
+
             return true;
         }
         return false;
     }
-
 }

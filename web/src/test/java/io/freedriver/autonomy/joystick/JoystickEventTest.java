@@ -1,13 +1,10 @@
 package io.freedriver.autonomy.joystick;
 
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.entity.event.input.joystick.jstest.AllJoysticks;
 import io.freedriver.autonomy.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.autonomy.entity.event.input.joystick.jstest.JSTestReader;
-
-import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,10 +24,16 @@ public class JoystickEventTest {
 
      */
 
-    @Test
+    //@Test
     public void testJoystickEvent() throws IOException, InterruptedException {
         //JSTestReader jsTestReader = new JSTestReader(, single, this::testEvent);
 
+        ExecutorService pool = Executors.newFixedThreadPool(16);
+        AllJoysticks aj = new AllJoysticks(pool, msg -> {
+            System.out.println(msg);
+        });
+
+        aj.poll();
     }
 
     private void testEvent(JSTestEvent jsTestEvent) {

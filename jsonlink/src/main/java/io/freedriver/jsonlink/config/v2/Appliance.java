@@ -21,6 +21,9 @@ public class Appliance {
         this(identifier, name, groupName(name).map(Collections::singleton).orElseGet(Collections::emptySet));
     }
 
+    public Appliance() {
+    }
+
     public Identifier getIdentifier() {
         return identifier;
     }

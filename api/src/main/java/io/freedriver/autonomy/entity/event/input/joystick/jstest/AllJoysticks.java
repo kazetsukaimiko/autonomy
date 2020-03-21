@@ -106,8 +106,10 @@ public class AllJoysticks implements AutoCloseable {
     private boolean shouldCreateReader(Path path) {
         if (!getActiveJoysticks().containsKey(path)) {
             if (!getFailedJoystickMap().containsKey(path)) {
-                LOGGER.info("New Joystick: " + path.toString());
+                System.out.println("New joystick: " + path);
                 return true;
+            } else {
+                System.out.println("Failed joystick: "  + path);
             }
         }
         return false;

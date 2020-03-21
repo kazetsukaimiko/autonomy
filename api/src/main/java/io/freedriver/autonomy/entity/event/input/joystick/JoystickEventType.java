@@ -34,4 +34,9 @@ public enum JoystickEventType {
                 .findFirst()
                 .orElse(null);
     }
+
+    @Override
+    public String toString() {
+        return name();
+    }
 }

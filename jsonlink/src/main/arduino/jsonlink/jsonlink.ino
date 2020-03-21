@@ -375,9 +375,6 @@ void processJson() {
   writePins();
   // Read any pins requested
   readPins();
-  
-  
-  // outputDocument["TIMEOUT"] = TIMEOUT;
 }
 
 // Arduino Loop.

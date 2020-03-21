@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 public class JSMetadata {
     private String title;
     private String hardwareType;
+    private String driverVersion;
     private Map<Integer, String> axisNames = new HashMap<>();
     private Map<Integer, String> buttonNames = new HashMap<>();
 
@@ -50,6 +51,14 @@ public class JSMetadata {
         this.hardwareType = hardwareType;
     }
 
+    public String getDriverVersion() {
+        return driverVersion;
+    }
+
+    public void setDriverVersion(String driverVersion) {
+        this.driverVersion = driverVersion;
+    }
+
     public Map<Integer, String> getAxisNames() {
         return axisNames;
     }
@@ -84,7 +93,9 @@ public class JSMetadata {
     @Override
     public String toString() {
         return "JSMetadata{" +
-                ", title='" + title + '\'' +
+                "title='" + title + '\'' +
+                ", hardwareType='" + hardwareType + '\'' +
+                ", driverVersion='" + driverVersion + '\'' +
                 ", axisNames=" + axisNames +
                 ", buttonNames=" + buttonNames +
                 '}';
