@@ -3,13 +3,14 @@ package io.freedriver.jsonlink.config.v2;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
 public class Appliance {
     private Identifier identifier;
     private String name;
-    private Set<String> groups;
+    private Set<String> groups = new HashSet<>();
 
     public Appliance(Identifier identifier, String name, Set<String> groups) {
         this.identifier = identifier;
