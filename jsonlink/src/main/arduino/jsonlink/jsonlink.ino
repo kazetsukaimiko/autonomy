@@ -311,12 +311,16 @@ void modeSetPin(int pinToModeNumber, bool mode, bool setup) {
 }
 
 void writeDigitalPin(int digitalPinNumber, bool value) {
-    if (getPinMode(digitalPinNumber) != OUTPUT) {
-        modeSetPin(digitalPinNumber, OUTPUT, false);
+    if (validDigitalPin(digitalPinNumber)) {
+        if (getPinMode(digitalPinNumber) != OUTPUT) {
+            modeSetPin(digitalPinNumber, OUTPUT, false);
+        }
+        digitalWrite(digitalPinNumber, value ? LOW : HIGH);
+        outputDocument[DIGITAL][String(digitalPinNumber)] = value;
+        appendDebug("Set:" + String(digitalPinNumber) + ":" + value ? "LOW" : "HIGH");
+    } else {
+        appendError("Invalid DigitalPin: " + String(digitalPinNumber));
     }
-    digitalWrite(digitalPinNumber, value ? LOW : HIGH);
-    outputDocument[DIGITAL][String(digitalPinNumber)] = value;
-    appendDebug("Set:" + String(digitalPinNumber) + ":" + value ? "LOW" : "HIGH");
 }
 
 // Reads digital write commands from the JSON inputDocument, and acts upon them.
