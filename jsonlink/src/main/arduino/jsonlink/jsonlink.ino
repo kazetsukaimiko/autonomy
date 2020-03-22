@@ -28,7 +28,7 @@ static int UUID_LENGTH = 36;
 // Version of JSONLink
 int JSONLINK_VERSION[] = {1,0,0};
 // Banned digital pins - setting these will mess things up.
-int BANNED_DIGITALS[] = {PIN_SPI_SS, PIN_SPI_MOSI, PIN_SPI_MISO, PIN_SPI_SCK, PIN_WIRE_SDA, PIN_WIRE_SCL};
+int BANNED_DIGITALS[] = {PIN_SPI_SS, PIN_SPI_SCK, PIN_WIRE_SDA, PIN_WIRE_SCL};
 
 
 /*
