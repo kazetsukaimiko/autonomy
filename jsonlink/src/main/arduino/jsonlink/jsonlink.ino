@@ -27,6 +27,8 @@ static char UUID_ADDRESS = 0;
 static int UUID_LENGTH = 36;
 // Version of JSONLink
 int JSONLINK_VERSION[] = {1,0,0};
+// Banned digital pins - setting these will mess things up.
+int BANNED_DIGITALS[] = {PIN_SPI_SS, PIN_SPI_MOSI, PIN_SPI_MISO, PIN_SPI_SCK, PIN_WIRE_SDA, PIN_WIRE_SCL};
 
 
 /*
@@ -35,6 +37,9 @@ int JSONLINK_VERSION[] = {1,0,0};
 
 // Json property to read the version from.
 static String VERSION = "version";
+
+// Json property to set current time.
+static String CURRENT_TIME = "currentTime";
 
 // Json property to request debug information with. Set to true if you want debugging output.
 // Will return an array of the same name containing strings of debugging information.
@@ -86,6 +91,19 @@ static String VOLTAGE = "voltage";
 // A response property specifying the resistance.
 static String RESISTANCE = "resistance";
 
+// A response property with the last time updated.
+static String LAST_UPDATED = "lastUpdated";
+
+// A response property containing board info.
+static String BOARD_INFO = "boardInfo";
+
+// A response property in boardInfo containing
+static String DIGITALS = "digitals";
+
+// A response property in boardInfo containing
+static String ANALOGS = "analogs";
+
+
 /*
  * Critical Constants for Serial
  */
@@ -102,11 +120,6 @@ static long TIMEOUT = (JSONSIZE*2)/(BAUD/1000);
 StaticJsonDocument<JSONSIZE> inputDocument;
 // The document this sketch populates to write to serial.
 StaticJsonDocument<JSONSIZE> outputDocument;
-
-// Known "good" pins for the Arduino Mega2560.
-// Some of these are probably incorrect.
-int ANALOG_PINS[] = {A0,A1,A2,A3,A4,A5,A6,A7,A8,A9};
-int DIGITAL_PINS[] = {1,2,3,5,6,7,12,13,15,16,17,18,19,20,21,22,23,24,25,26,35,36,37,38,39,40,41,42,43,44,45,46,50,51,52,53,54,55,56,57,58,59,60,63,64,70,71,72,73,74,75,76,77,78};
 
 // Buffer for reading from Serial.
 String buffer = "";
@@ -217,24 +230,39 @@ void setupRequestId() {
     }
 }
 
+void setupBoardInfo() {
+    if (inputDocument.containsKey(BOARD_INFO) && (bool)inputDocument[BOARD_INFO]) {
+        outputDocument.createNestedObject(BOARD_INFO);
+        outputDocument[BOARD_INFO].createNestedArray(DIGITALS);
+        for (int digitalPin = 0; digitalPin < (NUM_DIGITAL_PINS-NUM_ANALOG_INPUTS); digitalPin++) {
+            if (!bannedDigitalPin(digitalPin)) {
+                outputDocument[BOARD_INFO][DIGITALS].add(digitalPin);
+            }
+        }
+        outputDocument[BOARD_INFO].createNestedArray(ANALOGS);
+        for (int analogPin = A0; analogPin < (A0+NUM_ANALOG_INPUTS); analogPin++) {
+            outputDocument[BOARD_INFO][ANALOGS].add(analogPin);
+        }
+    }
+}
+
+boolean bannedDigitalPin(int pinNum) {
+    for (int bannedPin : BANNED_DIGITALS) {
+        if (bannedPin == pinNum) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Is the pinNum a valid digital pin?
 boolean validDigitalPin(int pinNum) {
-  for(int pin : DIGITAL_PINS) {
-    if (pin == pinNum) {
-      return true;
-    }
-  }
-  return false;
+    return ((pinNum >= 0) && (pinNum < NUM_DIGITAL_PINS) && !bannedDigitalPin(pinNum));
 }
 
 // Is the pinNum a valid analog pin?
 boolean validAnalogPin(int pinNum) {
-  for(int pin : ANALOG_PINS) {
-    if (pin == pinNum) {
-      return true;
-    }
-  }
-  return false;
+    return ((pinNum >= A0) && (pinNum < (A0+NUM_ANALOG_INPUTS)));
 }
 
 // Is the pinNum a valid pin?
@@ -242,12 +270,16 @@ boolean validPin(int pinNum) {
   return validDigitalPin(pinNum) || validAnalogPin(pinNum);
 }
 
-boolean getPinMode(int pinNum) {
-  uint8_t bit = digitalPinToBitMask(pinNum);
-  uint8_t port = digitalPinToPort(pinNum);
+int getPinMode(uint8_t pin) {
+  if (!validPin(pin)) return (-1);
+
+  uint8_t bit = digitalPinToBitMask(pin);
+  uint8_t port = digitalPinToPort(pin);
   volatile uint8_t *reg = portModeRegister(port);
-  // TRUE: output. FALSE: input.
-  return (*reg & bit) ? OUTPUT : INPUT;
+  if (*reg & bit) return (OUTPUT);
+
+  volatile uint8_t *out = portOutputRegister(port);
+  return ((*out & bit) ? INPUT_PULLUP : INPUT);
 }
 
 // Reads modeset commands from the JSON inputDocument, and acts upon them.
@@ -256,27 +288,36 @@ void modePins() {
   if (inputDocument.containsKey(MODE)) {
     JsonObject pinsToMode = inputDocument[MODE];
     for( JsonPair pinToMode : pinsToMode ) {
-      // Which pin
-      int pinToModeNumber = atoi(pinToMode.key().c_str());
-      // True = OUTPUT, False = INPUT
-      bool value = pinToMode.value();
-
-      // If we're setting as output (digital) and not a valid digital pin
-      if (value && !validDigitalPin(pinToModeNumber)) {
-        appendError(String("Cannot set OUTPUT, Invalid Digital Pin: ") + pinToMode.key().c_str());
-      }
-
-      if (!value && !validAnalogPin(pinToModeNumber)) {
-        appendError(String("Cannot set INPUT, Invalid Analog Pin: ") + pinToMode.key().c_str());
-      }
-      pinMode(pinToModeNumber, value ? OUTPUT : INPUT);
-      if (value) {
-        digitalWrite(pinToModeNumber, HIGH);
-      }
+      modeSetPin(atoi(pinToMode.key().c_str()), pinToMode.value(), true);
     }
   }
 }
 
+void modeSetPin(int pinToModeNumber, bool mode, bool setup) {
+    if (mode) {
+        if (!validDigitalPin(pinToModeNumber)) {
+            appendError(String("Cannot set OUTPUT, Invalid Digital Pin: ") + String(pinToModeNumber));
+        } else {
+            pinMode(pinToModeNumber, mode ? OUTPUT : INPUT);
+            if (setup) {
+                digitalWrite(pinToModeNumber, HIGH);
+            }
+        }
+    } else {
+        if (!validAnalogPin(pinToModeNumber)) {
+            appendError(String("Cannot set INPUT, Invalid Analog Pin: ") + String(pinToModeNumber));
+        }
+    }
+}
+
+void writeDigitalPin(int digitalPinNumber, bool value) {
+    if (getPinMode(digitalPinNumber) != OUTPUT) {
+        modeSetPin(digitalPinNumber, OUTPUT, false);
+    }
+    digitalWrite(digitalPinNumber, value ? LOW : HIGH);
+    outputDocument[DIGITAL][String(digitalPinNumber)] = value;
+    appendDebug("Set:" + String(digitalPinNumber) + ":" + value ? "LOW" : "HIGH");
+}
 
 // Reads digital write commands from the JSON inputDocument, and acts upon them.
 // Writes the state of any pins set back to the outputDocument.
@@ -285,11 +326,7 @@ void writePins() {
     if (inputDocument[WRITE].containsKey(DIGITAL)) {
       JsonObject digitalPins = inputDocument[WRITE][DIGITAL];
       for( JsonPair digitalPin : digitalPins ) {
-        int digitalPinNumber = atoi(digitalPin.key().c_str());
-        bool value = digitalPin.value();
-        digitalWrite(digitalPinNumber, value ? LOW : HIGH);
-        outputDocument[DIGITAL][String(digitalPinNumber)] = value;
-        appendDebug("Set:" + String(digitalPinNumber) + ":" + value ? "LOW" : "HIGH");
+        writeDigitalPin(atoi(digitalPin.key().c_str()), digitalPin.value());
       }
     }
   }
@@ -297,16 +334,14 @@ void writePins() {
   if (inputDocument.containsKey(TURN_ON)) {
     JsonArray pinsToTurnOn = inputDocument[TURN_ON];
     for (int pinToTurnOn : pinsToTurnOn) {
-      digitalWrite(pinToTurnOn, LOW);
-      outputDocument[DIGITAL][String(pinToTurnOn)] = true;
+      writeDigitalPin(pinToTurnOn, LOW);
     }
   }
 
   if (inputDocument.containsKey(TURN_OFF)) {
     JsonArray pinsToTurnOff = inputDocument[TURN_OFF];
     for (int pinToTurnOff : pinsToTurnOff) {
-      digitalWrite(pinToTurnOff, HIGH);
-      outputDocument[DIGITAL][String(pinToTurnOff)] = false;
+      writeDigitalPin(pinToTurnOff, HIGH);
     }
   }
 }
@@ -369,6 +404,8 @@ void processJson() {
   setupUUID();
   // Set Request Id
   setupRequestId();
+  // Set Board Info
+  setupBoardInfo();
   // Enact any pin modesets.
   modePins();
   // Write any digital pins set

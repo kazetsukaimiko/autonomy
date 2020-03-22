@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 public class Response extends BaseResponse {
     private UUID uuid;
     private UUID requestId;
+    private BoardInfo boardInfo;
     private List<String> info = new ArrayList<>();
     private List<String> error = new ArrayList<>();
     private List<String> debug = new ArrayList<>();
@@ -37,6 +38,14 @@ public class Response extends BaseResponse {
 
     public void setRequestId(UUID requestId) {
         this.requestId = requestId;
+    }
+
+    public BoardInfo getBoardInfo() {
+        return boardInfo;
+    }
+
+    public void setBoardInfo(BoardInfo boardInfo) {
+        this.boardInfo = boardInfo;
     }
 
     public List<String> getInfo() {
@@ -98,9 +107,14 @@ public class Response extends BaseResponse {
     public String toString() {
         return "Response{" +
                 "uuid=" + uuid +
+                ", requestId=" + requestId +
+                ", boardInfo=" + boardInfo +
+                ", info=" + info +
                 ", error=" + error +
+                ", debug=" + debug +
                 ", digital=" + digital +
                 ", analog=" + analog +
+                ", created=" + created +
                 '}';
     }
 }

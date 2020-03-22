@@ -11,12 +11,17 @@ import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.usb.UsbDevice;
+import javax.usb.UsbException;
+import javax.usb.UsbHostManager;
+import javax.usb.UsbHub;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +40,42 @@ public class ConnectorTest {
                 .distinct()
                 .peek(uuid -> LOGGER.info(String.valueOf(uuid)))
                 .collect(Collectors.toList());
+    }
+
+
+    @Test
+    public void identifyConnectorsByUSB() throws UsbException {
+        getAllUsbDevices(UsbHostManager.getUsbServices()
+                .getRootUsbHub())
+                .forEach(d -> System.out.println(d));
+    }
+
+    @SuppressWarnings("unchecked")
+    public Stream<UsbDevice> getAllUsbDevices(UsbHub hub) {
+        List<UsbDevice> devices = (List<UsbDevice>) hub.getAttachedUsbDevices();
+        return devices.isEmpty()
+                ? Stream.empty()
+                : Stream.concat(
+                    devices
+                            .stream()
+                            .filter(device -> !device.isUsbHub()),
+                    devices
+                            .stream()
+                            .filter(UsbDevice::isUsbHub)
+                            .map(UsbHub.class::cast)
+                            .flatMap(this::getAllUsbDevices)
+                );
+    }
+
+    @Test
+    public void testGetBoardInfo() {
+        Request boardInfo = new Request();
+        boardInfo.setBoardInfo(true);
+
+        Connectors.allConnectors()
+                .findFirst()
+                .map(connector -> connector.send(boardInfo))
+                .ifPresent(System.out::println);
     }
 
     @Test

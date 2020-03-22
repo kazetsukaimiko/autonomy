@@ -16,6 +16,7 @@ public class Request {
     private Map<Identifier, Mode> mode = new HashMap<>();
     private ReadRequest read;
     private WriteRequest write;
+    private Boolean boardInfo;
     private List<Identifier> turn_off = new ArrayList<>();
     private List<Identifier> turn_on = new ArrayList<>();
 
@@ -98,6 +99,14 @@ public class Request {
 
     public void setWrite(WriteRequest write) {
         this.write = write;
+    }
+
+    public Boolean getBoardInfo() {
+        return boardInfo;
+    }
+
+    public void setBoardInfo(Boolean boardInfo) {
+        this.boardInfo = boardInfo;
     }
 
     public Map<Identifier, Mode> getMode() {
