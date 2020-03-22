@@ -25,6 +25,10 @@ public enum JSTestEventType {
         return JSTestEventType == BUTTON_INITIAL || JSTestEventType == AXIS_INITIAL;
     }
 
+    public boolean isInitial() {
+        return isInitial(this);
+    }
+
     public int getTypeNumber() {
         return typeNumber;
     }

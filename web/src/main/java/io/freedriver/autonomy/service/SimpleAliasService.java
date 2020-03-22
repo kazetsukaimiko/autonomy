@@ -164,13 +164,21 @@ public class SimpleAliasService {
         return connectorService.send(boardId, request);
     }
 
+    /**
+     * On a genuine joystick event, search mappings for actions to commit to and execute them.
+     * TODO: JoystickPressEvent using temporal data.
+     * @param joystickEvent
+     * @throws IOException
+     */
     public void handleJoystickEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
-        try {
-            getMappings()
-                    .getMappings()
-                    .forEach(mapping -> handleJoystickEvent(joystickEvent, mapping));
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to observe JoystickEvent: ", e);
+        if (!joystickEvent.isInitial()) {
+            try {
+                getMappings()
+                        .getMappings()
+                        .forEach(mapping -> handleJoystickEvent(joystickEvent, mapping));
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Failed to observe JoystickEvent: ", e);
+            }
         }
     }
 

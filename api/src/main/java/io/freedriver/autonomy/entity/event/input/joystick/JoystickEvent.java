@@ -8,20 +8,23 @@ import io.freedriver.autonomy.entity.event.input.joystick.jstest.JSTestEvent;
 import org.dizitart.no2.objects.InheritIndices;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @InheritIndices
 public class JoystickEvent extends Event {
     private Long number;
     private Long value;
+    private boolean initial;
     private JoystickEventType joystickEventType;
 
     public JoystickEvent() {
     }
 
-    public JoystickEvent(Instant timestamp, EventCoordinate coordinate, EventDescription description, Long number, Long value, JoystickEventType joystickEventType) {
+    public JoystickEvent(Instant timestamp, EventCoordinate coordinate, EventDescription description, Long number, Long value, boolean initial, JoystickEventType joystickEventType) {
         super(timestamp, coordinate, description, SourceType.HUMAN);
         this.number = number;
         this.value = value;
+        this.initial = initial;
         this.joystickEventType = joystickEventType;
     }
 
@@ -32,6 +35,7 @@ public class JoystickEvent extends Event {
                 jsTestEvent.describe(),
                 jsTestEvent.getNumber(),
                 jsTestEvent.getValue(),
+                jsTestEvent.getJsTestEventType().isInitial(),
                 JoystickEventType.of(jsTestEvent)
         );
     }
@@ -52,11 +56,36 @@ public class JoystickEvent extends Event {
         this.value = value;
     }
 
+    public boolean isInitial() {
+        return initial;
+    }
+
+    public void setInitial(boolean initial) {
+        this.initial = initial;
+    }
+
     public JoystickEventType getJoystickEventType() {
         return joystickEventType;
     }
 
     public void setJoystickEventType(JoystickEventType joystickEventType) {
         this.joystickEventType = joystickEventType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        JoystickEvent that = (JoystickEvent) o;
+        return initial == that.initial &&
+                Objects.equals(number, that.number) &&
+                Objects.equals(value, that.value) &&
+                joystickEventType == that.joystickEventType;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), number, value, initial, joystickEventType);
     }
 }
