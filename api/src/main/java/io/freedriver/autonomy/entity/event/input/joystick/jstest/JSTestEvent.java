@@ -7,6 +7,7 @@ import io.freedriver.autonomy.entity.event.input.joystick.JoystickEventType;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -119,6 +120,16 @@ public class JSTestEvent {
 
     public void setValue(Long value) {
         this.value = value;
+    }
+
+    public boolean isButton() {
+        return Optional.ofNullable(jsTestEventType)
+                .map(JSTestEventType::isButton)
+                .orElse(false);
+    }
+
+    public boolean isAxis() {
+        return !isButton();
     }
 
     @Override

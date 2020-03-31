@@ -7,18 +7,24 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public enum JoystickEventType {
-    BUTTON_DOWN(1L),
-    BUTTON_UP(0L),
-    AXIS(Long.MIN_VALUE);
+    BUTTON_DOWN(1L, true),
+    BUTTON_UP(0L, true),
+    AXIS(Long.MIN_VALUE, false);
 
     private final Long value;
+    private final boolean button;
 
-    JoystickEventType(Long value) {
+    JoystickEventType(Long value, boolean button) {
         this.value = value;
+        this.button = button;
     }
 
     public Long getValue() {
         return value;
+    }
+
+    public boolean isButton() {
+        return button;
     }
 
     public static JoystickEventType of(JSTestEvent jsTestEvent) {

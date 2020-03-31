@@ -171,7 +171,7 @@ public class SimpleAliasService {
      * @throws IOException
      */
     public void handleJoystickEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
-        if (!joystickEvent.isInitial()) {
+        if (!joystickEvent.isInitial() && joystickEvent.isButton()) {
             try {
                 getMappings()
                         .getMappings()

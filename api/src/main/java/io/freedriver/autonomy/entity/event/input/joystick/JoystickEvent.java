@@ -72,6 +72,10 @@ public class JoystickEvent extends Event {
         this.joystickEventType = joystickEventType;
     }
 
+    public boolean isButton() {
+        return joystickEventType.isButton();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
