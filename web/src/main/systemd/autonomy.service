@@ -1,0 +1,12 @@
+[Unit]
+Description=Autonomy Daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/java -jar %h/.local/autonomy/autonomy-thorntail.jar
+ExecStop=/bin/kill $MAINPID
+KillMode=process
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

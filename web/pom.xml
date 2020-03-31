@@ -45,6 +45,38 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <executions>
+          <execution>
+            <id>copy</id>
+            <phase>install</phase>
+            <configuration>
+              <target>
+                <echo>Installing Autonomy</echo>
+                <copy todir="${user.home}/.local/autonomy" overwrite="true" flatten="true">
+                  <fileset dir="${build.directory}/" includes="autonomy-thorntail.jar" />
+                </copy>
+                <copy todir="${user.home}/.local/share/systemd/user/" overwrite="true" flatten="true">
+                  <fileset dir="${basedir}/src/main/systemd/" includes="*.service" />
+                </copy>
+                <copy todir="${user.home}/bin/" overwrite="true" flatten="true">
+                  <fileset dir="${basedir}/src/main/systemd/" includes="*.sh" />
+                </copy>
+                <chmod file="${user.home}/bin/startAutonomy.sh" perm="755" />
+                <chmod file="${user.home}/bin/stopAutonomy.sh" perm="755" />
+                <chmod file="${user.home}/bin/autolog.sh" perm="755" />
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 
