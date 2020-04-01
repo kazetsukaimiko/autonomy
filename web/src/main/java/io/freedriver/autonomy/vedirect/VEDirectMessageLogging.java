@@ -12,7 +12,8 @@ import java.util.stream.Stream;
 import static kaze.math.Multiplier.BASE;
 
 public enum VEDirectMessageLogging {
-    PV_POWER(vdm -> vdm.getSerialNumber() + " Panel power", vdm -> vdm.getPanelPower().toString()),
+    PV_POWER(vdm -> "Panel power for " +vdm.getProductType().getProductName() + " (" + vdm.getSerialNumber() + ")",
+            vdm -> vdm.getPanelPower().toString()),
     ;
 
     private final Function<VEDirectMessage, String> fieldName;

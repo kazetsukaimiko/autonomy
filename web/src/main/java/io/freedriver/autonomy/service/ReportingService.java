@@ -16,10 +16,10 @@ public class ReportingService {
     public synchronized <E> void update(String key, Runnable runnable, Duration every) {
         if (key != null &&
                 (!lastReportedMap.containsKey(key))
-                        || lastReportedMap.get(key).plus(every).isAfter(Instant.now())) {
+                        || Instant.now().isAfter(lastReportedMap.get(key).plus(every))) {
             try {
-                runnable.run();
                 lastReportedMap.put(key, Instant.now());
+                runnable.run();
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "Error reporting " + key, e);
             }
