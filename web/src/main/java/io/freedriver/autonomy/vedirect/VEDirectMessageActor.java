@@ -1,6 +1,7 @@
 package io.freedriver.autonomy.vedirect;
 
 import io.freedriver.autonomy.cdi.qualifier.VEProduct;
+import io.freedriver.autonomy.service.ReportingService;
 import kaze.victron.VEDirectMessage;
 import kaze.victron.VictronDevice;
 import kaze.victron.VictronProduct;
@@ -28,6 +29,9 @@ public class VEDirectMessageActor {
     @Inject
     private VEDirectMessageService messageService;
 
+    @Inject
+    private ReportingService reportingService;
+
     /*
      * SERVICE METHODS
      */
@@ -45,8 +49,21 @@ public class VEDirectMessageActor {
      * EVENT HANDLERS
      */
     public synchronized void actOnVEDirectMessage(@Observes @Default VEDirectMessage veDirectMessage) throws IOException {
+        report(veDirectMessage);
         VictronDevice.of(veDirectMessage)
                 .ifPresent(product -> handleProductMessage(product, veDirectMessage));
+    }
+
+    /**
+     * Log useful information.
+     */
+    private void report(VEDirectMessage veDirectMessage) {
+        VEDirectMessageLogging.stream()
+                .forEach(field ->
+                        reportingService.update(
+                                field.getFieldName(veDirectMessage),
+                                () -> LOGGER.info(field.getFieldName(veDirectMessage) + ": " + field.getMessage(veDirectMessage)),
+                                field.getInterval()));
     }
 
     public synchronized void handleProductMessage(VictronDevice product, VEDirectMessage veDirectMessage) {
