@@ -63,7 +63,7 @@ public class VEDirectMessageActor {
                         reportingService.update(
                                 field.getFieldName(veDirectMessage),
                                 () -> LOGGER.info(field.getFieldName(veDirectMessage) + ": " + field.getMessage(veDirectMessage)),
-                                field.getInterval()));
+                                field.getInterval(veDirectMessage)));
     }
 
     public synchronized void handleProductMessage(VictronDevice product, VEDirectMessage veDirectMessage) {

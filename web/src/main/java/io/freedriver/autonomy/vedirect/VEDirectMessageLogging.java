@@ -1,59 +1,41 @@
 package io.freedriver.autonomy.vedirect;
 
-import kaze.math.measurement.units.Potential;
+import kaze.math.measurement.units.Power;
 import kaze.victron.VEDirectMessage;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static kaze.math.Multiplier.BASE;
 
 public enum VEDirectMessageLogging {
-    PV_POWER(vdm -> "Panel power for " +vdm.getProductType().getProductName() + " (" + vdm.getSerialNumber() + ")",
-            vdm -> vdm.getPanelPower().toString()),
+    // TODO: Ramp up logging as PV power increases.
+    PV_POWER {
+        @Override
+        public String getFieldName(VEDirectMessage vdm) {
+            return "Panel power for "+vdm.getProductType().getProductName() +" ("+vdm.getSerialNumber()+")";
+        }
+
+        @Override
+        public String getMessage(VEDirectMessage vdm) {
+            return vdm.getPanelPower().toString();
+        }
+
+        @Override
+        public Duration getInterval(VEDirectMessage vdm) {
+            return Duration.ofSeconds(
+                    Math.max(2, Math.min(
+                            300,
+                            480-vdm.getPanelPower().divide(Power.of(2.5, BASE)).intValue()
+                    )));
+        }
+    },
     ;
 
-    private final Function<VEDirectMessage, String> fieldName;
-    private final Function<VEDirectMessage, String> message;
-    private final Duration interval;
 
-    VEDirectMessageLogging(Function<VEDirectMessage, String> fieldName, Function<VEDirectMessage, String> message, Duration interval) {
-        this.fieldName = fieldName;
-        this.message = message;
-        this.interval = interval;
-    }
-
-    VEDirectMessageLogging(Function<VEDirectMessage, String> fieldName, Function<VEDirectMessage, String> message) {
-        this(fieldName, message, Duration.ofMinutes(5));
-    }
-
-
-    public String getFieldName(VEDirectMessage veDirectMessage) {
-        return fieldName.apply(veDirectMessage);
-    }
-
-    public Function<VEDirectMessage, String> getFieldName() {
-        return fieldName;
-    }
-
-    public String getMessage(VEDirectMessage veDirectMessage) {
-        return message.apply(veDirectMessage);
-    }
-
-    public Function<VEDirectMessage, String> getMessage() {
-        return message;
-    }
-
-    public Duration getInterval() {
-        return interval;
-    }
-
-    public static BigDecimal tenthOfaVolt(Potential potential) {
-        return potential.getValue().divide(BASE.volts(new BigDecimal("10")).getValue(), RoundingMode.FLOOR);
-    }
+    public abstract String getFieldName(VEDirectMessage vdm);
+    public abstract String getMessage(VEDirectMessage vdm);
+    public abstract Duration getInterval(VEDirectMessage vdm);
 
     public static Stream<VEDirectMessageLogging> stream() {
         return Stream.of(values());
