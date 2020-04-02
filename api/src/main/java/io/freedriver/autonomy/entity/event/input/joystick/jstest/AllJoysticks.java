@@ -123,10 +123,13 @@ public class AllJoysticks implements AutoCloseable {
         try {
             activeJoysticks.put(
                     path,
-                    executorService.submit(() -> addOns
-                            .apply(JSTestReader
-                                    .ofJoystick(path)
-                                    .takeWhile(l -> open)).forEach(sink)));
+                    executorService.submit(() -> {
+                        addOns
+                                .apply(JSTestReader
+                                        .ofJoystick(path)
+                                        .takeWhile(l -> open)).forEach(sink);
+                        LOGGER.info("Closed Stream for Joystick at " + path);
+                    }));
         } catch (Exception e) {
             FailedJoystick failedJoystick = new FailedJoystick(path);
             LOGGER.log(Level.SEVERE, e, () -> "Failed to assemble Joystick at "
@@ -152,5 +155,6 @@ public class AllJoysticks implements AutoCloseable {
     @Override
     public void close() throws Exception {
         open = false;
+        waitForAllToClose();
     }
 }

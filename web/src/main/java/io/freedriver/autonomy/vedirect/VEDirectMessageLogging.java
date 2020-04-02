@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 import static kaze.math.Multiplier.BASE;
 
 public enum VEDirectMessageLogging {
-    // TODO: Ramp up logging as PV power increases.
     PV_POWER {
         @Override
         public String getFieldName(VEDirectMessage vdm) {

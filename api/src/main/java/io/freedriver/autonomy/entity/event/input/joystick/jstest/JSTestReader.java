@@ -31,6 +31,7 @@ public class JSTestReader {
     private static final Pattern DESCRIPTION = Pattern.compile("and\\s+(?<"+NUM_BUTTONS+">\\d+) buttons \\((?<"+BUTTON_NAMES+">[a-zA-Z\\d\\s+,]+)\\)\\.", Pattern.CASE_INSENSITIVE);
     private static final Pattern DRIVER_VERSION = Pattern.compile("Driver version is (?<"+DRIVERVER+">[\\d\\.]+)\\.", Pattern.CASE_INSENSITIVE);
 
+
     private JSTestReader() {
     }
 
