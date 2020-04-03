@@ -65,6 +65,7 @@
                 <copy todir="${user.home}/bin/" overwrite="true" flatten="true">
                   <fileset dir="${basedir}/src/main/systemd/" includes="*.sh" />
                 </copy>
+                <chmod file="${user.home}/bin/restartAutonomy.sh" perm="755" />
                 <chmod file="${user.home}/bin/startAutonomy.sh" perm="755" />
                 <chmod file="${user.home}/bin/stopAutonomy.sh" perm="755" />
                 <chmod file="${user.home}/bin/autolog.sh" perm="755" />
