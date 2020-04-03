@@ -41,7 +41,6 @@ public class RestartOnHashChangeService {
         Optional<String> restartCommand = Optional.of(HASH_CHANGE_COMMAND)
                 .map(System::getProperty);
         if (comparisonPath.isPresent() && restartCommand.isPresent()) {
-
             hashChangeLoop(comparisonPath.get(), restartCommand.get());
         } else {
             LOGGER.warning(
@@ -52,8 +51,8 @@ public class RestartOnHashChangeService {
     }
 
     private void hashChangeLoop(Path path, String command) {
-        LOGGER.info("Service started.");
         POOL.submit(() -> {
+            LOGGER.info("Service started.");
             while (continueTrying) {
                 try {
                     waitFor(INTERVAL);
