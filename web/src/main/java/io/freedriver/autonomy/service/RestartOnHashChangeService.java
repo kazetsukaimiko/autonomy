@@ -82,10 +82,10 @@ public class RestartOnHashChangeService {
         FileTime fileTime = Files.getLastModifiedTime(path);
         Instant modified = fileTime.toInstant();
         if (lastModified == null) {
-            modified = lastModified;
+            lastModified = modified;
             lastHash = hash(path);
         }
-        if (modified != null && lastModified.isAfter(modified)) {
+        if (modified.isAfter(lastModified)) {
             String currentHash = hash(path);
             return !Objects.equals(lastHash, currentHash);
         }
