@@ -1,11 +1,8 @@
 package io.freedriver.autonomy.async;
 
-import io.freedriver.autonomy.entity.event.StateType;
 import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
-import io.freedriver.autonomy.entity.event.input.joystick.JoystickEventType;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.jsonlink.Connector;
-import io.freedriver.jsonlink.ConnectorException;
 import io.freedriver.jsonlink.config.ConnectorConfig;
 
 import javax.annotation.Resource;
@@ -17,8 +14,6 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Objects;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @ApplicationScoped
@@ -40,6 +35,7 @@ public class JoystickEventActor {
 
     public void actOnEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
         LOGGER.info("Observed: " + joystickEvent.toString());
+        /*
         if (joystickEvent.getJoystickEventType() == JoystickEventType.BUTTON_UP && joystickEvent.getDescription().getType() != StateType.INITIAL_STATE) {
             String target = joystickEvent.getNumber().equals(11L) ?
                     "hallway" : "bathroom";
@@ -52,6 +48,8 @@ public class JoystickEventActor {
                 LOGGER.log(Level.WARNING, e, () -> "Couldn't act on Joystick Event.");
             }
         }
+
+         */
     }
 
 }
