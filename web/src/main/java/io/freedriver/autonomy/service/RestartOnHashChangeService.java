@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -82,10 +83,12 @@ public class RestartOnHashChangeService {
         FileTime fileTime = Files.getLastModifiedTime(path);
         Instant modified = fileTime.toInstant();
         if (lastModified == null) {
+            LOGGER.info("Last modified: " + DateTimeFormatter.ISO_DATE_TIME.format(modified));
             lastModified = modified;
             lastHash = hash(path);
         }
         if (modified.isAfter(lastModified)) {
+            LOGGER.info("Last modified changed: " + DateTimeFormatter.ISO_DATE_TIME.format(modified));
             String currentHash = hash(path);
             return !Objects.equals(lastHash, currentHash);
         }
