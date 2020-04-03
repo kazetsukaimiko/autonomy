@@ -37,6 +37,7 @@ public class RestartOnHashChangeService {
         Optional<String> restartCommand = Optional.of(HASH_CHANGE_COMMAND)
                 .map(System::getProperty);
         if (comparisonPath.isPresent() && restartCommand.isPresent()) {
+            LOGGER.info("Service started.");
             hashChangeLoop(comparisonPath.get(), restartCommand.get());
         } else {
             LOGGER.warning(
@@ -52,6 +53,7 @@ public class RestartOnHashChangeService {
                 waitFor(INTERVAL);
                 boolean hashChanged = checkHashChange(path);
                 if (hashChanged) {
+                    LOGGER.info("Hash changed. Initializing restart.");
                     continueTrying = (runRestartCommand(command) == 0);
                 }
             } catch (IOException | InterruptedException e) {
