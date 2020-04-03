@@ -15,6 +15,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,6 +27,8 @@ public class RestartOnHashChangeService {
     public static final String HASH_CHANGE_PROPERTY = "restartOn";
     public static final String HASH_CHANGE_COMMAND = "restartCommand";
     public static final Duration INTERVAL = Duration.ofSeconds(1);
+
+    private static final ExecutorService POOL = Executors.newSingleThreadExecutor();
 
     private boolean continueTrying = true;
     private Instant lastModified = null;
@@ -37,7 +41,7 @@ public class RestartOnHashChangeService {
         Optional<String> restartCommand = Optional.of(HASH_CHANGE_COMMAND)
                 .map(System::getProperty);
         if (comparisonPath.isPresent() && restartCommand.isPresent()) {
-            LOGGER.info("Service started.");
+
             hashChangeLoop(comparisonPath.get(), restartCommand.get());
         } else {
             LOGGER.warning(
@@ -48,19 +52,22 @@ public class RestartOnHashChangeService {
     }
 
     private void hashChangeLoop(Path path, String command) {
-        while (continueTrying) {
-            try {
-                waitFor(INTERVAL);
-                boolean hashChanged = checkHashChange(path);
-                if (hashChanged) {
-                    LOGGER.info("Hash changed. Initializing restart.");
-                    continueTrying = (runRestartCommand(command) == 0);
+        LOGGER.info("Service started.");
+        POOL.submit(() -> {
+            while (continueTrying) {
+                try {
+                    waitFor(INTERVAL);
+                    boolean hashChanged = checkHashChange(path);
+                    if (hashChanged) {
+                        LOGGER.info("Hash changed. Initializing restart.");
+                        continueTrying = (runRestartCommand(command) == 0);
+                    }
+                } catch (IOException | InterruptedException e) {
+                    LOGGER.log(Level.WARNING, "Looping error", e);
                 }
-            } catch (IOException | InterruptedException e) {
-                LOGGER.log(Level.WARNING, "Looping error", e);
             }
-        }
-        System.exit(0);
+            System.exit(0);
+        });
     }
 
     private void waitFor(Duration interval) throws InterruptedException {

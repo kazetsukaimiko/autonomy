@@ -88,6 +88,7 @@
       <artifactId>cdi</artifactId>
     </dependency>
 
+
     <!--
     <dependency>
       <groupId>io.thorntail</groupId>
@@ -109,7 +110,6 @@
       <groupId>io.thorntail</groupId>
       <artifactId>jsf</artifactId>
     </dependency>
-
 
     <dependency>
       <groupId>javax.faces</groupId>
