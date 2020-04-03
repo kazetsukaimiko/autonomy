@@ -21,9 +21,6 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,8 +73,10 @@ public class SimpleAliasService {
     }
 
     public Mappings getMappings() throws IOException {
+        /*
         Path v2File = Paths.get("mappings_v2.json");
         if (!Files.exists(v2File)) {
+            LOGGER.warning("V2 Mappings don't exist. Falling back....");
             Mappings mappings = ObjectMapperContextResolver.getMapper().readValue(
                     DirectoryProviders.CONFIG
                             .getProvider()
@@ -89,7 +88,8 @@ public class SimpleAliasService {
                     .migrate();
             ObjectMapperContextResolver.getMapper().writeValue(v2File.toFile(), mappings);
             return mappings;
-        }
+        }*/
+
         return ObjectMapperContextResolver.getMapper().readValue(
                 DirectoryProviders.CONFIG
                         .getProvider()
