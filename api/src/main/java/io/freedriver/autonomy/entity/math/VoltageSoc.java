@@ -1,5 +1,6 @@
 package io.freedriver.autonomy.entity.math;
 
+import kaze.math.Multiplier;
 import kaze.math.measurement.units.Potential;
 
 import java.math.BigDecimal;
@@ -29,4 +30,8 @@ public final class VoltageSoc {
         return state;
     }
 
+    public BigDecimal getVoltageBase() {
+        return getVoltage().scale(Multiplier.BASE)
+                .getValue();
+    }
 }
