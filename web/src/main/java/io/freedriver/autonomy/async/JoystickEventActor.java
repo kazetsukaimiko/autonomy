@@ -35,21 +35,6 @@ public class JoystickEventActor {
 
     public void actOnEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
         LOGGER.info("Observed: " + joystickEvent.toString());
-        /*
-        if (joystickEvent.getJoystickEventType() == JoystickEventType.BUTTON_UP && joystickEvent.getDescription().getType() != StateType.INITIAL_STATE) {
-            String target = joystickEvent.getNumber().equals(11L) ?
-                    "hallway" : "bathroom";
-            try {
-                connectorService.getWorkspace()
-                        .getBoards().forEach(boardEntity -> boardEntity.getGroups().stream()
-                                    .filter(groupEntity -> Objects.equals(target, groupEntity.getName()))
-                                    .forEach(matchedGroup -> connectorService.nextPermutation(boardEntity.getBoardId(), matchedGroup)));
-            } catch (ConnectorException | IllegalArgumentException e) {
-                LOGGER.log(Level.WARNING, e, () -> "Couldn't act on Joystick Event.");
-            }
-        }
-
-         */
     }
 
 }

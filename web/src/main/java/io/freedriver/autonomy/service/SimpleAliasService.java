@@ -73,23 +73,6 @@ public class SimpleAliasService {
     }
 
     public Mappings getMappings() throws IOException {
-        /*
-        Path v2File = Paths.get("mappings_v2.json");
-        if (!Files.exists(v2File)) {
-            LOGGER.warning("V2 Mappings don't exist. Falling back....");
-            Mappings mappings = ObjectMapperContextResolver.getMapper().readValue(
-                    DirectoryProviders.CONFIG
-                            .getProvider()
-                            .subdir(Autonomy.DEPLOYMENT)
-                            .file("mappings.json")
-                            .get()
-                            .toFile(),
-                    io.freedriver.jsonlink.config.Mappings.class)
-                    .migrate();
-            ObjectMapperContextResolver.getMapper().writeValue(v2File.toFile(), mappings);
-            return mappings;
-        }*/
-
         return ObjectMapperContextResolver.getMapper().readValue(
                 DirectoryProviders.CONFIG
                         .getProvider()
