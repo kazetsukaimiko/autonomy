@@ -39,7 +39,7 @@ public class StateOfChargeConfig {
         return SocRange.of(voltages.entrySet()
                 .stream()
                 .map(e -> VoltageSoc.of(Potential.of(e.getKey(), BASE), e.getValue()))
-                .sorted(Comparator.comparing(v -> v.getVoltage().subtract(voltage).abs()))
+                .sorted(Comparator.comparing(v -> v.getVoltage().subtract(voltage.divide(cells)).abs()))
                 .limit(2)
                 .collect(Collectors.toList()))
                 .calculate(voltage);
