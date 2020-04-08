@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,7 +24,8 @@ import java.util.logging.Logger;
 public class StateOfChargeService {
     private static final Logger LOGGER = Logger.getLogger(StateOfChargeService.class.getName());
 
-    private BigDecimal lastSOC;
+    private List<BigDecimal> charges = new ArrayList<>();
+    private BigDecimal lastAvg;
 
     // TODO: Victron-Agnostic Bank Voltage
     public synchronized void actOnVEDirectMessage(@Observes @Default VEDirectMessage veDirectMessage) throws IOException {
@@ -43,30 +46,26 @@ public class StateOfChargeService {
 
             StateOfChargeConfig socConfig = ObjectMapperContextResolver.getMapper().readValue(socPath.toFile(), StateOfChargeConfig.class);
 
-            BigDecimal bigDecimal = socConfig.calculate(veDirectMessage.getMainVoltage());
-            if (notEquals(bigDecimal)) {
-                LOGGER.info("New SOC: " + bigDecimal.setScale(2, RoundingMode.FLOOR).toPlainString() + "%");
-            }
+            reportAverage(veDirectMessage, socConfig.calculate(veDirectMessage.getMainVoltage()));
 
         } catch (IOException ioe) {
             LOGGER.log(Level.WARNING, "Couldn't calculate SOC: ", ioe);
         }
     }
 
-    private boolean notEquals(BigDecimal bigDecimal) {
-        if (lastSOC == null) {
-            lastSOC = bigDecimal;
-            return true;
+    private synchronized void reportAverage(VEDirectMessage veDM, BigDecimal bigDecimal) {
+        charges.add(0, bigDecimal.setScale(2, RoundingMode.HALF_UP));
+        if (charges.size() > 1000) {
+            charges = charges.subList(0, 1000);
         }
-        int newScale = Math.min(
-                2,
-                Math.max(bigDecimal.scale(), lastSOC.scale()));
-        if (!Objects.equals(
-                bigDecimal.setScale(newScale, RoundingMode.FLOOR),
-                lastSOC.setScale(newScale, RoundingMode.FLOOR))) {
-            lastSOC = bigDecimal.stripTrailingZeros();
-            return true;
+        BigDecimal newAvg = charges.stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(BigDecimal.valueOf(charges.size()), 2, RoundingMode.HALF_UP);
+        if (!Objects.equals(lastAvg, newAvg)) {
+            lastAvg = newAvg;
+            LOGGER.info(
+                    veDM.getProductType().getProductName() + " ("+veDM.getSerialNumber()+") Main Voltage SOC: "
+                    + bigDecimal.setScale(2, RoundingMode.FLOOR).toPlainString() + "%");
         }
-        return false;
     }
 }
