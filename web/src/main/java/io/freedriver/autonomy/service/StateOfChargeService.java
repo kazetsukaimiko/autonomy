@@ -6,6 +6,7 @@ import io.freedriver.autonomy.rest.provider.ObjectMapperContextResolver;
 import io.freedriver.util.file.DirectoryProviders;
 import kaze.victron.VEDirectMessage;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@ApplicationScoped
 public class StateOfChargeService {
     private static final Logger LOGGER = Logger.getLogger(StateOfChargeService.class.getName());
 
@@ -24,7 +26,7 @@ public class StateOfChargeService {
 
     // TODO: Victron-Agnostic Bank Voltage
     public synchronized void actOnVEDirectMessage(@Observes @Default VEDirectMessage veDirectMessage) throws IOException {
-
+        ensureEvent(veDirectMessage);
     }
 
     private void ensureEvent(VEDirectMessage veDirectMessage) {
