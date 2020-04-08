@@ -34,4 +34,8 @@ public final class VoltageSoc {
         return getVoltage().scale(Multiplier.BASE)
                 .getValue();
     }
+
+    public VoltageSoc series(int cells) {
+        return new VoltageSoc(voltage.multiply(cells), state);
+    }
 }
