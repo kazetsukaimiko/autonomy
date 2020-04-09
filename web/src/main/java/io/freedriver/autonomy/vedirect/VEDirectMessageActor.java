@@ -80,25 +80,7 @@ public class VEDirectMessageActor {
         }
         lastMessage.put(product, veDirectMessage);
         messageService.save(veDirectMessage);
-        //handleHistory(product, veDirectMessage);
     }
-
-    /*
-    public synchronized void handleHistory(VictronDevice product, VEDirectMessage newMessage) {
-        if (!lastMessages.containsKey(product)) {
-            lastMessages.put(product, new ArrayList<>());
-        }
-        List<VEDirectMessage> productHistory = lastMessages.get(product);
-        if (productHistory.size() > 10000) {
-            lastMessages.put(product, productHistory.subList(
-                    1,
-                    productHistory.size()
-            ));
-        }
-        lastMessages.get(product).add(newMessage);
-    }
-
-     */
 
     @Produces @VEProduct(value = VictronProduct.UNKNOWN, serial = "")
     public Optional<VEDirectMessage> getLastMessage(InjectionPoint injectionPoint) {

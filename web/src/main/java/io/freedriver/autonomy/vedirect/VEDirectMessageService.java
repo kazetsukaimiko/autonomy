@@ -19,12 +19,13 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @ApplicationScoped
 public class VEDirectMessageService {
-
+    private static final Logger LOGGER = Logger.getLogger(VEDirectMessageService.class.getSimpleName());
     private static final Set<VictronDevice> DEVICE_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Inject @NitriteDatabase(database = NitriteVEDirectMessage.class, deployment = Autonomy.DEPLOYMENT)
@@ -79,7 +80,6 @@ public class VEDirectMessageService {
     public Stream<NitriteVEDirectMessage> last(VictronDevice device, Duration duration) {
         return query(
                 ObjectFilters.gte("timestamp", Instant.now().minus(duration).toEpochMilli()),
-                ObjectFilters.eq("deviceType", device.getType()),
                 ObjectFilters.eq("serialNumber", device.getSerialNumber()));
     }
 
