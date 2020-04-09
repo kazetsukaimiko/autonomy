@@ -2,10 +2,8 @@ package io.freedriver.autonomy.vedirect;
 
 import io.freedriver.autonomy.ee.Autonomy;
 import io.freedriver.ee.cdi.qualifier.NitriteDatabase;
-import io.undertow.servlet.api.Deployment;
 import kaze.victron.VEDirectMessage;
 import kaze.victron.VictronDevice;
-import kaze.victron.VictronProduct;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.ObjectRepository;
@@ -16,7 +14,7 @@ import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import java.time.Duration;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -80,7 +78,7 @@ public class VEDirectMessageService {
      */
     public Stream<NitriteVEDirectMessage> last(VictronDevice device, Duration duration) {
         return query(
-                ObjectFilters.gte("timestamp", ZonedDateTime.now().minus(duration)),
+                ObjectFilters.gte("timestamp", Instant.now().minus(duration).toEpochMilli()),
                 ObjectFilters.eq("deviceType", device.getType()),
                 ObjectFilters.eq("serialNumber", device.getSerialNumber()));
     }
