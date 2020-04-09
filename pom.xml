@@ -18,7 +18,7 @@
     <junit.jupiter.version>5.5.2</junit.jupiter.version>
     <kaze.victron.version>0.4.7</kaze.victron.version>
     <!-- Issue #203 -->
-    <nitrite.version>3.4.0-SNAPSHOT</nitrite.version>
+    <nitrite.version>3.4.1</nitrite.version>
     <primefaces.version>7.0</primefaces.version>
   </properties>
 
