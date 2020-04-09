@@ -90,7 +90,6 @@ public class VEDirectMessageService {
      */
     public Stream<NitriteVEDirectMessage> byDevice(VictronDevice device) {
         return query(
-                ObjectFilters.eq("deviceType", device.getType()),
                 ObjectFilters.eq("serialNumber", device.getSerialNumber()));
     }
 
