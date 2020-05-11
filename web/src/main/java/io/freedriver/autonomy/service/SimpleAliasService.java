@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.service;
 
 import io.freedriver.autonomy.ee.Autonomy;
-import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.rest.provider.ObjectMapperContextResolver;
 import io.freedriver.autonomy.rest.view.AliasView;
 import io.freedriver.jsonlink.config.v2.Appliance;

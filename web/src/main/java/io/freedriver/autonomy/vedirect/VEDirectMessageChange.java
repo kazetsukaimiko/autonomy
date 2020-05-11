@@ -13,7 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static kaze.math.Multiplier.BASE;
+import static kaze.math.UnitPrefix.ONE;
 
 public enum VEDirectMessageChange {
     RELAY_STATE("Relay state", VEDirectMessage::getRelayState),
@@ -31,7 +31,7 @@ public enum VEDirectMessageChange {
                     "Main Voltage " + (o.getMainVoltage().lessThan(n.getMainVoltage()) ? "Rose":"Fell")
                     + " from " + o.getMainVoltage() + " to " + n.getMainVoltage()),
     PANEL_YIELD_CHANGE("Panel Power",
-            (o, n) -> o != null && n != null && o.getPanelPower().subtract(o.getPanelPower()).greaterThan(BASE.watts(new BigDecimal("50"))),
+            (o, n) -> o != null && n != null && o.getPanelPower().subtract(o.getPanelPower()).greaterThan(ONE.watts(new BigDecimal("50"))),
             (o, n) -> o == n ? "Current Panel Power: " + n.getPanelPower() : "Panel Power Change: " + o.getPanelPower() + " -> " + n.getPanelPower())
     ;
 
@@ -85,6 +85,6 @@ public enum VEDirectMessageChange {
     }
 
     public static BigDecimal tenthOfaVolt(Potential potential) {
-        return potential.getValue().divide(BASE.volts(new BigDecimal("10")).getValue(), RoundingMode.FLOOR);
+        return potential.getValue().divide(ONE.volts(new BigDecimal("10")).getValue(), RoundingMode.FLOOR);
     }
 }

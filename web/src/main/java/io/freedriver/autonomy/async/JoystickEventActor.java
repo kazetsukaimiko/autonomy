@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.async;
 
-import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.config.ConnectorConfig;

@@ -46,6 +46,12 @@
 
       <dependency>
         <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-jpa</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
         <artifactId>jsonlink</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -60,12 +66,9 @@
 
   <modules>
     <module>jsonlink</module>
+    <module>jpa</module>
     <module>api</module>
     <module>web</module>
-
-	<!--
-      <module>ui</module>
-      -->
   </modules>
 
   <repositories>

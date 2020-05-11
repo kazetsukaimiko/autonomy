@@ -1,5 +1,9 @@
 package io.freedriver.autonomy.entity.event.input.joystick.jstest;
 
+import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
+import io.freedriver.autonomy.event.input.joystick.jstest.JSTestReader;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEventType;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

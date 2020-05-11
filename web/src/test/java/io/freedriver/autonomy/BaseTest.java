@@ -1,21 +1,12 @@
 package io.freedriver.autonomy;
 
-import io.freedriver.autonomy.entity.EntityBase;
-import io.freedriver.autonomy.entity.jsonlink.AnalogPin;
-import io.freedriver.autonomy.entity.jsonlink.BoardEntity;
-import io.freedriver.autonomy.entity.jsonlink.DigitalPin;
-import io.freedriver.autonomy.entity.jsonlink.GroupEntity;
-import io.freedriver.autonomy.entity.jsonlink.PermutationEntity;
-import io.freedriver.autonomy.entity.jsonlink.PinEntity;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Mode;
+
+import io.freedriver.autonomy.jpa.entity.EntityBase;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -127,6 +118,7 @@ public class BaseTest {
                 .map(generator);
     }
 
+    /*
     protected List<PinEntity> generatePins(int digital, int analog) {
         return Stream.concat(
                 IntStream.range(0, digital).mapToObj(this::generateDigitalPin),
@@ -184,4 +176,6 @@ public class BaseTest {
 
         return Arrays.asList(allOff, allOn);
     }
+    */
+
 }

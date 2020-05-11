@@ -1,8 +1,8 @@
 package io.freedriver.autonomy.joystick;
 
-import io.freedriver.autonomy.entity.event.input.joystick.JoystickEvent;
-import io.freedriver.autonomy.entity.event.input.joystick.jstest.AllJoysticks;
-import io.freedriver.autonomy.entity.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -21,7 +21,6 @@ public class JoystickEventTest {
         joystickEvent.setValue(eventType.getValue());
 
     }
-
      */
 
     //@Test

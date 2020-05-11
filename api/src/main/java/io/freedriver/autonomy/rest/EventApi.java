@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.rest;
 
-import io.freedriver.autonomy.entity.event.Event;
+import io.freedriver.autonomy.jpa.entity.event.Event;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Path;

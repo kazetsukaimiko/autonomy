@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.vedirect;
 
+import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.rest.VEDirectApi;
-import kaze.victron.VEDirectMessage;
 import kaze.victron.VictronDevice;
 
 import javax.enterprise.context.RequestScoped;

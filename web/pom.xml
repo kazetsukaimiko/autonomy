@@ -88,18 +88,20 @@
       <artifactId>cdi</artifactId>
     </dependency>
 
-
-    <!--
     <dependency>
       <groupId>io.thorntail</groupId>
-      <artifactId>ejb</artifactId>
+      <artifactId>infinispan</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.thorntail</groupId>
-      <artifactId>ejb-mdb</artifactId>
+      <artifactId>jpa-eclipselink</artifactId>
     </dependency>
-    -->
+
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>jpa</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>io.thorntail</groupId>

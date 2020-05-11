@@ -1,18 +1,21 @@
 package io.freedriver.autonomy.vedirect;
 
 import io.freedriver.autonomy.ee.Autonomy;
-import io.freedriver.ee.cdi.qualifier.NitriteDatabase;
-import kaze.victron.VEDirectMessage;
+import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
+import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import kaze.victron.VictronDevice;
-import org.dizitart.no2.Nitrite;
-import org.dizitart.no2.objects.ObjectFilter;
-import org.dizitart.no2.objects.ObjectRepository;
-import org.dizitart.no2.objects.filters.ObjectFilters;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Observes;
-import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.SingularAttribute;
+import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -21,15 +24,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 @ApplicationScoped
 public class VEDirectMessageService {
     private static final Logger LOGGER = Logger.getLogger(VEDirectMessageService.class.getSimpleName());
     private static final Set<VictronDevice> DEVICE_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    @Inject @NitriteDatabase(database = NitriteVEDirectMessage.class, deployment = Autonomy.DEPLOYMENT)
-    private Nitrite nitrite;
+    @PersistenceContext(name = Autonomy.DEPLOYMENT)
+    private EntityManager entityManager;
+
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
         devices();
@@ -41,35 +44,20 @@ public class VEDirectMessageService {
      * @param veDirectMessage
      * @return
      */
-    public NitriteVEDirectMessage save(VEDirectMessage veDirectMessage) {
+    @Transactional
+    public VEDirectMessage save(kaze.victron.VEDirectMessage veDirectMessage) {
         // Add to Cache.
         VictronDevice.of(veDirectMessage)
                 .ifPresent(DEVICE_CACHE::add);
-        // Upgrade to a NitriteEntity.
-        NitriteVEDirectMessage nitriteVEDirectMessage = new NitriteVEDirectMessage(veDirectMessage);
-        // Transfer nitriteId if needed.
-        if (veDirectMessage instanceof NitriteVEDirectMessage) {
-            nitriteVEDirectMessage.setNitriteId(((NitriteVEDirectMessage) veDirectMessage).getNitriteId());
-        }
-        // Insert or update- update should never happen.
-        if (nitriteVEDirectMessage.getNitriteId() == null) {
-            getRepository().insert(nitriteVEDirectMessage);
-        } else {
-            getRepository().update(nitriteVEDirectMessage);
-        }
-        return nitriteVEDirectMessage;
+
+        return saveJPA(new VEDirectMessage(veDirectMessage));
     }
 
-    /**
-     * Query the NitriteVEDirectMessage database.
-     * @param filters
-     * @return
-     */
-    private Stream<NitriteVEDirectMessage> query(ObjectFilter... filters) {
-        return StreamSupport.stream(getRepository()
-                .find(ObjectFilters.and(filters))
-                .spliterator(), false);
+    private VEDirectMessage saveJPA(VEDirectMessage veDirectMessage) {
+        entityManager.persist(veDirectMessage);
+        return veDirectMessage;
     }
+
 
     /**
      * Get last Duration of messages for the given device.
@@ -77,10 +65,16 @@ public class VEDirectMessageService {
      * @param duration
      * @return
      */
-    public Stream<NitriteVEDirectMessage> last(VictronDevice device, Duration duration) {
-        return query(
-                ObjectFilters.gte("timestamp", Instant.now().minus(duration).toEpochMilli()),
-                ObjectFilters.eq("serialNumber", device.getSerialNumber()));
+    public Stream<VEDirectMessage> last(VictronDevice device, Duration duration) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
+        Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
+        TypedQuery<VEDirectMessage> typedQuery = entityManager.createQuery(cq.select(cq.from(VEDirectMessage.class))
+                .where(cb.and(
+                        cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()),
+                        cb.ge(veDirectMessageRoot.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())
+                )));
+        return typedQuery.getResultStream();
     }
 
     /**
@@ -88,9 +82,13 @@ public class VEDirectMessageService {
      * @param device
      * @return
      */
-    public Stream<NitriteVEDirectMessage> byDevice(VictronDevice device) {
-        return query(
-                ObjectFilters.eq("serialNumber", device.getSerialNumber()));
+    public Stream<VEDirectMessage> byDevice(VictronDevice device) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
+        Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
+        TypedQuery<VEDirectMessage> typedQuery = entityManager.createQuery(cq.select(cq.from(VEDirectMessage.class))
+                .where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber())));
+        return typedQuery.getResultStream();
     }
 
     /**
@@ -98,8 +96,8 @@ public class VEDirectMessageService {
      * @return
      */
     private Set<VictronDevice> updateDeviceCache() {
-        query()
-            .map(VictronDevice::of)
+        queryAll()
+            .map(veDirectMessage -> VictronDevice.of(veDirectMessage.getProductType(), veDirectMessage.getSerialNumber()))
             .flatMap(Optional::stream)
             .distinct()
             .forEach(DEVICE_CACHE::add);
@@ -117,12 +115,22 @@ public class VEDirectMessageService {
         return DEVICE_CACHE;
     }
 
-    /**
-     * Get the ObjectRepository.
-     * @return
-     */
-    private ObjectRepository<NitriteVEDirectMessage> getRepository() {
-        return nitrite.getRepository(NitriteVEDirectMessage.class);
+    public Stream<VEDirectMessage> queryAll() {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
+        return entityManager.createQuery(cq.select(cq.from(VEDirectMessage.class)))
+                .getResultStream();
     }
 
+    public Optional<VEDirectMessage> max(VictronDevice device, SingularAttribute<VEDirectMessage, Long> timestamp) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
+        Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
+        TypedQuery<VEDirectMessage> typedQuery = entityManager.createQuery(cq.select(cq.from(VEDirectMessage.class))
+                .where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()))
+                .orderBy(cb.desc(veDirectMessageRoot.get(VEDirectMessage_.timestamp))))
+                .setMaxResults(1);
+        return typedQuery.getResultStream()
+                .findFirst();
+    }
 }

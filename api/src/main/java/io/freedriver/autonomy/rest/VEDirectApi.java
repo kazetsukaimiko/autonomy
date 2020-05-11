@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.rest;
 
-import kaze.victron.VEDirectMessage;
+import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import kaze.victron.VictronDevice;
 
 import javax.ws.rs.Consumes;

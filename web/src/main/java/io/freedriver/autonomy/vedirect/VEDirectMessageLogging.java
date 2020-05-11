@@ -6,7 +6,7 @@ import kaze.victron.VEDirectMessage;
 import java.time.Duration;
 import java.util.stream.Stream;
 
-import static kaze.math.Multiplier.BASE;
+import static kaze.math.UnitPrefix.ONE;
 
 public enum VEDirectMessageLogging {
     PV_POWER {
@@ -25,7 +25,7 @@ public enum VEDirectMessageLogging {
             return Duration.ofSeconds(
                     Math.max(2, Math.min(
                             300,
-                            480-vdm.getPanelPower().divide(Power.of(2.5, BASE)).intValue()
+                            480-vdm.getPanelPower().divide(Power.of(2.5, ONE)).intValue()
                     )));
         }
     },

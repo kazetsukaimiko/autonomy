@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.service.crud;
 
-import io.freedriver.autonomy.iface.Positional;
-import org.dizitart.no2.NitriteId;
+
+import io.freedriver.autonomy.jpa.iface.Positional;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +22,7 @@ public interface CRUDInterface<I, T extends Positional> {
     List<T> saveOrder(List<T> entities);
 
     // DELETE
-    Optional<NitriteId> delete(T entity);
+    Optional<I> delete(T entity);
     Stream<I> deleteAll(Stream<T> entity);
     Optional<I> deleteById(I id);
     Stream<I> deleteAllById(Stream<I> ids);
