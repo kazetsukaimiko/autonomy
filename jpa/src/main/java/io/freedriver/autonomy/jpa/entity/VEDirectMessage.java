@@ -18,8 +18,6 @@ import javax.persistence.Entity;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -29,7 +27,7 @@ public class VEDirectMessage {
     @Id
     private long id;
 
-    @Temporal(TemporalType.TIMESTAMP)
+    @Column
     private long timestamp = Instant.now().toEpochMilli();
 
     @Enumerated

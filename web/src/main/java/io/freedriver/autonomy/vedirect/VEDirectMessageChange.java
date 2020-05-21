@@ -4,7 +4,6 @@ import kaze.math.measurement.units.Potential;
 import kaze.victron.VEDirectMessage;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -85,6 +84,6 @@ public enum VEDirectMessageChange {
     }
 
     public static BigDecimal tenthOfaVolt(Potential potential) {
-        return potential.getValue().divide(ONE.volts(new BigDecimal("10")).getValue(), RoundingMode.FLOOR);
+        return potential.getValue().divide(10).getValue();
     }
 }

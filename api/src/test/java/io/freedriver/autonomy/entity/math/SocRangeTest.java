@@ -3,6 +3,7 @@ package io.freedriver.autonomy.entity.math;
 import io.freedriver.autonomy.jpa.entity.math.SocRange;
 import io.freedriver.autonomy.jpa.entity.math.VoltageSoc;
 import kaze.math.measurement.units.Potential;
+import kaze.math.number.ScaledNumber;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -16,23 +17,23 @@ public class SocRangeTest {
 
     @Test
     public void testSocRange() {
-        SocRange scaled = SocRange.of(VoltageSoc.of(Potential.of(0, ONE), 0), VoltageSoc.of(Potential.of(100, ONE),100));
+        SocRange scaled = SocRange.of(VoltageSoc.of(new Potential(ScaledNumber.of(0, ONE)), 0), VoltageSoc.of(new Potential(ScaledNumber.of(100, ONE)),100));
         IntStream.range(0, 100)
                 .boxed()
                 .map(BigDecimal::valueOf)
-                .forEach(i -> assertBDEquals(i, scaled.calculate(Potential.of(i, ONE))));
+                .forEach(i -> assertBDEquals(i, scaled.calculate(new Potential(ScaledNumber.of(i, ONE)))));
     }
 
     @Test
     public void testSocRangeHappyPath() {
         SocRange known = SocRange.of(
-                VoltageSoc.of(Potential.of(3.2, ONE), 0),
-                VoltageSoc.of(Potential.of(4.2, ONE), 100)
+                VoltageSoc.of(new Potential(ScaledNumber.of(3.2, ONE)), 0),
+                VoltageSoc.of(new Potential(ScaledNumber.of(4.2, ONE)), 100)
         );
 
-        assertBDEquals(new BigDecimal("0.0"), known.calculate(Potential.of(3.2, ONE)));
-        assertBDEquals(new BigDecimal("50.0"), known.calculate(Potential.of(3.7, ONE)));
-        assertBDEquals(new BigDecimal("100.0"), known.calculate(Potential.of(4.2, ONE)));
+        assertBDEquals(new BigDecimal("0.0"), known.calculate(new Potential(ScaledNumber.of(3.2, ONE))));
+        assertBDEquals(new BigDecimal("50.0"), known.calculate(new Potential(ScaledNumber.of(3.7, ONE))));
+        assertBDEquals(new BigDecimal("100.0"), known.calculate(new Potential(ScaledNumber.of(4.2, ONE))));
     }
 
 
