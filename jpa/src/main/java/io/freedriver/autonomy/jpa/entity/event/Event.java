@@ -4,11 +4,11 @@ import io.freedriver.autonomy.jpa.entity.EntityBase;
 
 import javax.persistence.Column;
 import javax.persistence.Enumerated;
+import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
-import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -18,8 +18,11 @@ import java.util.Objects;
 public abstract class Event extends EntityBase implements Serializable {
     public static final long serialVersionUID = -1L;
 
+    @Id
+    private long id;
+
     @Temporal(TemporalType.TIMESTAMP)
-    private Instant timestamp;
+    private long timestamp;
 
     @ManyToOne
     private EventCoordinate coordinate;
@@ -39,7 +42,7 @@ public abstract class Event extends EntityBase implements Serializable {
     protected Event() {
     }
 
-    public Event(Instant timestamp, EventCoordinate coordinate, EventDescription description, SourceType sourceType, EventPriority priority) {
+    public Event(long timestamp, EventCoordinate coordinate, EventDescription description, SourceType sourceType, EventPriority priority) {
         this.timestamp = timestamp;
         this.coordinate = coordinate;
         this.description = description;
@@ -47,15 +50,25 @@ public abstract class Event extends EntityBase implements Serializable {
         this.priority = priority;
     }
 
-    public Event(Instant timestamp, EventCoordinate coordinate, EventDescription description, SourceType sourceType) {
+    public Event(long timestamp, EventCoordinate coordinate, EventDescription description, SourceType sourceType) {
         this(timestamp, coordinate, description, sourceType, EventPriority.STANDARD);
     }
 
-    public Instant getTimestamp() {
+    @Override
+    public long getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Instant timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 

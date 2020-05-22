@@ -36,7 +36,7 @@ public class JoystickEventTest {
     }
 
     private void testEvent(JSTestEvent jsTestEvent) {
-        testEvent(new JoystickEvent(Instant.now(), jsTestEvent));
+        testEvent(new JoystickEvent(Instant.now().toEpochMilli(), jsTestEvent));
     }
 
     private void testEvent(JoystickEvent joystickEvent) {

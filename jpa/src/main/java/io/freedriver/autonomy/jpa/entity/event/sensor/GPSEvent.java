@@ -7,13 +7,11 @@ import io.freedriver.autonomy.jpa.entity.event.SourceType;
 import io.freedriver.autonomy.jpa.entity.event.StateType;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-@Table
-@Entity
+//@Table
+//@Entity
 public class GPSEvent extends Event {
     @Column
     private BigDecimal latitude;
@@ -24,7 +22,7 @@ public class GPSEvent extends Event {
     public GPSEvent() {
     }
 
-    public GPSEvent(Instant timestamp, EventCoordinate coordinate, EventDescription description, BigDecimal latitude, BigDecimal longitude) {
+    public GPSEvent(long timestamp, EventCoordinate coordinate, EventDescription description, BigDecimal latitude, BigDecimal longitude) {
         super(timestamp, coordinate, description, SourceType.AUTOMATIC);
         this.latitude = latitude;
         this.longitude = longitude;
@@ -32,7 +30,7 @@ public class GPSEvent extends Event {
 
     public GPSEvent(BigDecimal latitude, BigDecimal longitude) {
         this(
-                Instant.now(),
+                Instant.now().toEpochMilli(),
                 new EventCoordinate(null, "GPS_LOCATION"),
                 new EventDescription(StateType.CHANGE_STATE,
                         "lat:" + String.valueOf(latitude) +

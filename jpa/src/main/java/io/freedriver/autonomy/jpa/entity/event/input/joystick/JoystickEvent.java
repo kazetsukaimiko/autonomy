@@ -8,7 +8,6 @@ import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent
 
 import javax.persistence.Column;
 import javax.persistence.Enumerated;
-import java.time.Instant;
 import java.util.Objects;
 
 public class JoystickEvent extends Event {
@@ -27,7 +26,7 @@ public class JoystickEvent extends Event {
     public JoystickEvent() {
     }
 
-    public JoystickEvent(Instant timestamp, EventCoordinate coordinate, EventDescription description, Long number, Long value, boolean initial, JoystickEventType joystickEventType) {
+    public JoystickEvent(long timestamp, EventCoordinate coordinate, EventDescription description, Long number, Long value, boolean initial, JoystickEventType joystickEventType) {
         super(timestamp, coordinate, description, SourceType.HUMAN);
         this.number = number;
         this.value = value;
@@ -35,7 +34,7 @@ public class JoystickEvent extends Event {
         this.joystickEventType = joystickEventType;
     }
 
-    public JoystickEvent(Instant timestamp, JSTestEvent jsTestEvent) {
+    public JoystickEvent(long timestamp, JSTestEvent jsTestEvent) {
         this(
                 timestamp,
                 jsTestEvent.locate(),

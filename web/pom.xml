@@ -14,7 +14,7 @@
   <packaging>war</packaging>
 
   <properties>
-    <version.thorntail>2.5.0.Final</version.thorntail>
+    <version.thorntail>2.6.0.Final</version.thorntail>
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -82,6 +82,10 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>datasources</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>io.thorntail</groupId>
@@ -93,14 +97,15 @@
       <artifactId>infinispan</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.thorntail</groupId>
-      <artifactId>jpa-eclipselink</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>io.thorntail</groupId>
       <artifactId>jpa</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>jpa-eclipselink</artifactId>
     </dependency>
 
     <dependency>
@@ -169,9 +174,8 @@
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
-      <version>1.4.197</version>
+      <version>1.4.200</version>
     </dependency>
-
 
     <!-- JUnit -->
     <dependency>

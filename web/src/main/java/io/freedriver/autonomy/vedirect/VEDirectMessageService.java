@@ -30,7 +30,7 @@ public class VEDirectMessageService {
     private static final Logger LOGGER = Logger.getLogger(VEDirectMessageService.class.getSimpleName());
     private static final Set<VictronDevice> DEVICE_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    @PersistenceContext(name = Autonomy.DEPLOYMENT)
+    @PersistenceContext(name = Autonomy.DEPLOYMENT, unitName = Autonomy.DEPLOYMENT)
     private EntityManager entityManager;
 
 

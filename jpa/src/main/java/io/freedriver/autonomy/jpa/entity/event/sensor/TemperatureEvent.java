@@ -15,14 +15,14 @@ public class TemperatureEvent extends Event {
     public TemperatureEvent() {
     }
 
-    public TemperatureEvent(Instant timestamp, EventCoordinate coordinate, EventDescription description, TemperatureValue temperature) {
+    public TemperatureEvent(long timestamp, EventCoordinate coordinate, EventDescription description, TemperatureValue temperature) {
         super(timestamp, coordinate, description, SourceType.AUTOMATIC);
         this.temperature = temperature;
     }
 
     public TemperatureEvent(TemperatureValue temperature) {
         this(
-                Instant.now(),
+                Instant.now().toEpochMilli(),
                 new EventCoordinate(null, "TEMPERATURE"),
                 new EventDescription(StateType.CHANGE_STATE,
                         String.valueOf(temperature)
