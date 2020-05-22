@@ -7,14 +7,15 @@ import java.math.BigDecimal;
 
 public abstract class TemporalMeasurementConverter<TM extends TemporalMeasurement<TM>> extends MeasurementConverter<TM> {
     @Override
-    public BigDecimal convertToDatabaseColumn(TM tm) {
+    public Double convertToDatabaseColumn(TM tm) {
         return tm.scaleTo(UnitPrefix.ONE).getValue()
-                .getValue();
+                .getValue()
+                .doubleValue();
     }
 
     @Override
-    public TM convertToEntityAttribute(BigDecimal value) {
-        return construct(value, UnitPrefix.ONE)
+    public TM convertToEntityAttribute(Double value) {
+        return construct(BigDecimal.valueOf(value), UnitPrefix.ONE)
                 .normalize();
     }
 

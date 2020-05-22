@@ -27,7 +27,7 @@ public abstract class MeasurementConverterTest<M extends Measurement<M>, MC exte
             .forEach(multiplier -> stream()
                 .forEach(value -> {
                     M sample = construct(value, multiplier);
-                    BigDecimal representation = victim.convertToDatabaseColumn(sample);
+                    Double representation = victim.convertToDatabaseColumn(sample);
                     M replica = victim.convertToEntityAttribute(representation);
                     assertEquals(sample, replica, "Replica should match.");
                 }));
