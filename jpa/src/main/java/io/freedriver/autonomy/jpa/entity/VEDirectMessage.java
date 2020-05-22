@@ -18,11 +18,18 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
 
-@Table
+@Table(
+        indexes = {
+                @Index(columnList = "TIMESTAMP"),
+                @Index(columnList = "SERIALNUMBER"),
+                @Index(columnList = "OFFREASON"),
+        }
+)
 @Entity
 public class VEDirectMessage {
     @Id
@@ -41,11 +48,8 @@ public class VEDirectMessage {
 
     private String serialNumber;
 
-//    @Convert(converter = PotentialConverter.class)
-   // @Column(columnDefinition = "decimal")
     private Potential mainVoltage;
 
-    //@Convert(converter = CurrentConverter.class)
     private Current mainCurrent;
 
     private Potential panelVoltage;
@@ -61,7 +65,6 @@ public class VEDirectMessage {
     private Energy yieldYesterday;
 
     private Power maxPowerYesterday;
-
 
     @Enumerated(EnumType.STRING)
     private StateOfOperation stateOfOperation;

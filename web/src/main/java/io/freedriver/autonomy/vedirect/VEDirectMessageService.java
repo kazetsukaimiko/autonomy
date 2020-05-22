@@ -54,9 +54,7 @@ public class VEDirectMessageService {
     }
 
     private VEDirectMessage saveJPA(VEDirectMessage veDirectMessage) {
-
         entityManager.persist(veDirectMessage);
-        System.out.println(veDirectMessage.getId());
         return veDirectMessage;
     }
 
