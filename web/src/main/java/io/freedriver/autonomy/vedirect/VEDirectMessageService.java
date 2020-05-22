@@ -70,13 +70,12 @@ public class VEDirectMessageService {
     public Stream<VEDirectMessage> last(VictronDevice device, Duration duration) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
-        Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
-        TypedQuery<VEDirectMessage> typedQuery = entityManager.createQuery(cq.select(cq.from(VEDirectMessage.class))
-                .where(cb.and(
-                        cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()),
-                        cb.ge(veDirectMessageRoot.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())
-                )));
-        return typedQuery.getResultStream();
+        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+        cq.select(root);
+        cq.where(cb.and(
+                cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()),
+                cb.ge(root.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())));
+        return entityManager.createQuery(cq).getResultStream();
     }
 
     /**
