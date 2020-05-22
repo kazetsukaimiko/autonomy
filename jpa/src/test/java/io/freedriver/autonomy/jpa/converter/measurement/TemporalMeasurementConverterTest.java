@@ -18,7 +18,7 @@ public abstract class TemporalMeasurementConverterTest<TM extends TemporalMeasur
 
 
     public void assertConversionBidirectionality(TM sample) {
-        Double representation = victim.convertToDatabaseColumn(sample);
+        BigDecimal representation = victim.convertToDatabaseColumn(sample);
         TM replica = victim.convertToEntityAttribute(representation);
         System.out.println(sample + " vs " + replica);
         assertEquals(sample, replica, "Replica should match");

@@ -1,9 +1,10 @@
 thorntail:
   jpa:
-    default-datasource: autonomy
+    default-datasource: autonomyjta
   datasources:
     data-sources:
-      autonomy:
+      autonomyjta:
+        jta: true
         driver-name: h2
         connection-url: jdbc:h2:file:~/.config/autonomy/autonomy_h2.db
         user-name: sa

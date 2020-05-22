@@ -102,17 +102,20 @@
       <groupId>io.thorntail</groupId>
       <artifactId>jpa</artifactId>
     </dependency>
+    <!--
 
     <dependency>
       <groupId>io.thorntail</groupId>
       <artifactId>jpa-eclipselink</artifactId>
     </dependency>
-
+-->
     <dependency>
       <groupId>io.thorntail</groupId>
       <artifactId>jaxrs</artifactId>
     </dependency>
 
+
+    <!--
     <dependency>
       <groupId>io.thorntail</groupId>
       <artifactId>jsf</artifactId>
@@ -136,6 +139,8 @@
       <artifactId>all-themes</artifactId>
       <version>1.0.10</version>
     </dependency>
+
+    -->
 
     <dependency>
       <groupId>io.freedriver.ee</groupId>
@@ -201,7 +206,7 @@
     <dependency>
       <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
-      <version>1.5.0.Final</version>
+      <version>1.6.0.Final</version>
       <scope>test</scope>
     </dependency>
 
@@ -222,7 +227,8 @@
     </dependency>
 
   </dependencies>
-  
+
+  <!--
   <repositories>
     <repository> 
       <url>http://repository.primefaces.org/</url>  
@@ -231,4 +237,5 @@
       <name>Repository for library PrimeFaces 3.2</name> 
     </repository>  
   </repositories>
+  -->
 </project>

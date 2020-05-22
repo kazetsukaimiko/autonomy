@@ -27,20 +27,31 @@ public abstract class MeasurementConverterTest<M extends Measurement<M>, MC exte
             .forEach(multiplier -> stream()
                 .forEach(value -> {
                     M sample = construct(value, multiplier);
-                    Double representation = victim.convertToDatabaseColumn(sample);
+                    BigDecimal representation = victim.convertToDatabaseColumn(sample);
                     M replica = victim.convertToEntityAttribute(representation);
                     assertEquals(sample, replica, "Replica should match.");
                 }));
     }
 
+    @Test
+    public void testRaw() {
+        stream()
+                .forEach(value -> {
+                    M replica = victim.convertToEntityAttribute(value);
+                    BigDecimal representation = victim.convertToDatabaseColumn(replica);
+                    //assertEquals(value, representation);
+                    assertEquals(replica, victim.convertToEntityAttribute(representation));
+                });
+    }
+
     public static Stream<BigDecimal> stream() {
         return Stream.of(
-                BigDecimal.ZERO,
-                BigDecimal.ONE,
-                BigDecimal.TEN,
-                new BigDecimal("0.34453"),
-                new BigDecimal("10293123.131131")
-        );
+                0d,
+                1d,
+                10d,
+                0.34453d,
+                10293123.131131d
+        ).map(BigDecimal::valueOf);
     }
 
     public final M construct(BigDecimal value, UnitPrefix unitPrefix) {

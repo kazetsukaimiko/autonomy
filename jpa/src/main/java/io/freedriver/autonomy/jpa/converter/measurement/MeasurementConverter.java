@@ -4,23 +4,20 @@ import kaze.math.UnitPrefix;
 import kaze.math.measurement.types.Measurement;
 
 import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
 import java.math.BigDecimal;
 
-@Converter(autoApply = true)
-public abstract class MeasurementConverter<M extends Measurement<M>> implements AttributeConverter<M, Double> {
+public abstract class MeasurementConverter<M extends Measurement<M>> implements AttributeConverter<M, BigDecimal> {
     public abstract M construct(BigDecimal value, UnitPrefix unitPrefix);
 
     @Override
-    public Double convertToDatabaseColumn(M m) {
+    public BigDecimal convertToDatabaseColumn(M m) {
         return m.scaleTo(UnitPrefix.ONE).getValue()
-                .getValue()
-                .doubleValue();
+                .getValue();
     }
 
     @Override
-    public M convertToEntityAttribute(Double value) {
-        return construct(BigDecimal.valueOf(value), UnitPrefix.ONE)
+    public M convertToEntityAttribute(BigDecimal value) {
+        return construct(value, UnitPrefix.ONE)
                 .normalize();
     }
 }

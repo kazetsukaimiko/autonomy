@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.vedirect;
 
-import io.freedriver.autonomy.ee.Autonomy;
+import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import kaze.victron.VictronDevice;
@@ -54,7 +54,9 @@ public class VEDirectMessageService {
     }
 
     private VEDirectMessage saveJPA(VEDirectMessage veDirectMessage) {
+
         entityManager.persist(veDirectMessage);
+        System.out.println(veDirectMessage.getId());
         return veDirectMessage;
     }
 
@@ -85,11 +87,26 @@ public class VEDirectMessageService {
     public Stream<VEDirectMessage> byDevice(VictronDevice device) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
-        Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
-        TypedQuery<VEDirectMessage> typedQuery = entityManager.createQuery(cq.select(cq.from(VEDirectMessage.class))
-                .where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber())));
-        return typedQuery.getResultStream();
+        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+        cq.select(root);
+        cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()));
+        return entityManager.createQuery(cq).getResultStream();
     }
+
+    /**
+     * Get messages for the given device.
+     * @param device
+     * @return
+     */
+    public long countByDevice(VictronDevice device) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+        cq.select(cb.count(root));
+        cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()));
+        return entityManager.createQuery(cq).getSingleResult();
+    }
+
 
     /**
      * Update the Device Cache.

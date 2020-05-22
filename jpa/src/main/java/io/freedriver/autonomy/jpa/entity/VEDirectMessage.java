@@ -1,9 +1,5 @@
 package io.freedriver.autonomy.jpa.entity;
 
-import io.freedriver.autonomy.jpa.converter.measurement.CurrentConverter;
-import io.freedriver.autonomy.jpa.converter.measurement.EnergyConverter;
-import io.freedriver.autonomy.jpa.converter.measurement.PotentialConverter;
-import io.freedriver.autonomy.jpa.converter.measurement.PowerConverter;
 import kaze.math.measurement.units.Current;
 import kaze.math.measurement.units.Energy;
 import kaze.math.measurement.units.Potential;
@@ -17,9 +13,8 @@ import kaze.victron.TrackerOperation;
 import kaze.victron.VictronProduct;
 import kaze.victron.vedirect.OffReason;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -34,70 +29,53 @@ public class VEDirectMessage {
     @GeneratedValue
     private Long id;
 
-    @Column
     private long timestamp = Instant.now().toEpochMilli();
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private VictronProduct productType;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private RelayState relayState;
 
-    @Column
     private FirmwareVersion firmwareVersion;
 
-    @Column
     private String serialNumber;
 
-    @Column
-    @Convert(converter = PotentialConverter.class)
+//    @Convert(converter = PotentialConverter.class)
+   // @Column(columnDefinition = "decimal")
     private Potential mainVoltage;
 
-    @Column
-    @Convert(converter = CurrentConverter.class)
+    //@Convert(converter = CurrentConverter.class)
     private Current mainCurrent;
 
-    @Column
-    @Convert(converter = PotentialConverter.class)
     private Potential panelVoltage;
 
-    @Column
-    @Convert(converter = PowerConverter.class)
     private Power panelPower;
 
-    @Column
-    @Convert(converter = EnergyConverter.class)
     private Energy resettableYield;
 
-    @Column
-    @Convert(converter = EnergyConverter.class)
     private Energy yieldToday;
 
-    @Column
-    @Convert(converter = PowerConverter.class)
     private Power maxPowerToday;
 
-    @Column
-    @Convert(converter = EnergyConverter.class)
     private Energy yieldYesterday;
 
-    @Column
-    @Convert(converter = PowerConverter.class)
     private Power maxPowerYesterday;
 
-    @Enumerated
+
+    @Enumerated(EnumType.STRING)
     private StateOfOperation stateOfOperation;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private TrackerOperation trackerOperation;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private LoadOutputState loadOutputState;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private ErrorCode errorCode;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private OffReason offReason;
 
     public VEDirectMessage() {
@@ -110,19 +88,22 @@ public class VEDirectMessage {
         this.firmwareVersion = veDirectMessage.getFirmwareVersion();
         this.serialNumber = veDirectMessage.getSerialNumber();
         this.mainVoltage = veDirectMessage.getMainVoltage();
+
         this.mainCurrent = veDirectMessage.getMainCurrent();
         this.panelVoltage = veDirectMessage.getPanelVoltage();
         this.panelPower = veDirectMessage.getPanelPower();
-        this.stateOfOperation = veDirectMessage.getStateOfOperation();
-        this.trackerOperation = veDirectMessage.getTrackerOperation();
-        this.loadOutputState = veDirectMessage.getLoadOutputState();
-        this.errorCode = veDirectMessage.getErrorCode();
-        this.offReason = veDirectMessage.getOffReason();
         this.resettableYield = veDirectMessage.getResettableYield();
         this.yieldToday = veDirectMessage.getYieldToday();
         this.maxPowerToday = veDirectMessage.getMaxPowerToday();
         this.yieldYesterday = veDirectMessage.getYieldYesterday();
         this.maxPowerYesterday = veDirectMessage.getMaxPowerYesterday();
+
+        this.stateOfOperation = veDirectMessage.getStateOfOperation();
+        this.trackerOperation = veDirectMessage.getTrackerOperation();
+        this.loadOutputState = veDirectMessage.getLoadOutputState();
+        this.errorCode = veDirectMessage.getErrorCode();
+        this.offReason = veDirectMessage.getOffReason();
+
     }
 
     public Long getId() {
@@ -205,45 +186,6 @@ public class VEDirectMessage {
         this.panelPower = panelPower;
     }
 
-    public StateOfOperation getStateOfOperation() {
-        return stateOfOperation;
-    }
-
-    public void setStateOfOperation(StateOfOperation stateOfOperation) {
-        this.stateOfOperation = stateOfOperation;
-    }
-
-    public TrackerOperation getTrackerOperation() {
-        return trackerOperation;
-    }
-
-    public void setTrackerOperation(TrackerOperation trackerOperation) {
-        this.trackerOperation = trackerOperation;
-    }
-
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
-
-    public void setErrorCode(ErrorCode errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    public LoadOutputState getLoadOutputState() {
-        return loadOutputState;
-    }
-
-    public void setLoadOutputState(LoadOutputState loadOutputState) {
-        this.loadOutputState = loadOutputState;
-    }
-
-    public OffReason getOffReason() {
-        return offReason;
-    }
-
-    public void setOffReason(OffReason offReason) {
-        this.offReason = offReason;
-    }
 
     public Energy getResettableYield() {
         return resettableYield;
@@ -285,6 +227,87 @@ public class VEDirectMessage {
         this.maxPowerYesterday = maxPowerYesterday;
     }
 
+    public StateOfOperation getStateOfOperation() {
+        return stateOfOperation;
+    }
+
+    public void setStateOfOperation(StateOfOperation stateOfOperation) {
+        this.stateOfOperation = stateOfOperation;
+    }
+
+    public TrackerOperation getTrackerOperation() {
+        return trackerOperation;
+    }
+
+    public void setTrackerOperation(TrackerOperation trackerOperation) {
+        this.trackerOperation = trackerOperation;
+    }
+
+    public ErrorCode getErrorCode() {
+        return errorCode;
+    }
+
+    public void setErrorCode(ErrorCode errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    public LoadOutputState getLoadOutputState() {
+        return loadOutputState;
+    }
+
+    public void setLoadOutputState(LoadOutputState loadOutputState) {
+        this.loadOutputState = loadOutputState;
+    }
+
+    public OffReason getOffReason() {
+        return offReason;
+    }
+
+    public void setOffReason(OffReason offReason) {
+        this.offReason = offReason;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VEDirectMessage that = (VEDirectMessage) o;
+        return timestamp == that.timestamp &&
+                Objects.equals(id, that.id) &&
+                productType == that.productType &&
+                relayState == that.relayState &&
+                Objects.equals(firmwareVersion, that.firmwareVersion) &&
+                Objects.equals(serialNumber, that.serialNumber) &&
+                stateOfOperation == that.stateOfOperation &&
+                trackerOperation == that.trackerOperation &&
+                loadOutputState == that.loadOutputState &&
+                errorCode == that.errorCode &&
+                offReason == that.offReason;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, timestamp, productType, relayState, firmwareVersion, serialNumber, stateOfOperation, trackerOperation, loadOutputState, errorCode, offReason);
+    }
+
+    @Override
+    public String toString() {
+        return "VEDirectMessage{" +
+                "id=" + id +
+                ", timestamp=" + timestamp +
+                ", productType=" + productType +
+                ", relayState=" + relayState +
+                ", firmwareVersion=" + firmwareVersion +
+                ", serialNumber='" + serialNumber + '\'' +
+                ", stateOfOperation=" + stateOfOperation +
+                ", trackerOperation=" + trackerOperation +
+                ", loadOutputState=" + loadOutputState +
+                ", errorCode=" + errorCode +
+                ", offReason=" + offReason +
+                '}';
+    }
+
+    /*
     @Override
     public String toString() {
         return "VEDirectMessage{" +
@@ -341,5 +364,5 @@ public class VEDirectMessage {
     @Override
     public int hashCode() {
         return Objects.hash(id, timestamp, productType, relayState, firmwareVersion, serialNumber, mainVoltage, mainCurrent, panelVoltage, panelPower, stateOfOperation, trackerOperation, loadOutputState, errorCode, offReason, resettableYield, yieldToday, maxPowerToday, yieldYesterday, maxPowerYesterday);
-    }
+    }*/
 }
