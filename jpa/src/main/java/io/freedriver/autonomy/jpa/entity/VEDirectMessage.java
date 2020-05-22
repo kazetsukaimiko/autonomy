@@ -1,5 +1,9 @@
 package io.freedriver.autonomy.jpa.entity;
 
+import io.freedriver.autonomy.jpa.converter.measurement.CurrentConverter;
+import io.freedriver.autonomy.jpa.converter.measurement.EnergyConverter;
+import io.freedriver.autonomy.jpa.converter.measurement.PotentialConverter;
+import io.freedriver.autonomy.jpa.converter.measurement.PowerConverter;
 import kaze.math.measurement.units.Current;
 import kaze.math.measurement.units.Energy;
 import kaze.math.measurement.units.Potential;
@@ -14,6 +18,7 @@ import kaze.victron.VictronProduct;
 import kaze.victron.vedirect.OffReason;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
@@ -45,30 +50,39 @@ public class VEDirectMessage {
     private String serialNumber;
 
     @Column
+    @Convert(converter = PotentialConverter.class)
     private Potential mainVoltage;
 
     @Column
+    @Convert(converter = CurrentConverter.class)
     private Current mainCurrent;
 
     @Column
+    @Convert(converter = PotentialConverter.class)
     private Potential panelVoltage;
 
     @Column
+    @Convert(converter = PowerConverter.class)
     private Power panelPower;
 
     @Column
+    @Convert(converter = EnergyConverter.class)
     private Energy resettableYield;
 
     @Column
+    @Convert(converter = EnergyConverter.class)
     private Energy yieldToday;
 
     @Column
+    @Convert(converter = PowerConverter.class)
     private Power maxPowerToday;
 
     @Column
+    @Convert(converter = EnergyConverter.class)
     private Energy yieldYesterday;
 
     @Column
+    @Convert(converter = PowerConverter.class)
     private Power maxPowerYesterday;
 
     @Enumerated

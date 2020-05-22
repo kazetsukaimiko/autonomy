@@ -4,8 +4,10 @@ import kaze.math.UnitPrefix;
 import kaze.math.measurement.types.Measurement;
 
 import javax.persistence.AttributeConverter;
+import javax.persistence.Converter;
 import java.math.BigDecimal;
 
+@Converter(autoApply = true)
 public abstract class MeasurementConverter<M extends Measurement<M>> implements AttributeConverter<M, Double> {
     public abstract M construct(BigDecimal value, UnitPrefix unitPrefix);
 
