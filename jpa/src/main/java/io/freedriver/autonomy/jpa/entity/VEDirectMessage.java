@@ -16,6 +16,7 @@ import kaze.victron.vedirect.OffReason;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.Instant;
@@ -25,7 +26,8 @@ import java.util.Objects;
 @Entity
 public class VEDirectMessage {
     @Id
-    private long id;
+    @GeneratedValue
+    private Long id;
 
     @Column
     private long timestamp = Instant.now().toEpochMilli();
@@ -109,11 +111,11 @@ public class VEDirectMessage {
         this.maxPowerYesterday = veDirectMessage.getMaxPowerYesterday();
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
