@@ -25,6 +25,14 @@ public enum VEDirectMessageLogging {
                             480-vdm.getPanelPower().divide(2.5).intValue()
                     )));
         }
+
+        @Override
+        public boolean validate(VEDirectMessage vdm) {
+            return vdm != null
+                    && vdm.getProductType() != null
+                    && vdm.getProductType().getProductName() != null
+                    && vdm.getSerialNumber() != null;
+        }
     },
     ;
 
@@ -32,6 +40,7 @@ public enum VEDirectMessageLogging {
     public abstract String getFieldName(VEDirectMessage vdm);
     public abstract String getMessage(VEDirectMessage vdm);
     public abstract Duration getInterval(VEDirectMessage vdm);
+    public abstract boolean validate(VEDirectMessage vdm);
 
     public static Stream<VEDirectMessageLogging> stream() {
         return Stream.of(values());

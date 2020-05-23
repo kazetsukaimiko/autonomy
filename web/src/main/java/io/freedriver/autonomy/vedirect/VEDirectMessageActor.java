@@ -59,6 +59,7 @@ public class VEDirectMessageActor {
      */
     private void report(VEDirectMessage veDirectMessage) {
         VEDirectMessageLogging.stream()
+                .filter(field -> field.validate(veDirectMessage))
                 .forEach(field ->
                         reportingService.update(
                                 field.getFieldName(veDirectMessage),

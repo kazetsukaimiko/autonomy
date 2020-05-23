@@ -6,22 +6,19 @@ function loadWorkspaces(uuid) {
   var ajax = fs.ajax()
     //.POST("/rest/workspaces")
     .GET("/rest/simple/id/"+uuid)
+    //.GET("http://hakobune.local:8080/rest/simple/id/"+uuid)
     .accept("application/json")
     .handle(200, function(xhr, request) {
       //window.location.hash = query;
       var aliasView = JSON.parse(xhr.responseText);
       toggleOff("#controls");
       populateToggles(document.getElementById("controls"), uuid, aliasView);
-
       toggleOn(".controls"); // TODO : Activate Section.
+      setTimeout(function() { loadWorkspaces(uuid); }, 1000);
     })
     .handleOthers(function(xhr, request) {
       logger(xhr.status.toString() + " Failed to fetch woirkspaces: " + xhr.statusText + '\n' + xhr.responseText);
-      /*
-      document.allElements(".searchInput", function(elem) {
-        removeClass(elem, "searching");
-      });
-      */
+      setTimeout(function() { loadWorkspaces(uuid); }, 1000);
       // TODO: Recover the UI state somehow.
     })
     .json();
@@ -31,7 +28,7 @@ function setState(uuid, key, state) {
   var payload = {};
   payload[key] = state;
   var ajax = fs.ajax()
-    //.POST("/rest/workspaces")
+    //.POST("http://hakobune.local:8080/rest/simple/id/"+uuid)
     .POST("/rest/simple/id/"+uuid)
     .accept("application/json")
     .handle(200, function(xhr, request) {
@@ -104,12 +101,32 @@ function createButton(uuid, key, initialValue) {
     }
 }
 
+function getGroup(controlsPane, key) {
+    var groupName = key;
+    var parts = key.split("_");
+    if (parts.length == 2) {
+        var groupName = key[0];
+    }
+    var groupName = "group_" + groupName;
+
+    var group = document.getElementById(groupName);
+    if (group == null) {
+        group = document.createElement("div");
+        group.id = groupName;
+        group.setAttribute("class", "controlGroup");
+        controlsPane.appendChild(group);
+    }
+
+    return group;
+}
+
+
 function populateToggles(controlsPane, uuid, aliasView) {
     var state = aliasView.applianceStates;
     for(key in state) {
         button = createButton(uuid, key, state[key]);
         if (button !== null) {
-            controlsPane.appendChild(button);
+            getGroup(controlsPane, key).appendChild(button);
         }
     }
 }
