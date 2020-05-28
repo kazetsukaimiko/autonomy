@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 public class Benchmark {
     private static final Logger LOGGER = Logger.getLogger(Benchmark.class.getName());
@@ -29,7 +30,7 @@ public class Benchmark {
         if (!message.contains(TIME_PLACEHOLDER)) {
             message = message + " took "+ TIME_PLACEHOLDER;
         }
-        logConsumer.accept(message.replaceAll(TIME_PLACEHOLDER, time+"ms"), args);
+        logConsumer.accept(message.replaceAll(Pattern.quote(TIME_PLACEHOLDER), time+"ms"), args);
     }
 
     private <T> T benchmark(Callable<T> callable, String message, Object... args) {
