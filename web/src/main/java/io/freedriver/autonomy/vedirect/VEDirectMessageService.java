@@ -86,6 +86,7 @@ public class VEDirectMessageService {
         cq.where(cb.and(
                 cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()),
                 cb.ge(root.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())));
+        cq.orderBy(cb.desc(root.get(VEDirectMessage_.id)));
         return queryStream(cq, "for device " + device + " last " + duration.toMillis() + "ms");
     }
 
