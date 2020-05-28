@@ -1,4 +1,9 @@
 thorntail:
+  h2-server:
+    base-directory: ~/.config/autonomy/
+    user-name: sa
+    password: sa
+    allowOthers: true
   jpa:
     default-datasource: autonomyjta
   datasources:
@@ -6,7 +11,8 @@ thorntail:
       autonomyjta:
         jta: true
         driver-name: h2
-        connection-url: jdbc:h2:file:~/.config/autonomy/autonomy_h2.db
+        #connection-url: jdbc:h2:file:~/.config/autonomy/autonomy_h2.db
+        connection-url: jdbc:h2:tcp://localhost:9092/autonomy
         user-name: sa
       autonomy-memory:
         driver-name: h2

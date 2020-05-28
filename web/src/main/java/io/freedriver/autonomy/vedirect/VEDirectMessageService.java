@@ -3,6 +3,7 @@ package io.freedriver.autonomy.vedirect;
 import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
+import io.freedriver.autonomy.util.Benchmark;
 import kaze.victron.VictronDevice;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApplicationScoped
@@ -58,6 +60,17 @@ public class VEDirectMessageService {
         return veDirectMessage;
     }
 
+    // TODO: Revert full buffer
+    public <T> Stream<T> queryStream(CriteriaQuery<T> cq, String description) {
+        return Benchmark.bench(() ->
+                entityManager
+                        .createQuery(cq)
+                        .getResultStream()
+                        .collect(Collectors.toList())
+                        .stream(),
+                description);
+    }
+
 
     /**
      * Get last Duration of messages for the given device.
@@ -73,7 +86,7 @@ public class VEDirectMessageService {
         cq.where(cb.and(
                 cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()),
                 cb.ge(root.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())));
-        return entityManager.createQuery(cq).getResultStream();
+        return queryStream(cq, "for device " + device + " last " + duration.toMillis() + "ms");
     }
 
     /**
@@ -87,7 +100,7 @@ public class VEDirectMessageService {
         Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
         cq.select(root);
         cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()));
-        return entityManager.createQuery(cq).getResultStream();
+        return queryStream(cq, "byDevice " + device);
     }
 
     /**
@@ -101,7 +114,8 @@ public class VEDirectMessageService {
         Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
         cq.select(cb.count(root));
         cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()));
-        return entityManager.createQuery(cq).getSingleResult();
+        return Benchmark.bench(() -> entityManager.createQuery(cq).getSingleResult(),
+                "countByDevice {}", device);
     }
 
 

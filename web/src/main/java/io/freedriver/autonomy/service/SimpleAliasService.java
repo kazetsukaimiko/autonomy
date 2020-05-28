@@ -41,6 +41,10 @@ public class SimpleAliasService {
     @Inject
     private ConnectorService connectorService;
 
+    //@Inject
+    //@OneSecondCache
+    //private Cache<UUID, AliasView> oneSecondCache;
+
     /**
      * Conversion from aliases to their mapped pin numbers for controller i/o.
      */
@@ -88,7 +92,20 @@ public class SimpleAliasService {
                 .stream().map(Appliance::getIdentifier).collect(Collectors.toSet()));
     }
 
+
     public AliasView newView(UUID boardId) throws IOException {
+        return makeView(boardId);
+        /*
+        return oneSecondCache.computeIfAbsent(boardId, uuid -> {
+            try {
+                return makeView(uuid);
+            } catch (IOException e) {
+                throw new ViewCreationException("Problem creating view", e);
+            }
+        });*/
+    }
+
+    public AliasView makeView(UUID boardId) throws IOException {
         Mapping mapping = getMapping(boardId);
         AliasView aliasView = new AliasView();
 
