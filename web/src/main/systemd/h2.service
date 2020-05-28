@@ -2,14 +2,12 @@
 Description=H2 Database
 After=network.target
 
-
 [Service]
 ExecStartPre=mkdir -p %h/.config/h2
 ExecStartPre=mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -Dartifact=com.h2database:h2:1.4.200 -Ddest=%h/.config/h2
 ExecStart=/usr/bin/java -cp %h/.config/h2/h2*.jar org.h2.tools.Server -web -webAllowOthers -tcp -tcpAllowOthers -ifNotExists -baseDir %h/.config/h2
 ExecStop=/bin/kill $MAINPID
 KillMode=process
-Restart=always
 
 [Install]
 WantedBy=multi-user.target
