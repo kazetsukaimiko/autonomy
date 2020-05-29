@@ -110,7 +110,7 @@ public class VEDirectMessageService {
         }, "fromSunUp took {}ms");
 
 
-        /*
+        /* TODO Figure out query
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);

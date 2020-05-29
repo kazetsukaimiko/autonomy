@@ -5,15 +5,18 @@ import kaze.victron.VictronDevice;
 public class ControllerView {
     private final VictronDevice device;
 
-    private final ControllerTimeView controllerTimeView;
+    private final ControllerTimeView controllerTime;
 
-    public ControllerView(VictronDevice device, ControllerTimeView controllerTimeView) {
+    public ControllerView(VictronDevice device, ControllerTimeView controllerTime) {
         this.device = device;
-        this.controllerTimeView = controllerTimeView;
+        this.controllerTime = controllerTime;
     }
 
+    public VictronDevice getDevice() {
+        return device;
+    }
 
-    public ControllerTimeView getControllerTimeView() {
-        return controllerTimeView;
+    public ControllerTimeView getControllerTime() {
+        return controllerTime;
     }
 }
