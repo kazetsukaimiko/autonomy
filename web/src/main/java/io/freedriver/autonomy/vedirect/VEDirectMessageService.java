@@ -4,6 +4,8 @@ import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import io.freedriver.autonomy.util.Benchmark;
+import kaze.math.measurement.units.Power;
+import kaze.math.number.ScaledNumber;
 import kaze.victron.VictronDevice;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -102,7 +104,7 @@ public class VEDirectMessageService {
         startIdQuery.select(cb.min(root.get(VEDirectMessage_.id)));
         startIdQuery.where(cb.and(
                 cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
-                cb.ge(root.get(VEDirectMessage_.panelPower), 20.0)
+                cb.ge(root.get(VEDirectMessage_.panelPower), new Power(ScaledNumber.of(20.0)))
         ));
 
 
