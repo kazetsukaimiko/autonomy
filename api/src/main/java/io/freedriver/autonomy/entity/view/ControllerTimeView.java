@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,7 +20,6 @@ public class ControllerTimeView {
 
     public ControllerTimeView(Map<String, Integer> data, Duration duration) {
         this.data = data;
-        //addMissingMapKeys(data);
         if (duration.toSeconds() > 3600) {
             this.unit = ChronoUnit.HOURS;
         } else if (duration.toSeconds() > 60) {
@@ -51,11 +51,11 @@ public class ControllerTimeView {
     }
 
 
-    private static void addMissingMapKeys(Map<String, Integer> data) {
+    public ControllerTimeView addMissingMapKeys(Set<OffReason> historicalOffReasons) {
         Stream.of(StateOfOperation.values())
                 .forEach(soo -> {
                     if (soo == StateOfOperation.OFF) {
-                        Stream.of(OffReason.values())
+                        historicalOffReasons
                                 .forEach(offReason -> {
                                     String missingKey = StateOfOperation.OFF + "-" + offReason;
                                     if (!data.containsKey(missingKey)) {
@@ -66,6 +66,7 @@ public class ControllerTimeView {
                         data.put(String.valueOf(soo), 0);
                     }
                 });
+        return this;
     }
 
     public static String makeMapKey(VEDirectMessage message) {

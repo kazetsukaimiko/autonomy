@@ -38,9 +38,9 @@ public class VEDirect implements VEDirectApi {
                 .findFirst().orElseThrow(() -> VEDirectApiException.unknownDevice(serial));
         return new ControllerView(
                 device,
-                new ControllerTimeView(
-                        messageService.fromSunUp(device).collect(Collectors.toList())),
-                        messageService.max(device).map(ControllerStateView::new).orElse(null),
+                new ControllerTimeView(messageService.fromSunUp(device).collect(Collectors.toList()))
+                    .addMissingMapKeys(messageService.distinct(device, VEDirectMessage_.offReason).collect(Collectors.toSet())),
+                messageService.max(device).map(ControllerStateView::new).orElse(null),
                 new ControllerHistoryView(
                         messageService.max(device, VEDirectMessage_.panelPower).doubleValue(),
                         messageService.max(device, VEDirectMessage_.panelVoltage).doubleValue(),

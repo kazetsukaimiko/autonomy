@@ -208,13 +208,22 @@ public class VEDirectMessageService {
                 .getResultStream();
     }
 
+    public <T> Stream<T> distinct(VictronDevice device, SingularAttribute<VEDirectMessage, T> attribute) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<T> cq = cb.createQuery(attribute.getBindableJavaType());
+        Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
+        cq.select(veDirectMessageRoot.get(attribute)).distinct(true);
+        cq.where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()));
+        return entityManager.createQuery(cq).getResultStream();
+    }
+
+
     public <T extends Number> T max(VictronDevice device, SingularAttribute<VEDirectMessage, T> attribute) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<T> cq = cb.createQuery(attribute.getBindableJavaType());
         Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
         cq.select(cb.max(veDirectMessageRoot.get(attribute)));
-        cq.where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()))
-                .orderBy(cb.desc(veDirectMessageRoot.get(VEDirectMessage_.timestamp)));
+        cq.where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()));
         return entityManager.createQuery(cq).getSingleResult();
     }
 
