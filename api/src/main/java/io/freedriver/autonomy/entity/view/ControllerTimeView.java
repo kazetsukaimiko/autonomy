@@ -2,6 +2,7 @@ package io.freedriver.autonomy.entity.view;
 
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import kaze.victron.StateOfOperation;
+import kaze.victron.vedirect.OffReason;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -9,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ControllerTimeView {
     private final Map<String, Integer> data;
@@ -17,6 +19,7 @@ public class ControllerTimeView {
 
     public ControllerTimeView(Map<String, Integer> data, Duration duration) {
         this.data = data;
+        addMissingMapKeys(data);
         if (duration.toSeconds() > 3600) {
             this.unit = ChronoUnit.HOURS;
         } else if (duration.toSeconds() > 60) {
@@ -45,6 +48,24 @@ public class ControllerTimeView {
                         .min(VEDirectMessage::orderByTimestamp)
                         .orElseGet(VEDirectMessage::new)
                         .getTimestamp())).abs());
+    }
+
+
+    private static void addMissingMapKeys(Map<String, Integer> data) {
+        Stream.of(StateOfOperation.values())
+                .forEach(soo -> {
+                    if (soo == StateOfOperation.OFF) {
+                        Stream.of(OffReason.values())
+                                .forEach(offReason -> {
+                                    String missingKey = StateOfOperation.OFF + "-" + offReason;
+                                    if (!data.containsKey(missingKey)) {
+                                        data.put(missingKey, 0);
+                                    }
+                                });
+                    } else if (!data.containsKey(String.valueOf(soo))) {
+                        data.put(String.valueOf(soo), 0);
+                    }
+                });
     }
 
     public static String makeMapKey(VEDirectMessage message) {

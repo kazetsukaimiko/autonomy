@@ -225,7 +225,7 @@ function getCharts() {
 
 
 function loadControllerView(serialNumber, controllerView) {
-    loadControllerTime(controllerView['controllerTime']);
+    loadControllerTime(serialNumber, controllerView['controllerTime']);
 }
 
 function loadControllerTime(serialNumber, controllerTime) {

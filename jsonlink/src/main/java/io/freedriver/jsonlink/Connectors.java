@@ -75,7 +75,7 @@ public final class Connectors {
                 getFailedConnectors()
                         .put(device, FailedConnector.failed(device));
             } catch (TimeoutException e) {
-                LOGGER.log(Level.WARNING, "Timed out building connector " + device, e);
+                LOGGER.log(Level.WARNING, "Timed out building connector " + device);
                 getFailedConnectors()
                         .put(device, FailedConnector.timedOut(device));
             }
@@ -90,6 +90,15 @@ public final class Connectors {
                 .map(Connectors::findOrOpen)
                 .flatMap(Optional::stream);
     }
+
+
+    public static Stream<Future<Optional<Connector>>> allConnectors(ExecutorService pool) {
+        return Stream.of(SerialPortList.getPortNames())
+                .filter(getConfig()::doNotIgnore)
+                .peek(port -> LOGGER.finest("Looking to get " + port))
+                .map(port -> pool.submit(() -> findOrOpen(port)));
+    }
+
 
     public static Optional<Connector> getConnector(UUID deviceId) {
         return connectors(cs -> cs.filter(connector -> Objects.equals(connector.getUUID(), deviceId)))
