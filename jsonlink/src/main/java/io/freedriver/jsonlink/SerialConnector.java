@@ -238,7 +238,7 @@ public class SerialConnector implements Connector, AutoCloseable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SerialConnector that = (SerialConnector) o;
-        return Objects.equals(device, that.device);
+        return Objects.equals(getUUID(), that.getUUID());
     }
 
     @Override
