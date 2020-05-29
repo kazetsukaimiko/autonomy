@@ -15,10 +15,13 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -89,6 +92,26 @@ public class VEDirectMessageService {
         cq.orderBy(cb.desc(root.get(VEDirectMessage_.id)));
         return queryStream(cq, "for device " + device + " last " + duration.toMillis() + "ms");
     }
+
+
+    public Stream<VEDirectMessage> fromSunUp(VictronDevice device) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
+        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+        Subquery<Long> startIdQuery = cq.subquery(Long.class);
+        startIdQuery.select(cb.min(root.get(VEDirectMessage_.id)));
+        startIdQuery.where(cb.and(
+                cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
+                cb.ge(root.get(VEDirectMessage_.panelPower), 20.0)
+        ));
+
+
+        cq.select(root);
+        cq.where(cb.ge(root.get(VEDirectMessage_.id), startIdQuery));
+        cq.orderBy(cb.asc(root.get(VEDirectMessage_.id)));
+        return queryStream(cq, "from Sun Up of device " + device);
+    }
+
 
     /**
      * Get messages for the given device.
@@ -162,4 +185,10 @@ public class VEDirectMessageService {
         return typedQuery.getResultStream()
                 .findFirst();
     }
+
+    public static Instant getStartOfDay() {
+        LocalDateTime localDateTime = LocalDateTime.now().toLocalDate().atStartOfDay();
+        return localDateTime.toInstant(ZoneOffset.UTC);
+    }
+
 }

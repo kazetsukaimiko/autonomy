@@ -1,5 +1,7 @@
 package io.freedriver.autonomy.rest;
 
+import io.freedriver.autonomy.entity.view.ControllerView;
+import io.freedriver.autonomy.exception.VEDirectApiException;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import kaze.victron.VEDirectColumn;
 import kaze.victron.VictronDevice;
@@ -20,6 +22,7 @@ public interface VEDirectApi {
     String DEVICE_PATH = "/device";
     String DEVICE_SERIAL = "deviceSerial";
     String DEVICE_SERIAL_PATH = DEVICE_PATH + "/{"+DEVICE_SERIAL+"}";
+    String DEVICE_SERIAL_DATA_PATH = DEVICE_SERIAL_PATH + "/data";
     String NUMBER = "number";
     String UNITS = "units";
     String MESSAGE_TIME_PATH = DEVICE_SERIAL_PATH + "/last/{"+NUMBER+"}/{"+UNITS+"}";
@@ -32,7 +35,11 @@ public interface VEDirectApi {
 
     @GET
     @Path(DEVICE_SERIAL_PATH)
-    List<VEDirectMessage> getDevices(@PathParam(DEVICE_SERIAL) String serial);
+    ControllerView getDeviceOverview(@PathParam(DEVICE_SERIAL) String serial) throws VEDirectApiException;
+
+    @GET
+    @Path(DEVICE_SERIAL_DATA_PATH)
+    List<VEDirectMessage> getDeviceData(@PathParam(DEVICE_SERIAL) String serial);
 
     @GET
     @Path(MESSAGE_TIME_PATH)

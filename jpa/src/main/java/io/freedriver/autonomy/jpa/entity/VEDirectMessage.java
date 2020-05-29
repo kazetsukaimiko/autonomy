@@ -4,13 +4,7 @@ import kaze.math.measurement.units.Current;
 import kaze.math.measurement.units.Energy;
 import kaze.math.measurement.units.Potential;
 import kaze.math.measurement.units.Power;
-import kaze.victron.ErrorCode;
-import kaze.victron.FirmwareVersion;
-import kaze.victron.LoadOutputState;
-import kaze.victron.RelayState;
-import kaze.victron.StateOfOperation;
-import kaze.victron.TrackerOperation;
-import kaze.victron.VictronProduct;
+import kaze.victron.*;
 import kaze.victron.vedirect.OffReason;
 
 import javax.persistence.*;
@@ -326,6 +320,16 @@ public class VEDirectMessage {
                 ", errorCode=" + errorCode +
                 ", offReason=" + offReason +
                 '}';
+    }
+
+    public static int orderByTimestamp(VEDirectMessage veDirectMessage, VEDirectMessage veDirectMessage1) {
+        if (veDirectMessage != null) {
+            if (veDirectMessage1 != null) {
+                return Long.compare(veDirectMessage.getTimestamp(), veDirectMessage1.getTimestamp());
+            }
+            return 1;
+        }
+        return veDirectMessage1 == null ? 0 : -1;
     }
 
     /*
