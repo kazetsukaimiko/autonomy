@@ -15,6 +15,11 @@ public class UUIDTest {
     }
 
     @Test
+    public void randomUUID() {
+        System.out.println(UUID.randomUUID().toString());
+    }
+
+    @Test
     public void testStartOfDay() {
         LocalDateTime localDateTime = LocalDateTime.now().toLocalDate().atStartOfDay();
         System.out.println(localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli());

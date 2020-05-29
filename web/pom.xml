@@ -58,6 +58,8 @@
                 <echo>Installing Autonomy</echo>
                 <copy todir="${user.home}/.local/autonomy" overwrite="true" flatten="true">
                   <fileset dir="${build.directory}/" includes="autonomy-thorntail.jar" />
+                  <fileset dir="${basedir}/src/main/systemd/" includes="*.yml" />
+
                 </copy>
                 <copy todir="${user.home}/.local/share/systemd/user/" overwrite="true" flatten="true">
                   <fileset dir="${basedir}/src/main/systemd/" includes="*.service" />
@@ -152,6 +154,15 @@
         <groupId>org.hrorm</groupId>
         <artifactId>hrorm</artifactId>
         <version>0.14.0</version>
+    </dependency>
+
+
+    <!-- JDBC -->
+
+    <dependency>
+      <groupId>org.mariadb.jdbc</groupId>
+      <artifactId>mariadb-java-client</artifactId>
+      <version>2.6.0</version>
     </dependency>
 
     <dependency>

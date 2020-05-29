@@ -1,0 +1,8 @@
+  datasources:
+    data-sources:
+      autonomyjta:
+        jta: true
+        driver-name: your-jdbc-driver
+        connection-url: jdbc:your://host:port/db
+        user-name: your-username
+        password: your-password

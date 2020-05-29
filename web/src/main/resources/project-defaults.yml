@@ -6,16 +6,3 @@ thorntail:
     allowOthers: true
   jpa:
     default-datasource: autonomyjta
-  datasources:
-    data-sources:
-      autonomyjta:
-        jta: true
-        driver-name: h2
-        #connection-url: jdbc:h2:file:~/.config/autonomy/autonomy_h2.db
-        connection-url: jdbc:h2:tcp://localhost:9092/autonomy
-        user-name: sa
-      autonomy-memory:
-        driver-name: h2
-        connection-url: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-        user-name: sa
-        password: sa
