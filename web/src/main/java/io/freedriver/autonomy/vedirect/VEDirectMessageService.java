@@ -13,7 +13,6 @@ import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Observes;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -67,6 +66,18 @@ public class VEDirectMessageService {
         return Benchmark.bench(() ->
                         entityManager
                                 .createQuery(cq)
+                                .getResultStream()
+                                .collect(Collectors.toList())
+                                .stream(),
+                description);
+    }
+
+    // TODO: Revert full buffer
+    public <T> Stream<T> queryStream(CriteriaQuery<T> cq, int limit, String description) {
+        return Benchmark.bench(() ->
+                        entityManager
+                                .createQuery(cq)
+                                .setMaxResults(limit)
                                 .getResultStream()
                                 .collect(Collectors.toList())
                                 .stream(),
@@ -200,12 +211,12 @@ public class VEDirectMessageService {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
         Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
-        TypedQuery<VEDirectMessage> typedQuery = entityManager.createQuery(cq.select(cq.from(VEDirectMessage.class))
-                .where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()))
-                .orderBy(cb.desc(veDirectMessageRoot.get(VEDirectMessage_.timestamp))))
-                .setMaxResults(1);
-        return typedQuery.getResultStream()
+        cq.select(veDirectMessageRoot);
+        cq.where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()))
+                .orderBy(cb.desc(veDirectMessageRoot.get(VEDirectMessage_.timestamp)));
+        return queryStream(cq, 1, "Max")
                 .findFirst();
+
     }
 
     public static Instant getStartOfDay() {
