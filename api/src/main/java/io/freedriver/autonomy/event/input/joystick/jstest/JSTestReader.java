@@ -51,7 +51,12 @@ public class JSTestReader {
 
     public static Stream<JSTestEvent> ofJoystick(Path joystickPath) {
         final Process p = jstestProcess(joystickPath);
-        return readEvents(ProcessUtil.linesInputStream(p.getInputStream()).onClose(p::destroy));
+        return readEvents(ProcessUtil.linesInputStream(p.getInputStream()).onClose(() -> destroyProcess(p, joystickPath)));
+    }
+
+    public static void destroyProcess(Process p, Path joystickPath) {
+        LOGGER.info("Destroying Joystick " + joystickPath.toAbsolutePath().toString());
+        p.destroyForcibly();
     }
 
     public static List<Path> getJoysticksPaths() {
