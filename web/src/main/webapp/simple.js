@@ -30,7 +30,7 @@ function loadAllBoards() {
 
 
 function loadBoard(uuid) {
-    logger("Loading board " + uuid)
+    //logger("Loading board " + uuid)
     const ajax = fs.ajax()
         //.POST("/rest/workspaces")
         //.GET("/rest/simple/id/"+uuid)
@@ -42,19 +42,57 @@ function loadBoard(uuid) {
             //toggleOff("#controls");
             populateToggles(getControls(uuid), uuid, aliasView);
             toggleOn("#" + getControlsId(uuid)); // TODO : Activate Section.
-            setTimeout(function () {
-                loadWorkspaces(uuid);
-            }, 1000);
         })
         .handleOthers(function (xhr, request) {
             logger(xhr.status.toString() + " Failed to load board " + uuid + ": " + xhr.statusText + '\n' + xhr.responseText);
-            setTimeout(function () {
-                loadWorkspaces(uuid);
-            }, 1000);
             // TODO: Recover the UI state somehow.
         })
         .json();
 }
+
+function loadVEDirectDevices() {
+    logger("Loading devices...")
+    const ajax = fs.ajax()
+        //.POST("/rest/workspaces")
+        //.GET("/rest/vedirect/device/")
+        .GET("http://hakobune.local:8080/rest/vedirect/device/")
+        .accept("application/json")
+        .handle(200, function (xhr, request) {
+            const devices = JSON.parse(xhr.responseText);
+            for (let i = 0; i < devices.length; i++) {
+                loadVEDirectDevice(devices[i]['serialNumber'], devices[i]['type']);
+            }
+            setTimeout(function () {
+                loadVEDirectDevices();
+            }, 10000);
+        })
+        .handleOthers(function (xhr, request) {
+            logger(xhr.status.toString() + " Failed to load VEDirectDevices: " + xhr.statusText + '\n' + xhr.responseText);
+            setTimeout(function () {
+                loadVEDirectDevices();
+            }, 1000);
+        })
+        .json();
+}
+
+function loadVEDirectDevice(serialNumber, type) {
+    logger("Loading VEDirect Device Serial: " + serialNumber);
+    const ajax = fs.ajax()
+        //.POST("/rest/workspaces")
+        //.GET("/rest/vedirect/device/" + serialNumber)
+        .GET("http://hakobune.local:8080/rest/vedirect/device/" + serialNumber)
+        .accept("application/json")
+        .handle(200, function (xhr, request) {
+            const controllerView = JSON.parse(xhr.responseText);
+            loadControllerView(serialNumber, controllerView);
+        })
+        .handleOthers(function (xhr, request) {
+            logger(xhr.status.toString() + " Failed to load VEDirectDevice " + serialNumber + ": "
+                + xhr.statusText + '\n' + xhr.responseText);
+        })
+        .json();
+}
+
 
 function setState(uuid, key, state) {
     const payload = {};
@@ -180,10 +218,88 @@ function populateToggles(controlsPane, uuid, aliasView) {
     }
 }
 
-//function
+function getCharts() {
+    return document.getElementById("charts");
+}
 
+
+
+function loadControllerView(serialNumber, controllerView) {
+    loadControllerTime(controllerView['controllerTime']);
+}
+
+function loadControllerTime(serialNumber, controllerTime) {
+    const canvasId = "controllerTime-"+serialNumber;
+    let canvas = document.getElementById(canvasId);
+    if (canvas == null) {
+        canvas = document.createElement("canvas");
+        canvas.id = canvasId;
+        getCharts().appendChild(canvas);
+    }
+
+    const color = Chart.helpers.color;
+    const data  =  controllerTime['data'];
+    const total = Object.values(data).reduce((a, b) => a + b, 0);
+    const scale = total / controllerTime['time'];
+    const unit  = controllerTime['unit'];
+
+    const config = {
+        type: 'radar',
+        data: {
+            labels: Object.keys(controllerTime['data']),
+            datasets: [{
+                label: serialNumber,
+                backgroundColor: color(window.chartColors.red).alpha(0.2).rgbString(),
+                borderColor: window.chartColors.red,
+                pointBackgroundColor: window.chartColors.red,
+                data: Object.values(data)
+            }]
+        },
+        options: {
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: true,
+                text: 'Controller Time, Seconds'
+            },
+            scale: {
+                ticks: {
+                    beginAtZero: true
+                }
+            }
+        }
+    };
+    console.log(config);
+
+    if (typeof(canvas.dataset['chart']) == "undefined") {
+        logger("Creating new canvas");
+        canvas.dataset['chart'] = new Chart(canvas, config);
+    } else {
+        logger("Updating existing canvas");
+        canvas.dataset['chart'].options.data = config.data;
+        canvas.dataset['chart'].update();
+    }
+}
+
+
+var randomScalingFactor = function() {
+    return Math.round(Math.random() * 100);
+};
+
+
+window.chartColors = {
+    red: 'rgb(255, 99, 132)',
+    orange: 'rgb(255, 159, 64)',
+    yellow: 'rgb(255, 205, 86)',
+    green: 'rgb(75, 192, 192)',
+    blue: 'rgb(54, 162, 235)',
+    purple: 'rgb(153, 102, 255)',
+    grey: 'rgb(201, 203, 207)'
+};
 
 window.onload = function() {
     console.log("Loading");
     loadAllBoards();
+    loadVEDirectDevices();
 };

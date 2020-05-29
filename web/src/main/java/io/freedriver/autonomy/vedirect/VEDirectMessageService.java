@@ -17,7 +17,6 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.SingularAttribute;
 import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
@@ -197,7 +196,7 @@ public class VEDirectMessageService {
                 .getResultStream();
     }
 
-    public Optional<VEDirectMessage> max(VictronDevice device, SingularAttribute<VEDirectMessage, Long> timestamp) {
+    public Optional<VEDirectMessage> max(VictronDevice device) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
         Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
