@@ -239,12 +239,12 @@ public class SerialConnector implements Connector, AutoCloseable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SerialConnector that = (SerialConnector) o;
-        return Objects.equals(device, that.device) || Objects.equals(getUUID(), that.getUUID());
+        return Objects.equals(device, that.device);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid);
+        return Objects.hash(getUUID());
     }
 
     @Override

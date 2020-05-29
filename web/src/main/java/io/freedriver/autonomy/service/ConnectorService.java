@@ -43,6 +43,7 @@ public class ConnectorService {
     private List<Connector> getAllConnectors() {
         Connectors.allConnectors()
                 .filter(connector -> !ACTIVE_CONNECTORS.contains(connector))
+                .peek(connector -> System.out.println("Adding connector device: " + connector.device()))
                 .forEach(ACTIVE_CONNECTORS::add);
         return ACTIVE_CONNECTORS;
     }
