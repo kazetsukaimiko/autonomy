@@ -13,13 +13,7 @@ import kaze.victron.TrackerOperation;
 import kaze.victron.VictronProduct;
 import kaze.victron.vedirect.OffReason;
 
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -106,7 +100,6 @@ public class VEDirectMessage {
         this.loadOutputState = veDirectMessage.getLoadOutputState();
         this.errorCode = veDirectMessage.getErrorCode();
         this.offReason = veDirectMessage.getOffReason();
-
     }
 
     public Long getId() {
@@ -268,6 +261,31 @@ public class VEDirectMessage {
 
     public void setOffReason(OffReason offReason) {
         this.offReason = offReason;
+    }
+
+    @Transient
+    public kaze.victron.VEDirectMessage toNative() {
+        kaze.victron.VEDirectMessage nativeMessage = new kaze.victron.VEDirectMessage();
+        nativeMessage.setTimestamp(Instant.ofEpochMilli(getTimestamp()));
+        nativeMessage.setProductType(getProductType());
+        nativeMessage.setRelayState(getRelayState());
+        nativeMessage.setFirmwareVersion(getFirmwareVersion());
+        nativeMessage.setSerialNumber(getSerialNumber());
+        nativeMessage.setMainVoltage(getMainVoltage());
+        nativeMessage.setMainCurrent(getMainCurrent());
+        nativeMessage.setPanelVoltage(getPanelVoltage());
+        nativeMessage.setPanelPower(getPanelPower());
+        nativeMessage.setStateOfOperation(getStateOfOperation());
+        nativeMessage.setTrackerOperation(getTrackerOperation());
+        nativeMessage.setLoadOutputState(getLoadOutputState());
+        nativeMessage.setErrorCode(getErrorCode());
+        nativeMessage.setOffReason(getOffReason());
+        nativeMessage.setResettableYield(getResettableYield());
+        nativeMessage.setYieldToday(getYieldToday());
+        nativeMessage.setMaxPowerToday(getMaxPowerToday());
+        nativeMessage.setYieldYesterday(getYieldYesterday());
+        nativeMessage.setMaxPowerYesterday(getMaxPowerYesterday());
+        return nativeMessage;
     }
 
     @Override

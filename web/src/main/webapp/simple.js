@@ -2,76 +2,124 @@ function logger(log) {
     console.log(log);
 }
 
-function loadWorkspaces(uuid) {
-  var ajax = fs.ajax()
-    //.POST("/rest/workspaces")
-    .GET("/rest/simple/id/"+uuid)
-    //.GET("http://hakobune.local:8080/rest/simple/id/"+uuid)
-    .accept("application/json")
-    .handle(200, function(xhr, request) {
-      //window.location.hash = query;
-      var aliasView = JSON.parse(xhr.responseText);
-      toggleOff("#controls");
-      populateToggles(document.getElementById("controls"), uuid, aliasView);
-      toggleOn(".controls"); // TODO : Activate Section.
-      setTimeout(function() { loadWorkspaces(uuid); }, 1000);
-    })
-    .handleOthers(function(xhr, request) {
-      logger(xhr.status.toString() + " Failed to fetch woirkspaces: " + xhr.statusText + '\n' + xhr.responseText);
-      setTimeout(function() { loadWorkspaces(uuid); }, 1000);
-      // TODO: Recover the UI state somehow.
-    })
-    .json();
+
+function loadAllBoards() {
+    const ajax = fs.ajax()
+        //.POST("/rest/workspaces")
+        //.GET("/rest/simple/id/"+uuid)
+        .GET("http://hakobune.local:8080/rest/simple/")
+        .accept("application/json")
+        .handle(200, function (xhr, request) {
+            const boards = JSON.parse(xhr.responseText);
+            for (let i = 0; i < boards.length; i++) {
+                loadBoard(boards[i]);
+            }
+            setTimeout(function () {
+                loadAllBoards();
+            }, 1000);
+        })
+        .handleOthers(function (xhr, request) {
+            logger(xhr.status.toString() + " Failed to fetch boards: " + xhr.statusText + '\n' + xhr.responseText);
+            setTimeout(function () {
+                loadAllBoards();
+            }, 1000);
+            // TODO: Recover the UI state somehow.
+        })
+        .json();
+}
+
+
+function loadBoard(uuid) {
+    logger("Loading board " + uuid)
+    const ajax = fs.ajax()
+        //.POST("/rest/workspaces")
+        //.GET("/rest/simple/id/"+uuid)
+        .GET("http://hakobune.local:8080/rest/simple/id/" + uuid)
+        .accept("application/json")
+        .handle(200, function (xhr, request) {
+            //window.location.hash = query;
+            const aliasView = JSON.parse(xhr.responseText);
+            //toggleOff("#controls");
+            populateToggles(getControls(uuid), uuid, aliasView);
+            toggleOn("#" + getControlsId(uuid)); // TODO : Activate Section.
+            setTimeout(function () {
+                loadWorkspaces(uuid);
+            }, 1000);
+        })
+        .handleOthers(function (xhr, request) {
+            logger(xhr.status.toString() + " Failed to load board " + uuid + ": " + xhr.statusText + '\n' + xhr.responseText);
+            setTimeout(function () {
+                loadWorkspaces(uuid);
+            }, 1000);
+            // TODO: Recover the UI state somehow.
+        })
+        .json();
 }
 
 function setState(uuid, key, state) {
-  var payload = {};
-  payload[key] = state;
-  var ajax = fs.ajax()
-    //.POST("http://hakobune.local:8080/rest/simple/id/"+uuid)
-    .POST("/rest/simple/id/"+uuid)
-    .accept("application/json")
-    .handle(200, function(xhr, request) {
-      //window.location.hash = query;
-      var state = JSON.parse(xhr.responseText);
-      toggleOff("#controls");
-      populateToggles(document.getElementById("controls"), uuid, state);
+    const payload = {};
+    payload[key] = state;
+    const ajax = fs.ajax()
+        .POST("http://hakobune.local:8080/rest/simple/id/" + uuid)
+        //.POST("/rest/simple/id/"+uuid)
+        .accept("application/json")
+        .handle(200, function (xhr, request) {
+            //window.location.hash = query;
+            const state = JSON.parse(xhr.responseText);
+            toggleOff("#controls");
+            populateToggles(document.getElementById("controls"), uuid, state);
 
-      toggleOn(".controls"); // TODO : Activate Section.
-    })
-    .handleOthers(function(xhr, request) {
-      logger(xhr.status.toString() + " Failed to fetch woirkspaces: " + xhr.statusText + '\n' + xhr.responseText);
-      /*
-      document.allElements(".searchInput", function(elem) {
-        removeClass(elem, "searching");
-      });
-      */
-      // TODO: Recover the UI state somehow.
-    })
-    .json(payload);
+            toggleOn(".controls"); // TODO : Activate Section.
+        })
+        .handleOthers(function (xhr, request) {
+            logger(xhr.status.toString() + " Failed to fetch woirkspaces: " + xhr.statusText + '\n' + xhr.responseText);
+            /*
+            document.allElements(".searchInput", function(elem) {
+              removeClass(elem, "searching");
+            });
+            */
+            // TODO: Recover the UI state somehow.
+        })
+        .json(payload);
 }
 
+function getControlsId(uuid) {
+    return "controls-" + uuid;
+}
+
+function getControls(uuid) {
+    let controlsDiv = document.getElementById(getControlsId(uuid));
+    if (controlsDiv == null) {
+        controlsDiv = document.createElement("div");
+        getTabsContainer().appendChild(controlsDiv);
+    }
+    return controlsDiv;
+}
+
+function getTabsContainer() {
+    return document.getElementById("tabs");
+}
 
 function createButton(uuid, key, initialValue) {
-    var elementId = uuid + "_" + key;
-    var existing = document.getElementById(elementId);
+    const elementId = uuid + "_" + key;
+    let existing = document.getElementById(elementId);
     if (existing === null) {
         console.log("Creating control for " + key);
-        var checkbox = document.createElement("input");
+        const checkbox = document.createElement("input");
         checkbox.setAttribute("type", "checkbox");
         checkbox.checked = initialValue;
         checkbox.id = elementId;
-        var text = document.createElement("strong");
+        const text = document.createElement("strong");
         text.textContent = key;
         text.setAttribute("style", "color:white");
 
-        var container = document.createElement("label");
+        const container = document.createElement("label");
         addClass(container, "switch-light switch-holo");
 
-        var span = document.createElement("span");
-        var on = document.createElement("span");
+        const span = document.createElement("span");
+        const on = document.createElement("span");
         on.textContent = "On";
-        var off = document.createElement("span");
+        const off = document.createElement("span");
         off.textContent = "Off";
         span.appendChild(off);
         span.appendChild(on);
@@ -84,13 +132,13 @@ function createButton(uuid, key, initialValue) {
         container.appendChild(text);
         container.appendChild(span);
 
-        container.addEventListener("click", function(evt) {
-                              //console.log(key, checkbox.checked);
-                              evt.preventDefault();
-                              evt.stopPropagation();
-                              setState(uuid, key, !document.getElementById(elementId).checked);
-                              return false;
-                          });
+        container.addEventListener("click", function (evt) {
+            //console.log(key, checkbox.checked);
+            evt.preventDefault();
+            evt.stopPropagation();
+            setState(uuid, key, !document.getElementById(elementId).checked);
+            return false;
+        });
         return container;
     } else {
         if (existing.checked != initialValue) {
@@ -102,14 +150,14 @@ function createButton(uuid, key, initialValue) {
 }
 
 function getGroup(controlsPane, key) {
-    var groupName = key;
-    var parts = key.split("_");
-    if (parts.length == 2) {
-        var groupName = key[0];
+    let groupName = key;
+    const parts = key.split("_");
+    if (parts.length === 2) {
+        groupName = key[0];
     }
-    var groupName = "group_" + groupName;
+    groupName = "group_" + groupName;
 
-    var group = document.getElementById(groupName);
+    let group = document.getElementById(groupName);
     if (group == null) {
         group = document.createElement("div");
         group.id = groupName;
@@ -122,8 +170,9 @@ function getGroup(controlsPane, key) {
 
 
 function populateToggles(controlsPane, uuid, aliasView) {
-    var state = aliasView.applianceStates;
-    for(key in state) {
+    const state = aliasView['applianceStates'];
+    let button;
+    for (let key in state) {
         button = createButton(uuid, key, state[key]);
         if (button !== null) {
             getGroup(controlsPane, key).appendChild(button);
@@ -131,19 +180,10 @@ function populateToggles(controlsPane, uuid, aliasView) {
     }
 }
 
-window.onhashchange = function() {
-    console.log("HashChange");
-    document.getElementById("controls").empty();
-    loadWorkspaces(window.location.hash.substr(1));
-}
+//function
+
 
 window.onload = function() {
-    var uuid = "0f2829e1-1804-4993-ae33-c5dd21840646";
     console.log("Loading");
-    if (window.location.hash.substr(1) != uuid) {
-        console.log(window.location.hash);
-        window.location.hash = uuid;
-    } else {
-        window.onhashchange();
-    }
+    loadAllBoards();
 };
