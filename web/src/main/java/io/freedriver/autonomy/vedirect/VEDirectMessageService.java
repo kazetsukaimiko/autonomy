@@ -117,7 +117,7 @@ public class VEDirectMessageService {
             return last.stream()
                     .filter(m -> m.getId() >= sunUpId)
                     .sorted(Comparator.comparingLong(VEDirectMessage::getId));
-        }, "fromSunUp took {}ms");
+        }, "fromSunUp");
 
 
         /* TODO Figure out query

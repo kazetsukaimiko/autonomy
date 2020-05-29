@@ -15,7 +15,7 @@ import java.util.Objects;
         indexes = {
                 @Index(columnList = "TIMESTAMP"),
                 @Index(columnList = "SERIALNUMBER"),
-                @Index(columnList = "OFFREASON"),
+                @Index(columnList = "OFFREASON")
         }
 )
 @Entity
