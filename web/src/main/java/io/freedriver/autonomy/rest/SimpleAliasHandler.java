@@ -26,13 +26,13 @@ public class SimpleAliasHandler implements SimpleAliasApi {
 
     @Override
     public List<UUID> getBoards() {
-        LOGGER.info("Getting boards");
+        LOGGER.fine("Getting boards");
         return connectorService.getConnectedBoards();
     }
 
     @Override
     public AliasView getState(UUID boardId) throws IOException {
-        LOGGER.info("Getting state of " + boardId);
+        LOGGER.fine("Getting state of " + boardId);
         return simpleAliasService.newView(boardId);
     }
 

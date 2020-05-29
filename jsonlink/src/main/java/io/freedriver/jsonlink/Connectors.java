@@ -4,20 +4,8 @@ import io.freedriver.jsonlink.config.ConnectorConfig;
 import jssc.SerialPort;
 import jssc.SerialPortList;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -98,7 +86,7 @@ public final class Connectors {
     public static Stream<Connector> allConnectors() {
         return Stream.of(SerialPortList.getPortNames())
                 .filter(getConfig()::doNotIgnore)
-                .peek(port -> LOGGER.info("Looking to get " + port))
+                .peek(port -> LOGGER.finest("Looking to get " + port))
                 .map(Connectors::findOrOpen)
                 .flatMap(Optional::stream);
     }
@@ -121,7 +109,7 @@ public final class Connectors {
 
     private static ConnectorConfig getConfig() {
         ConnectorConfig connectorConfig = ConnectorConfig.load();
-        LOGGER.info("Ignored devices: " + String.join(",", connectorConfig.getIgnoreDevices()));
+        LOGGER.finest("Ignored devices: " + String.join(",", connectorConfig.getIgnoreDevices()));
         return connectorConfig;
     }
 }

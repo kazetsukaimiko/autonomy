@@ -111,16 +111,16 @@ public class SerialConnector implements Connector, AutoCloseable {
         Instant start = Instant.now();
         while (true) {
             if (getResponseMap().containsKey(requestId)) {
-                LOGGER.info("Found request");
+                LOGGER.fine("Found request");
                 return Optional.of(getResponseMap().remove(requestId));
             }
             Optional<String> json = pollUntilFinish(maxwait);
             if (json.isPresent()) {
-                LOGGER.info("Json Payload received.");
+                LOGGER.fine("Json Payload received.");
                 String responseJSON = json.get();
                 try {
                     Response response = MAPPER.readValue(responseJSON, Response.class);
-                    LOGGER.info("New response: " + response.getRequestId());
+                    LOGGER.fine("New response: " + response.getRequestId());
                     if (Objects.equals(requestId, response.getRequestId())) {
                         response.getError()
                                 .forEach(error -> LOGGER
