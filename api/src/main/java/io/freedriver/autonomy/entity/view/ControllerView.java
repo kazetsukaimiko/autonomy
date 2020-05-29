@@ -21,4 +21,8 @@ public class ControllerView {
     public ControllerTimeView getControllerTime() {
         return controllerTime;
     }
+
+    public ControllerStateView getControllerState() {
+        return controllerState;
+    }
 }
