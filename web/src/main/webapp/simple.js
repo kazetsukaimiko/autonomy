@@ -238,10 +238,13 @@ function loadControllerTime(serialNumber, controllerTime) {
     }
 
     const color = Chart.helpers.color;
+    console.log(controllerTime);
     const data  =  controllerTime['data'];
     const total = Object.values(data).reduce((a, b) => a + b, 0);
-    const scale = total / controllerTime['time'];
+    const secondsPerUnit = total / controllerTime['secondsPerUnit'];
     const unit  = controllerTime['unit'];
+    const scaledValues = Object.values(data).map((a) => a / secondsPerUnit);
+
 
     const config = {
         type: 'radar',
@@ -252,7 +255,7 @@ function loadControllerTime(serialNumber, controllerTime) {
                 backgroundColor: color(window.chartColors.red).alpha(0.2).rgbString(),
                 borderColor: window.chartColors.red,
                 pointBackgroundColor: window.chartColors.red,
-                data: Object.values(data)
+                data: scaledValues
             }]
         },
         options: {
@@ -261,7 +264,7 @@ function loadControllerTime(serialNumber, controllerTime) {
             },
             title: {
                 display: true,
-                text: 'Controller Time, Seconds'
+                text: 'Controller Time, ' + unit
             },
             scale: {
                 ticks: {

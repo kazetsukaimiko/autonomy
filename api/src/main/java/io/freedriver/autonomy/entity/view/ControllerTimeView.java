@@ -12,21 +12,19 @@ import java.util.stream.Collectors;
 
 public class ControllerTimeView {
     private final Map<String, Integer> data;
-    private final long time;
     private final ChronoUnit unit;
+    private final long secondsPerUnit;
 
     public ControllerTimeView(Map<String, Integer> data, Duration duration) {
         this.data = data;
         if (duration.toSeconds() > 3600) {
-            time = duration.toHours();
-            unit = ChronoUnit.HOURS;
+            this.unit = ChronoUnit.HOURS;
         } else if (duration.toSeconds() > 60) {
-            time = duration.toMinutes();
-            unit = ChronoUnit.MINUTES;
+            this.unit = ChronoUnit.MINUTES;
         } else {
-            time = duration.toSeconds();
-            unit = ChronoUnit.SECONDS;
+            this.unit = ChronoUnit.SECONDS;
         }
+        this.secondsPerUnit = unit.getDuration().toSeconds();
     }
 
     public ControllerTimeView(List<VEDirectMessage> messages, Duration duration) {
@@ -60,11 +58,11 @@ public class ControllerTimeView {
         return data;
     }
 
-    public long getTime() {
-        return time;
-    }
-
     public ChronoUnit getUnit() {
         return unit;
+    }
+
+    public long getSecondsPerUnit() {
+        return secondsPerUnit;
     }
 }
