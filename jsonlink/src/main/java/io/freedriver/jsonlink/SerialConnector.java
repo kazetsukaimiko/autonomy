@@ -23,7 +23,7 @@ public class SerialConnector implements Connector, AutoCloseable {
 
     private final String device;
     private final SerialPort serialPort;
-    private UUID uuid = null;
+    private final UUID uuid;
 
     private StringBuilder buffer = new StringBuilder();
 
@@ -49,6 +49,11 @@ public class SerialConnector implements Connector, AutoCloseable {
                 throw new ConnectorException(e);
             }
         }
+        this.uuid = Optional.of(new Request())
+                .map(this::send)
+                .map(Response::getUuid)
+                .orElseGet(() -> send(new Request().newUuid()).getUuid());
+        LOGGER.info("Added Connector Device: " + device + "; UUID: " + uuid);
     }
 
     private Map<UUID, Response> getResponseMap() {
@@ -225,13 +230,7 @@ public class SerialConnector implements Connector, AutoCloseable {
 
     @Override
     public UUID getUUID() throws ConnectorException {
-        if (uuid == null) {
-            uuid = Optional.of(new Request())
-                    .map(this::send)
-                    .map(Response::getUuid)
-                    .orElseGet(() -> send(new Request().newUuid()).getUuid());
-        }
-        return null;
+        return uuid;
     }
 
     @Override
