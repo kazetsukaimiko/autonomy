@@ -4,11 +4,7 @@ import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import kaze.victron.VEDirectColumn;
 import kaze.victron.VictronDevice;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -44,5 +40,5 @@ public interface VEDirectApi {
 
     @GET
     @Path(COLUMN_DATA_PATH)
-    <T> Map<T, Integer> getColumnData(@PathParam(DEVICE_SERIAL) String serial, @PathParam(NUMBER) Integer number, @PathParam(UNITS) ChronoUnit chronoUnit, @PathParam(COLUMN) VEDirectColumn column);
+    Map<String, Integer> getColumnData(@PathParam(DEVICE_SERIAL) String serial, @PathParam(NUMBER) Integer number, @PathParam(UNITS) ChronoUnit chronoUnit, @PathParam(COLUMN) VEDirectColumn column);
 }
