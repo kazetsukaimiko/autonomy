@@ -9,12 +9,7 @@ import jssc.SerialPortTimeoutException;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,6 +23,7 @@ public class SerialConnector implements Connector, AutoCloseable {
 
     private final String device;
     private final SerialPort serialPort;
+    private UUID uuid = null;
 
     private StringBuilder buffer = new StringBuilder();
 
@@ -227,6 +223,29 @@ public class SerialConnector implements Connector, AutoCloseable {
         }
     }
 
+    @Override
+    public UUID getUUID() throws ConnectorException {
+        if (uuid == null) {
+            uuid = Optional.of(new Request())
+                    .map(this::send)
+                    .map(Response::getUuid)
+                    .orElseGet(() -> send(new Request().newUuid()).getUuid());
+        }
+        return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SerialConnector that = (SerialConnector) o;
+        return Objects.equals(device, that.device) || Objects.equals(getUUID(), that.getUUID());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
+    }
 
     @Override
     public void close() throws Exception {

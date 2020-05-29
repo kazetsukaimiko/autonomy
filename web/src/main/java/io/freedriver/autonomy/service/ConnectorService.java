@@ -14,15 +14,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.WebApplicationException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -32,30 +24,32 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class ConnectorService {
     private static final Logger LOGGER = Logger.getLogger(ConnectorService.class.getName());
-    private static final Map<UUID, Connector> ACTIVE_CONNECTORS = new ConcurrentHashMap<>();
+    private static final List<Connector> ACTIVE_CONNECTORS = new ArrayList<>();
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .registerModule(new JsonLinkModule())
             .enable(SerializationFeature.INDENT_OUTPUT);
 
     public List<UUID> getConnectedBoards() {
-        return new ArrayList<>(getAllConnectors().keySet());
+        return getAllConnectors().stream()
+                .map(Connector::getUUID)
+                .collect(Collectors.toList());
     }
 
     /*
      * INTERNALS / HELPERS
      */
 
-    private Map<UUID, Connector> getAllConnectors() {
+    private List<Connector> getAllConnectors() {
         Connectors.allConnectors()
-                .filter(connector -> !ACTIVE_CONNECTORS.containsKey(connector.getUUID()))
-                .forEach(connector -> ACTIVE_CONNECTORS.put(connector.getUUID(), connector));
+                .filter(connector -> !ACTIVE_CONNECTORS.contains(connector))
+                .forEach(ACTIVE_CONNECTORS::add);
         return ACTIVE_CONNECTORS;
     }
 
 
     private Optional<Connector> getConnectorByBoardId(UUID boardId) {
-        return getAllConnectors().values().stream()
+        return getAllConnectors().stream()
                 .filter(connector -> Objects.equals(boardId, connector.getUUID()))
                 .findFirst();
     }
@@ -65,7 +59,7 @@ public class ConnectorService {
     }
 
     public String describeBoards() {
-        return getAllConnectors().values().stream()
+        return getAllConnectors().stream()
                 .map(Connector::getUUID)
                 .sorted(Comparator.comparing(UUID::toString))
                 .map(UUID::toString)
