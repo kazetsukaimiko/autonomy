@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ControllerTimeView {
     private final Map<String, Integer> data;
@@ -51,8 +50,9 @@ public class ControllerTimeView {
     }
 
 
-    public ControllerTimeView addMissingMapKeys(Set<OffReason> historicalOffReasons) {
-        Stream.of(StateOfOperation.values())
+    public ControllerTimeView addMissingMapKeys(Set<StateOfOperation> historicalStates,
+                                                Set<OffReason> historicalOffReasons) {
+        historicalStates
                 .forEach(soo -> {
                     if (soo == StateOfOperation.OFF) {
                         historicalOffReasons

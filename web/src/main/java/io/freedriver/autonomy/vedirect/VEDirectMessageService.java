@@ -214,7 +214,8 @@ public class VEDirectMessageService {
         Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
         cq.select(veDirectMessageRoot.get(attribute)).distinct(true);
         cq.where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()));
-        return entityManager.createQuery(cq).getResultStream();
+        return entityManager.createQuery(cq).getResultStream()
+                .filter(Objects::nonNull);
     }
 
 
