@@ -70,7 +70,7 @@ public class ConnectorService {
     public synchronized Response send(UUID uuid, Request request) {
         return getConnectorByBoardId(uuid)
                 .map(connector -> connector.send(request))
-                .orElseThrow(() -> new WebApplicationException("Board not found", 404));
+                .orElseThrow(() -> new WebApplicationException("Board not found, present devices: " + ACTIVE_CONNECTORS.stream().map(Connector::device).collect(Collectors.joining(",")), 404));
     }
 
     public synchronized Map<Identifier, Boolean> readDigital(UUID boardId, Collection<Identifier> pins) {
