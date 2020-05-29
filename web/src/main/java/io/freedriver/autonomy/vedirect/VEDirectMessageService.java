@@ -4,8 +4,6 @@ import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import io.freedriver.autonomy.util.Benchmark;
-import kaze.math.measurement.units.Power;
-import kaze.math.number.ScaledNumber;
 import kaze.victron.VictronDevice;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -20,6 +18,7 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -101,16 +100,16 @@ public class VEDirectMessageService {
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
         Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
         Subquery<Long> startIdQuery = cq.subquery(Long.class);
-        startIdQuery.select(cb.min(root.get(VEDirectMessage_.id)));
-        startIdQuery.where(cb.and(
-                cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
-                cb.ge(root.get(VEDirectMessage_.panelPower), new Power(ScaledNumber.of(20.0)))
+        Root<VEDirectMessage> subQueryRoot = startIdQuery.from(VEDirectMessage.class);
+        startIdQuery.select(cb.min(subQueryRoot.get(VEDirectMessage_.id)))
+                .where(cb.and(
+                        cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
+                        cb.ge(root.get(VEDirectMessage_.panelPower).as(BigDecimal.class), 20.0)
         ));
-
-
-        cq.select(root);
-        cq.where(cb.ge(root.get(VEDirectMessage_.id), startIdQuery));
-        cq.orderBy(cb.asc(root.get(VEDirectMessage_.id)));
+        cq
+                .select(root)
+                .where(cb.greaterThanOrEqualTo(root.get(VEDirectMessage_.id), startIdQuery))
+                .orderBy(cb.asc(root.get(VEDirectMessage_.id)));
         return queryStream(cq, "from Sun Up of device " + device);
     }
 
