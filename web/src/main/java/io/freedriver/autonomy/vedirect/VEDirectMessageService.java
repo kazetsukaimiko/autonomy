@@ -4,6 +4,8 @@ import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import io.freedriver.autonomy.util.Benchmark;
+import kaze.math.measurement.units.Power;
+import kaze.math.number.ScaledNumber;
 import kaze.victron.VictronDevice;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -15,17 +17,13 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import javax.persistence.criteria.Subquery;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.transaction.Transactional;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -47,6 +45,7 @@ public class VEDirectMessageService {
 
     /**
      * Saves a VEDirectMessage.
+     *
      * @param veDirectMessage
      * @return
      */
@@ -67,17 +66,18 @@ public class VEDirectMessageService {
     // TODO: Revert full buffer
     public <T> Stream<T> queryStream(CriteriaQuery<T> cq, String description) {
         return Benchmark.bench(() ->
-                entityManager
-                        .createQuery(cq)
-                        .getResultStream()
-                        .collect(Collectors.toList())
-                        .stream(),
+                        entityManager
+                                .createQuery(cq)
+                                .getResultStream()
+                                .collect(Collectors.toList())
+                                .stream(),
                 description);
     }
 
 
     /**
      * Get last Duration of messages for the given device.
+     *
      * @param device
      * @param duration
      * @return
@@ -96,6 +96,22 @@ public class VEDirectMessageService {
 
 
     public Stream<VEDirectMessage> fromSunUp(VictronDevice device) {
+        return Benchmark.bench(() -> {
+            List<VEDirectMessage> last = last(device, Duration.between(getStartOfDay(), Instant.now()))
+                    .collect(Collectors.toList());
+            long sunUpId = last.stream()
+                    .filter(m -> m.getPanelPower().greaterThanOrEqualTo(new Power(ScaledNumber.of(20))))
+                    .mapToLong(VEDirectMessage::getId)
+                    .min()
+                    .getAsLong();
+            return last.stream()
+                    .filter(m -> m.getId() >= sunUpId)
+                    .sorted(Comparator.comparingLong(VEDirectMessage::getId));
+        }, "fromSunUp took {}ms");
+
+
+        /*
+
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
         Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
@@ -111,11 +127,14 @@ public class VEDirectMessageService {
                 .where(cb.greaterThanOrEqualTo(root.get(VEDirectMessage_.id), startIdQuery))
                 .orderBy(cb.asc(root.get(VEDirectMessage_.id)));
         return queryStream(cq, "from Sun Up of device " + device);
+
+         */
     }
 
 
     /**
      * Get messages for the given device.
+     *
      * @param device
      * @return
      */
@@ -130,6 +149,7 @@ public class VEDirectMessageService {
 
     /**
      * Get messages for the given device.
+     *
      * @param device
      * @return
      */
@@ -146,19 +166,21 @@ public class VEDirectMessageService {
 
     /**
      * Update the Device Cache.
+     *
      * @return
      */
     private Set<VictronDevice> updateDeviceCache() {
         queryAll()
-            .map(veDirectMessage -> VictronDevice.of(veDirectMessage.getProductType(), veDirectMessage.getSerialNumber()))
-            .flatMap(Optional::stream)
-            .distinct()
-            .forEach(DEVICE_CACHE::add);
+                .map(veDirectMessage -> VictronDevice.of(veDirectMessage.getProductType(), veDirectMessage.getSerialNumber()))
+                .flatMap(Optional::stream)
+                .distinct()
+                .forEach(DEVICE_CACHE::add);
         return DEVICE_CACHE;
     }
 
     /**
      * Get all known VictronDevices.
+     *
      * @return
      */
     public Set<VictronDevice> devices() {
