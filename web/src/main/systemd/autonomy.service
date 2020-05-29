@@ -4,7 +4,7 @@ After=network.target
 Requires=h2.service
 
 [Service]
-ExecStart=/usr/bin/java -jar %h/.local/autonomy/autonomy-thorntail.jar -DrestartOn=%h/.local/autonomy/autonomy-thorntail.jar -DrestartCommand="%h/bin/restartAutonomy.sh"
+ExecStart=/usr/bin/java -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n -jar %h/.local/autonomy/autonomy-thorntail.jar -DrestartOn=%h/.local/autonomy/autonomy-thorntail.jar -DrestartCommand="%h/bin/restartAutonomy.sh"
 ExecStop=/bin/kill $MAINPID
 ExecStopPost=systemctl --user stop h2
 KillMode=process
