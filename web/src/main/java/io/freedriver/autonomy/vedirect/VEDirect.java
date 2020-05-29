@@ -1,10 +1,12 @@
 package io.freedriver.autonomy.vedirect;
 
+import io.freedriver.autonomy.entity.view.ControllerHistoryView;
 import io.freedriver.autonomy.entity.view.ControllerStateView;
 import io.freedriver.autonomy.entity.view.ControllerTimeView;
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
+import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import io.freedriver.autonomy.rest.VEDirectApi;
 import kaze.victron.VEDirectColumn;
 import kaze.victron.VictronDevice;
@@ -36,8 +38,15 @@ public class VEDirect implements VEDirectApi {
                 .findFirst().orElseThrow(() -> VEDirectApiException.unknownDevice(serial));
         return new ControllerView(
                 device,
-                new ControllerTimeView(messageService.fromSunUp(device).collect(Collectors.toList())),
-                messageService.max(device).map(ControllerStateView::new).orElse(null));
+                new ControllerTimeView(
+                        messageService.fromSunUp(device).collect(Collectors.toList())),
+                        messageService.max(device).map(ControllerStateView::new).orElse(null),
+                new ControllerHistoryView(
+                        messageService.max(device, VEDirectMessage_.panelPower).doubleValue(),
+                        messageService.max(device, VEDirectMessage_.panelVoltage).doubleValue(),
+                        messageService.max(device, VEDirectMessage_.mainVoltage).doubleValue(),
+                        messageService.max(device, VEDirectMessage_.yieldToday).doubleValue()
+                ));
     }
 
     @Override

@@ -225,11 +225,12 @@ function getCharts() {
 
 
 function loadControllerView(serialNumber, controllerView) {
-    loadControllerTime(serialNumber, controllerView['controllerTime']);
+    loadControllerTimeRadar(serialNumber, controllerView['controllerTime']);
+    loadControllerTimeDoughnut(serialNumber, controllerView['controllerTime']);
 }
 
-function loadControllerTime(serialNumber, controllerTime) {
-    const canvasId = "controllerTime-"+serialNumber;
+function loadControllerTimeRadar(serialNumber, controllerTime) {
+    const canvasId = "controllerTime-radar-"+serialNumber;
     let canvas = document.getElementById(canvasId);
     if (canvas == null) {
         canvas = document.createElement("canvas");
@@ -285,6 +286,67 @@ function loadControllerTime(serialNumber, controllerTime) {
     }
 }
 
+
+function loadControllerTimeDoughnut(serialNumber, controllerTime) {
+    const canvasId = "controllerTime-doughnut-"+serialNumber;
+    let canvas = document.getElementById(canvasId);
+    if (canvas == null) {
+        canvas = document.createElement("canvas");
+        canvas.id = canvasId;
+        getCharts().appendChild(canvas);
+    }
+
+    const color = Chart.helpers.color;
+    console.log(controllerTime);
+    const data  =  controllerTime['data'];
+    const total = Object.values(data).reduce((a, b) => a + b, 0);
+    const secondsPerUnit = total / controllerTime['secondsPerUnit'];
+    const unit  = controllerTime['unit'];
+    const scaledValues = Object.values(data).map((a) => a / secondsPerUnit);
+
+    var config = {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: scaledValues,
+                backgroundColor: [
+                    window.chartColors.red,
+                    window.chartColors.orange,
+                    window.chartColors.yellow,
+                    window.chartColors.green,
+                    window.chartColors.blue,
+                ],
+                label: serialNumber
+            }],
+            labels: Object.keys(controllerTime['data'])
+        },
+        options: {
+            responsive: true,
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: true,
+                text: 'Controller time, ' + unit
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        }
+    };
+
+    console.log(config);
+
+    if (typeof(canvas.dataset['chart']) == "undefined") {
+        logger("Creating new canvas");
+        canvas.dataset['chart'] = new Chart(canvas, config);
+    } else {
+        logger("Updating existing canvas");
+        canvas.dataset['chart'].options.data = config.data;
+        canvas.dataset['chart'].update();
+    }
+}
 
 var randomScalingFactor = function() {
     return Math.round(Math.random() * 100);

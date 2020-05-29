@@ -16,6 +16,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.SingularAttribute;
 import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
@@ -207,6 +208,16 @@ public class VEDirectMessageService {
                 .getResultStream();
     }
 
+    public <T extends Number> T max(VictronDevice device, SingularAttribute<VEDirectMessage, T> attribute) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<T> cq = cb.createQuery(attribute.getBindableJavaType());
+        Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
+        cq.select(cb.max(veDirectMessageRoot.get(attribute)));
+        cq.where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()))
+                .orderBy(cb.desc(veDirectMessageRoot.get(VEDirectMessage_.timestamp)));
+        return entityManager.createQuery(cq).getSingleResult();
+    }
+
     public Optional<VEDirectMessage> max(VictronDevice device) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
@@ -216,7 +227,6 @@ public class VEDirectMessageService {
                 .orderBy(cb.desc(veDirectMessageRoot.get(VEDirectMessage_.timestamp)));
         return queryStream(cq, 1, "Max")
                 .findFirst();
-
     }
 
     public static Instant getStartOfDay() {

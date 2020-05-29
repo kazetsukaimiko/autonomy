@@ -19,7 +19,7 @@ public class ControllerTimeView {
 
     public ControllerTimeView(Map<String, Integer> data, Duration duration) {
         this.data = data;
-        addMissingMapKeys(data);
+        //addMissingMapKeys(data);
         if (duration.toSeconds() > 3600) {
             this.unit = ChronoUnit.HOURS;
         } else if (duration.toSeconds() > 60) {

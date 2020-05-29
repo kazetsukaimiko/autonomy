@@ -7,11 +7,13 @@ public class ControllerView {
 
     private final ControllerTimeView controllerTime;
     private final ControllerStateView controllerState;
+    private final ControllerHistoryView controllerHistory;
 
-    public ControllerView(VictronDevice device, ControllerTimeView controllerTime, ControllerStateView controllerState) {
+    public ControllerView(VictronDevice device, ControllerTimeView controllerTime, ControllerStateView controllerState, ControllerHistoryView controllerHistory) {
         this.device = device;
         this.controllerTime = controllerTime;
         this.controllerState = controllerState;
+        this.controllerHistory = controllerHistory;
     }
 
     public VictronDevice getDevice() {
@@ -24,5 +26,9 @@ public class ControllerView {
 
     public ControllerStateView getControllerState() {
         return controllerState;
+    }
+
+    public ControllerHistoryView getControllerHistory() {
+        return controllerHistory;
     }
 }
