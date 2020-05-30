@@ -64,7 +64,7 @@ function loadVEDirectDevices() {
             }
             setTimeout(function () {
                 loadVEDirectDevices();
-            }, 10000);
+            }, 1000);
         })
         .handleOthers(function (xhr, request) {
             logger(xhr.status.toString() + " Failed to load VEDirectDevices: " + xhr.statusText + '\n' + xhr.responseText);
@@ -225,10 +225,23 @@ function getCharts() {
 
 
 function loadControllerView(serialNumber, controllerView) {
-    loadControllerTimeRadar(serialNumber, controllerView['controllerTime']);
-    loadControllerTimeDoughnut(serialNumber, controllerView['controllerTime']);
+    const controllerTime = controllerView['controllerTime'];
+    const controllerState = controllerView['controllerState'];
+    const controllerHistory = controllerView['controllerHistory'];
+    //loadControllerTimeRadar(serialNumber, controllerTime);
+    loadControllerTimeDoughnut(serialNumber, "controller-time", "Controller Time", controllerTime['data']);
+
+    loadControllerGauge(serialNumber, controllerState['mainVoltage'], controllerHistory['maxMainVoltage'],
+        "main-voltage", "Main Voltage", "V");
+
+    loadControllerGauge(serialNumber, controllerState['panelVoltage'], controllerHistory['maxPanelVoltage'],
+        "pv-voltage", "PV Voltage", "V");
+    loadControllerGauge(serialNumber, controllerState['panelPower'], controllerHistory['maxPanelPower'],
+        "pv-power", "PV Power", "W");
+
 }
 
+/*
 function loadControllerTimeRadar(serialNumber, controllerTime) {
     const canvasId = "controllerTime-radar-"+serialNumber;
     let canvas = document.getElementById(canvasId);
@@ -245,7 +258,6 @@ function loadControllerTimeRadar(serialNumber, controllerTime) {
     const secondsPerUnit = total / controllerTime['secondsPerUnit'];
     const unit  = controllerTime['unit'];
     const scaledValues = Object.values(data).map((a) => a / secondsPerUnit);
-
 
     const config = {
         type: 'radar',
@@ -285,68 +297,142 @@ function loadControllerTimeRadar(serialNumber, controllerTime) {
         canvas.dataset['chart'].update();
     }
 }
+*/
 
 
-function loadControllerTimeDoughnut(serialNumber, controllerTime) {
-    const canvasId = "controllerTime-doughnut-"+serialNumber;
-    let canvas = document.getElementById(canvasId);
-    if (canvas == null) {
-        canvas = document.createElement("canvas");
-        canvas.id = canvasId;
-        getCharts().appendChild(canvas);
+function loadControllerTimeDoughnut(serialNumber, name, title, cmap) {
+    const divId = "controller-"+name+"-plotly-"+serialNumber;
+    let div = document.getElementById(divId);
+    if (div == null) {
+        div = document.createElement("div");
+        div.id = divId;
+        getCharts().appendChild(div);
     }
 
-    const color = Chart.helpers.color;
-    console.log(controllerTime);
-    const data  =  controllerTime['data'];
-    const total = Object.values(data).reduce((a, b) => a + b, 0);
-    const secondsPerUnit = total / controllerTime['secondsPerUnit'];
-    const unit  = controllerTime['unit'];
-    const scaledValues = Object.values(data).map((a) => a / secondsPerUnit);
+    var data = [{
+        values: Object.values(cmap),
+        labels: Object.keys(cmap),
+        //domain: {column: 0},
+        name: serialNumber,
+        hoverinfo: 'label+percent+name',
+        hole: .4,
+        type: 'pie'
+    }];
 
-    var config = {
-        type: 'doughnut',
-        data: {
-            datasets: [{
-                data: scaledValues,
-                backgroundColor: [
-                    window.chartColors.red,
-                    window.chartColors.orange,
-                    window.chartColors.yellow,
-                    window.chartColors.green,
-                    window.chartColors.blue,
-                ],
-                label: serialNumber
-            }],
-            labels: Object.keys(controllerTime['data'])
-        },
-        options: {
-            responsive: true,
-            legend: {
-                position: 'top',
-            },
-            title: {
-                display: true,
-                text: 'Controller time, ' + unit
-            },
-            animation: {
-                animateScale: true,
-                animateRotate: true
+    var layout = {
+        title: {
+            text: title,
+            font: {
+                size: 20,
+                color: "#FFF"
             }
-        }
+        },
+        height: 300,
+        width: 300,
+        showlegend: true,
+        legend: {
+            font: {
+                color: "#FFF"
+            },
+            x: 1.5,
+            xanchor: 'right',
+            y: -.5
+        },
+
+
+        plot_bgcolor: "rgba(0,0,0,0)",
+        paper_bgcolor: "rgba(0,0,0,0)",
+        bgcolor: "rgba(0,0,0,0)"
+        //grid: {rows: 1, columns: 2}
     };
 
-    console.log(config);
+    const config = {
+        responsive: true
+    };
 
-    if (typeof(canvas.dataset['chart']) == "undefined") {
-        logger("Creating new canvas");
-        canvas.dataset['chart'] = new Chart(canvas, config);
+    if (typeof(div.dataset['chart']) == "undefined") {
+        div.dataset['chart'] = true;
+        Plotly.newPlot(div.id, data, layout, config);
     } else {
-        logger("Updating existing canvas");
-        canvas.dataset['chart'].options.data = config.data;
-        canvas.dataset['chart'].update();
+        Plotly.react(div.id, data, layout, config);
     }
 }
+
+
+function loadControllerGauge(serialNumber, currentValue, maxValue, name, title, suffix) {
+    const divId = "controller-"+name+"-plotly-"+serialNumber;
+    let div = document.getElementById(divId);
+    if (div == null) {
+        div = document.createElement("div");
+        div.id = divId;
+        getCharts().appendChild(div);
+    }
+
+    const data = [
+        {
+            domain: { x: [0, 1], y: [0, 1] },
+            value: currentValue,
+            title: {
+                text: title,
+                font: {
+                    size: 20,
+                    color: "#FFF"
+                }
+            },
+            type: "indicator",
+            mode: "gauge+number+delta",
+            number: {
+                font: {
+                    size: 18,
+                    color: "#FFF"
+                },
+                suffix: suffix
+            },
+            delta: {
+                reference: maxValue, // TODO Previous known state
+                font: {
+                    size: 14
+                },
+                suffix:  suffix
+            },
+            gauge: {
+                bordercolor: "#FFF",
+                bar: {
+                    color: "rgba(255,255,255,0.8)",
+                    line: {
+                        color: "#FFF",
+                        width: 1
+                    }
+                },
+                axis:
+                    {
+                        range: [null, maxValue]
+                    }
+            }
+        }
+    ];
+
+    const layout = {
+        width: 300,
+        height: 300,
+
+        plot_bgcolor: "rgba(0,0,0,0)",
+        paper_bgcolor: "rgba(0,0,0,0)",
+        bgcolor: "rgba(0,0,0,0)"
+    };
+
+    const config = {
+        responsive: true
+    };
+
+    if (typeof(div.dataset['chart']) == "undefined") {
+        div.dataset['chart'] = true;
+        Plotly.newPlot(div.id, data, layout, config);
+    } else {
+        Plotly.react(div.id, data, layout, config);
+    }
+}
+
 
 var randomScalingFactor = function() {
     return Math.round(Math.random() * 100);

@@ -1,6 +1,18 @@
 
-#charts > canvas {
-    display: inline-block;
-    max-width: 600px;
-    max-height: 600px;
+#tabs {
+    position: absolute;
+    top: 60px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    overflow-y: scroll;
 }
+
+#charts > canvas, #charts > div {
+    display: inline-block;
+    width: 300px;
+    height: 300px;
+    border: 1px solid rgba(255,255,255,0.8);
+    padding: 1px;
+}
+
