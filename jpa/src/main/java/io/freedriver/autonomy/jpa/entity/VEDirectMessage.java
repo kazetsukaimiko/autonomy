@@ -19,7 +19,7 @@ import java.util.Objects;
         }
 )
 @Entity
-public class VEDirectMessage {
+public class VEDirectMessage extends EntityBase {
     @Id
     @GeneratedValue
     private Long id;
@@ -94,14 +94,6 @@ public class VEDirectMessage {
         this.loadOutputState = veDirectMessage.getLoadOutputState();
         this.errorCode = veDirectMessage.getErrorCode();
         this.offReason = veDirectMessage.getOffReason();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public long getTimestamp() {

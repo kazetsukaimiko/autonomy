@@ -2,9 +2,12 @@ package io.freedriver.autonomy.jpa.entity.event;
 
 import io.freedriver.autonomy.jpa.entity.EntityBase;
 
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.util.Objects;
 
-
+@Entity
+@Table
 public class EventCoordinate extends EntityBase {
     private String subject;
     private String property;

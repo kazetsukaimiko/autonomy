@@ -1,17 +1,18 @@
 package io.freedriver.autonomy.jpa.entity;
 
-import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import java.util.Objects;
 
+@MappedSuperclass
 public abstract class EntityBase extends EmbeddedEntityBase {
     @Id
-    @Column
+    @GeneratedValue
     private long id;
 
     public EntityBase() {
     }
-
 
     public EntityBase(EntityBase entityBase) {
         this.id = entityBase.id;

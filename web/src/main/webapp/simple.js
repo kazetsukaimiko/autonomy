@@ -315,7 +315,7 @@ function loadControllerTimeDoughnut(serialNumber, name, title, cmap) {
         //domain: {column: 0},
         name: serialNumber,
         hoverinfo: 'label+percent+name',
-        hole: .4,
+        hole: .7,
         type: 'pie'
     }];
 
@@ -347,7 +347,8 @@ function loadControllerTimeDoughnut(serialNumber, name, title, cmap) {
     };
 
     const config = {
-        responsive: true
+        responsive: true,
+        displayModeBar: false
     };
 
     if (typeof(div.dataset['chart']) == "undefined") {
@@ -422,7 +423,8 @@ function loadControllerGauge(serialNumber, currentValue, maxValue, name, title, 
     };
 
     const config = {
-        responsive: true
+        responsive: true,
+        displayModeBar: false
     };
 
     if (typeof(div.dataset['chart']) == "undefined") {

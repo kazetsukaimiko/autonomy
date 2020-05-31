@@ -1,8 +1,9 @@
 package io.freedriver.autonomy.vedirect;
 
-import io.freedriver.autonomy.Autonomy;
+import io.freedriver.autonomy.cdi.AttributeCache;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
+import io.freedriver.autonomy.service.JPACrudService;
 import io.freedriver.autonomy.util.Benchmark;
 import kaze.math.measurement.units.Power;
 import kaze.math.number.ScaledNumber;
@@ -11,13 +12,15 @@ import kaze.victron.VictronDevice;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Observes;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import javax.inject.Inject;
+import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -28,13 +31,19 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@ApplicationScoped
-public class VEDirectMessageService {
+@ApplicationScoped // TODO EventService
+public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     private static final Logger LOGGER = Logger.getLogger(VEDirectMessageService.class.getSimpleName());
     private static final Set<VictronDevice> DEVICE_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    @PersistenceContext(name = Autonomy.DEPLOYMENT, unitName = Autonomy.DEPLOYMENT)
-    private EntityManager entityManager;
+    //@PersistenceContext(name = Autonomy.DEPLOYMENT, unitName = Autonomy.DEPLOYMENT)
+    //private EntityManager entityManager;
+
+    //@Inject
+//    private Cache<SingularAttribute<VEDir, T>, T> backingCache;
+
+    @Inject
+    private AttributeCache maxCache;
 
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
@@ -54,13 +63,9 @@ public class VEDirectMessageService {
         VictronDevice.of(veDirectMessage)
                 .ifPresent(DEVICE_CACHE::add);
 
-        return saveJPA(new VEDirectMessage(veDirectMessage));
+        return persist(new VEDirectMessage(veDirectMessage));
     }
 
-    private VEDirectMessage saveJPA(VEDirectMessage veDirectMessage) {
-        entityManager.persist(veDirectMessage);
-        return veDirectMessage;
-    }
 
     // TODO: Revert full buffer
     public <T> Stream<T> queryStream(CriteriaQuery<T> cq, String description) {
@@ -108,21 +113,27 @@ public class VEDirectMessageService {
 
     public Stream<VEDirectMessage> fromSunUp(VictronDevice device) {
         return Benchmark.bench(() -> {
+            // Get all of the messages from the start of the day.
             List<VEDirectMessage> last = last(device, Duration.between(getStartOfDay(), Instant.now()))
                     .collect(Collectors.toList());
-            long sunUpId = last.stream()
+            // Find the timestamp of the message first with solar input.
+            // If past midnight with no PV, just use from midnight onward
+            long sunUpTimestamp = last.stream()
                     .filter(m -> m.getPanelPower().greaterThanOrEqualTo(new Power(ScaledNumber.of(20))))
-                    .mapToLong(VEDirectMessage::getId)
+                    .mapToLong(VEDirectMessage::getTimestamp)
                     .min()
-                    .getAsLong();
+                    .orElse(getStartOfDay().toEpochMilli());
+            // Filter all of the messages to only be those forward of when we first got sun.
+            // Order by Timestamp.
             return last.stream()
-                    .filter(m -> m.getId() >= sunUpId)
-                    .sorted(Comparator.comparingLong(VEDirectMessage::getId));
+                    .filter(m -> m.getTimestamp() >= sunUpTimestamp)
+                    .sorted(Comparator.comparingLong(VEDirectMessage::getTimestamp));
         }, "fromSunUp");
+    }
 
 
-        /* TODO Figure out query
-
+    // TODO: Does this work on mariadb? coalesce will be required.
+    public Stream<VEDirectMessage> fromSunUpJPA(VictronDevice device) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
         Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
@@ -131,17 +142,14 @@ public class VEDirectMessageService {
         startIdQuery.select(cb.min(subQueryRoot.get(VEDirectMessage_.id)))
                 .where(cb.and(
                         cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
-                        cb.ge(root.get(VEDirectMessage_.panelPower).as(BigDecimal.class), 20.0)
+                        cb.ge(root.get(VEDirectMessage_.panelPower).as(BigDecimal.class), BigDecimal.valueOf(20.0))
         ));
         cq
                 .select(root)
                 .where(cb.greaterThanOrEqualTo(root.get(VEDirectMessage_.id), startIdQuery))
                 .orderBy(cb.asc(root.get(VEDirectMessage_.id)));
         return queryStream(cq, "from Sun Up of device " + device);
-
-         */
     }
-
 
     /**
      * Get messages for the given device.
@@ -181,10 +189,7 @@ public class VEDirectMessageService {
      * @return
      */
     private Set<VictronDevice> updateDeviceCache() {
-        queryAll()
-                .map(veDirectMessage -> VictronDevice.of(veDirectMessage.getProductType(), veDirectMessage.getSerialNumber()))
-                .flatMap(Optional::stream)
-                .distinct()
+        distinctDevices()
                 .forEach(DEVICE_CACHE::add);
         return DEVICE_CACHE;
     }
@@ -219,7 +224,23 @@ public class VEDirectMessageService {
     }
 
 
+    public <T> Stream<VictronDevice> distinctDevices() {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Tuple> cq = cb.createTupleQuery();
+        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+        cq.multiselect(root.get(VEDirectMessage_.serialNumber), root.get(VEDirectMessage_.productType)).distinct(true);
+        return queryStream(cq, "Distinct Devices")
+                .map(tuple -> new VictronDevice(
+                        tuple.get(root.get(VEDirectMessage_.productType)),
+                        tuple.get(root.get(VEDirectMessage_.serialNumber))));
+    }
+
     public <T extends Number> T max(VictronDevice device, SingularAttribute<VEDirectMessage, T> attribute) {
+        return maxCache.computeIfAbsent(attribute, (a) -> queryForMax(device, a));
+    }
+
+
+    public <T extends Number> T queryForMax(VictronDevice device, SingularAttribute<VEDirectMessage, T> attribute) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<T> cq = cb.createQuery(attribute.getBindableJavaType());
         Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);

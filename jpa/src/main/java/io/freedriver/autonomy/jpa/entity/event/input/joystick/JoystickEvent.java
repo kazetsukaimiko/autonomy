@@ -7,9 +7,13 @@ import io.freedriver.autonomy.jpa.entity.event.SourceType;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.Enumerated;
+import javax.persistence.Table;
 import java.util.Objects;
 
+@Entity
+@Table
 public class JoystickEvent extends Event {
 
     @Column
@@ -17,6 +21,7 @@ public class JoystickEvent extends Event {
 
     @Column
     private Long value;
+
     @Column
     private boolean initial;
 

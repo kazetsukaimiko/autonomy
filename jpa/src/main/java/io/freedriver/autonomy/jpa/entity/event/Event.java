@@ -2,12 +2,7 @@ package io.freedriver.autonomy.jpa.entity.event;
 
 import io.freedriver.autonomy.jpa.entity.EntityBase;
 
-import javax.persistence.Column;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -15,11 +10,9 @@ import java.util.Objects;
  * An entity that represents either the initial state of some thing or a change
  * in that thing's state.
  */
+@MappedSuperclass
 public abstract class Event extends EntityBase implements Serializable {
     public static final long serialVersionUID = -1L;
-
-    @Id
-    private long id;
 
     @Temporal(TemporalType.TIMESTAMP)
     private long timestamp;
@@ -36,9 +29,6 @@ public abstract class Event extends EntityBase implements Serializable {
     @Enumerated
     private EventPriority priority = EventPriority.STANDARD;
 
-    @Column
-    private EventAction action;
-
     protected Event() {
     }
 
@@ -54,15 +44,6 @@ public abstract class Event extends EntityBase implements Serializable {
         this(timestamp, coordinate, description, sourceType, EventPriority.STANDARD);
     }
 
-    @Override
-    public long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public long getTimestamp() {
         return timestamp;
@@ -102,14 +83,6 @@ public abstract class Event extends EntityBase implements Serializable {
 
     public void setPriority(EventPriority priority) {
         this.priority = priority;
-    }
-
-    public EventAction getAction() {
-        return action;
-    }
-
-    public void setAction(EventAction action) {
-        this.action = action;
     }
 
     @Override
