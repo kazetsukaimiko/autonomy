@@ -106,7 +106,7 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
         cq.where(cb.and(
                 cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()),
                 cb.ge(root.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())));
-        cq.orderBy(cb.desc(root.get(VEDirectMessage_.id)));
+        cq.orderBy(cb.desc(root.get(VEDirectMessage_.timestamp)));
         return queryStream(cq, "for device " + device + " last " + duration.toMillis() + "ms");
     }
 
