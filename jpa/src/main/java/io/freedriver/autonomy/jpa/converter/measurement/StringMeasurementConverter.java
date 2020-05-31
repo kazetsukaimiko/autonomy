@@ -14,9 +14,10 @@ import java.util.regex.Pattern;
 public abstract class StringMeasurementConverter<M extends Measurement<M>> implements AttributeConverter<M, String> {
     protected static final String VALUE_GROUP = "value";
     protected static final String MULTIPLIER_GROUP = "multiplier";
-    protected static final String BASE_PATTERN_STRING = "(?<"+VALUE_GROUP+">[0-9]+(\\.[0-9]+)?)\\s+(?<"+MULTIPLIER_GROUP+">[a-zA-Z]+)?";
+    protected static final String BASE_PATTERN_STRING = "(?<" + VALUE_GROUP + ">[0-9]+(\\.[0-9]+)?)\\s+(?<" + MULTIPLIER_GROUP + ">[a-zA-Z]+)?";
 
     public abstract BiFunction<BigDecimal, UnitPrefix, M> constructor();
+
     public abstract Unit unit();
 
     @Override
@@ -26,7 +27,7 @@ public abstract class StringMeasurementConverter<M extends Measurement<M>> imple
 
     @Override
     public M convertToEntityAttribute(String s) {
-        Matcher m = Pattern.compile(BASE_PATTERN_STRING+unit().getSymbol())
+        Matcher m = Pattern.compile(BASE_PATTERN_STRING + unit().getSymbol())
                 .matcher(s);
         if (m.matches()) {
             Optional<UnitPrefix> multiplier = UnitPrefix.ofPrefix(m.group(MULTIPLIER_GROUP));

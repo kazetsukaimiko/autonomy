@@ -8,7 +8,9 @@ import java.util.stream.LongStream;
 
 public interface Positional {
     Comparator<Positional> EXPLICIT_ORDER = Comparator.comparingLong(Positional::getPosition);
+
     long getPosition();
+
     void setPosition(long newPosition);
 
     static <T extends Positional> List<T> move(List<T> toOrder, int fromIndex, int toIndex) {
@@ -16,8 +18,8 @@ public interface Positional {
             return toOrder;
         }
         ArrayList<T> inOrder = new ArrayList<>(toOrder);
-        int from = Math.min(toOrder.size()-1, Math.max(0, fromIndex));
-        int to = Math.min(inOrder.size()-1, Math.max(0, toIndex));
+        int from = Math.min(toOrder.size() - 1, Math.max(0, fromIndex));
+        int to = Math.min(inOrder.size() - 1, Math.max(0, toIndex));
         if (from == to) {
             return reorder(inOrder);
         }
@@ -42,7 +44,7 @@ public interface Positional {
 
     static <T extends Positional> T next(List<T> inOrder, T current) {
         return inOrder.stream()
-                .filter(item -> Objects.equals(current.getPosition()+1, item.getPosition()))
+                .filter(item -> Objects.equals(current.getPosition() + 1, item.getPosition()))
                 .findFirst()
                 .orElse(inOrder.isEmpty() ? null : inOrder.get(0));
     }

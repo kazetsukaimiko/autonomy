@@ -30,7 +30,7 @@ public class JSMetadata {
      * Simple method to read metadata strings into a JSMetadata container.
      */
     public static void index(String[] source, BiConsumer<Integer, String> putter) {
-        for(int i = 0; i<source.length; i++) {
+        for (int i = 0; i < source.length; i++) {
             putter.accept(i, source[i]);
         }
     }
@@ -80,7 +80,7 @@ public class JSMetadata {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         JSMetadata that = (JSMetadata) o;
-        return  Objects.equals(title, that.title) &&
+        return Objects.equals(title, that.title) &&
                 Objects.equals(axisNames, that.axisNames) &&
                 Objects.equals(buttonNames, that.buttonNames);
     }

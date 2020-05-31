@@ -1,10 +1,6 @@
 package io.freedriver.autonomy.jpa.entity.event.sensor;
 
-import io.freedriver.autonomy.jpa.entity.event.Event;
-import io.freedriver.autonomy.jpa.entity.event.EventCoordinate;
-import io.freedriver.autonomy.jpa.entity.event.EventDescription;
-import io.freedriver.autonomy.jpa.entity.event.SourceType;
-import io.freedriver.autonomy.jpa.entity.event.StateType;
+import io.freedriver.autonomy.jpa.entity.event.*;
 
 import javax.persistence.Column;
 import java.math.BigDecimal;
@@ -33,10 +29,10 @@ public class GPSEvent extends Event {
                 Instant.now().toEpochMilli(),
                 new EventCoordinate(null, "GPS_LOCATION"),
                 new EventDescription(StateType.CHANGE_STATE,
-                        "lat:" + String.valueOf(latitude) +
-                                ";lon:" + String.valueOf(longitude)
-                        ),
-                    latitude,longitude
+                        "lat:" + latitude +
+                                ";lon:" + longitude
+                ),
+                latitude, longitude
         );
     }
 

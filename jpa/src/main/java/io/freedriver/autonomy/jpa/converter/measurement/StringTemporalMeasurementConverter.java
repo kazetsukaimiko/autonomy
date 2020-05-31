@@ -14,7 +14,7 @@ public abstract class StringTemporalMeasurementConverter<TM extends TemporalMeas
 
     @Override
     public TM convertToEntityAttribute(String s) {
-        Matcher m = Pattern.compile(BASE_PATTERN_STRING+unit().getSymbol()+"(?<"+TEMPORAL_GROUP+">[a-zA-Z]+)")
+        Matcher m = Pattern.compile(BASE_PATTERN_STRING + unit().getSymbol() + "(?<" + TEMPORAL_GROUP + ">[a-zA-Z]+)")
                 .matcher(s);
         if (m.matches()) {
             BigDecimal value = new BigDecimal(m.group(VALUE_GROUP));

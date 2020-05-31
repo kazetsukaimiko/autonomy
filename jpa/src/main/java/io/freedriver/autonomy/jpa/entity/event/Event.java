@@ -2,8 +2,8 @@ package io.freedriver.autonomy.jpa.entity.event;
 
 import io.freedriver.autonomy.jpa.entity.EntityBase;
 
+import javax.persistence.Embedded;
 import javax.persistence.Enumerated;
-import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import java.io.Serializable;
 import java.util.Objects;
@@ -18,10 +18,10 @@ public abstract class Event extends EntityBase implements Serializable {
 
     private long timestamp;
 
-    @ManyToOne
+    @Embedded
     private EventCoordinate coordinate;
 
-    @ManyToOne
+    @Embedded
     private EventDescription description;
 
     @Enumerated

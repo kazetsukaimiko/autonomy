@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 @Converter(autoApply = true)
 public class FirmwareVersionConverter implements AttributeConverter<FirmwareVersion, String> {
     private static final Logger LOGGER = Logger.getLogger(FirmwareVersionConverter.class.getName());
+
     @Override
     public String convertToDatabaseColumn(FirmwareVersion firmwareVersion) {
         return Optional.ofNullable(firmwareVersion)

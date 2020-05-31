@@ -1,10 +1,6 @@
 package io.freedriver.autonomy.jpa.entity.event.sensor;
 
-import io.freedriver.autonomy.jpa.entity.event.Event;
-import io.freedriver.autonomy.jpa.entity.event.EventCoordinate;
-import io.freedriver.autonomy.jpa.entity.event.EventDescription;
-import io.freedriver.autonomy.jpa.entity.event.SourceType;
-import io.freedriver.autonomy.jpa.entity.event.StateType;
+import io.freedriver.autonomy.jpa.entity.event.*;
 
 import java.time.Instant;
 
@@ -26,8 +22,8 @@ public class TemperatureEvent extends Event {
                 new EventCoordinate(null, "TEMPERATURE"),
                 new EventDescription(StateType.CHANGE_STATE,
                         String.valueOf(temperature)
-                        ),
-                    temperature
+                ),
+                temperature
         );
     }
 

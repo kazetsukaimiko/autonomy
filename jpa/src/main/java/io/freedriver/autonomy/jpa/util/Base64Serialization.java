@@ -1,11 +1,6 @@
 package io.freedriver.autonomy.jpa.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -13,6 +8,7 @@ import java.util.logging.Logger;
 
 public class Base64Serialization {
     private static final Logger LOGGER = Logger.getLogger(Base64Serialization.class.getName());
+
     private Base64Serialization() {
 
     }

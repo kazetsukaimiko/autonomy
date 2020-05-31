@@ -1,15 +1,16 @@
 package io.freedriver.autonomy.jpa.entity.event;
 
-import io.freedriver.autonomy.jpa.entity.EntityBase;
+import io.freedriver.autonomy.jpa.entity.EmbeddedEntityBase;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
 import java.util.Objects;
 
-@Entity
-@Table
-public class EventCoordinate extends EntityBase {
+@Embeddable
+public class EventCoordinate extends EmbeddedEntityBase {
+    @Column(nullable = false)
     private String subject;
+    @Column(nullable = false)
     private String property;
 
     public EventCoordinate() {

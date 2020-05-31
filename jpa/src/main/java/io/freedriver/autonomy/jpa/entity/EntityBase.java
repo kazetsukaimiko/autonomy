@@ -9,7 +9,7 @@ import java.util.Objects;
 public abstract class EntityBase extends EmbeddedEntityBase {
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     public EntityBase() {
     }
@@ -18,11 +18,11 @@ public abstract class EntityBase extends EmbeddedEntityBase {
         this.id = entityBase.id;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

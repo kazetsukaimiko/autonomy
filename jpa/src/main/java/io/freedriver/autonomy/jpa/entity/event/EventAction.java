@@ -11,5 +11,6 @@ import java.util.Optional;
 @FunctionalInterface
 public interface EventAction extends Serializable {
     long serialVersionUID = -1L;
+
     Optional<Event> fire(Event sourceEvent);
 }
