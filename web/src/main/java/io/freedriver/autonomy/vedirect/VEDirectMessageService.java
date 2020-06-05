@@ -3,6 +3,7 @@ package io.freedriver.autonomy.vedirect;
 import io.freedriver.autonomy.cache.CacheKey;
 import io.freedriver.autonomy.cdi.AttributeCache;
 import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
+import io.freedriver.autonomy.cdi.qualifier.OneSecondCache;
 import io.freedriver.autonomy.entity.view.ControllerHistoryView;
 import io.freedriver.autonomy.entity.view.ControllerTimeView;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
@@ -53,6 +54,11 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     @Inject
     @AutonomyCache
     private Cache<CacheKey<VictronDevice, ControllerHistoryView>, ControllerHistoryView> historyViewCache;
+
+    @Inject
+    @OneSecondCache
+    private Cache<CacheKey<VictronDevice, VEDirectMessage>, VEDirectMessage> lastMessageCache;
+
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
         devices();
@@ -278,14 +284,15 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     }
 
     public Optional<VEDirectMessage> max(VictronDevice device) {
+        return Optional.ofNullable(lastMessageCache.computeIfAbsent(new CacheKey<>(device, VEDirectMessage.class), k -> {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
         Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
         cq.select(veDirectMessageRoot);
-        cq.where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), device.getSerialNumber()))
+        cq.where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber()))
                 .orderBy(cb.desc(veDirectMessageRoot.get(VEDirectMessage_.timestamp)));
-        return queryStream(cq, 1, "Max")
-                .findFirst();
+            return entityManager.createQuery(cq).getSingleResult();
+        }));
     }
 
     public static Instant getStartOfDay() {

@@ -19,10 +19,12 @@ public class CacheProvider {
     @Produces
     public Configuration oneSecondCacheConfig() {
         return new ConfigurationBuilder()
+                .locking()
+                .lockAcquisitionTimeout(10, TimeUnit.SECONDS)
                 .expiration()
                 .lifespan(1, TimeUnit.SECONDS)
                 .memory()
-                .size(100)
+                .size(10000)
                 .build();
     }
 
