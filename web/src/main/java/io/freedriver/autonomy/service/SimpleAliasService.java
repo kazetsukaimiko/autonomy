@@ -1,35 +1,23 @@
 package io.freedriver.autonomy.service;
 
 import io.freedriver.autonomy.Autonomy;
+import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.rest.provider.ObjectMapperContextResolver;
 import io.freedriver.autonomy.rest.view.AliasView;
 import io.freedriver.jsonlink.config.v2.Appliance;
 import io.freedriver.jsonlink.config.v2.Mapping;
 import io.freedriver.jsonlink.config.v2.Mappings;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalState;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Mode;
-import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import io.freedriver.jsonlink.jackson.schema.v1.*;
 import io.freedriver.util.file.DirectoryProviders;
+import org.infinispan.Cache;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -44,6 +32,10 @@ public class SimpleAliasService {
     //@Inject
     //@OneSecondCache
     //private Cache<UUID, AliasView> oneSecondCache;
+
+    @Inject
+    @AutonomyCache
+    private Cache<PinCoordinate, Boolean> digitalPinCache;
 
     /**
      * Conversion from aliases to their mapped pin numbers for controller i/o.
@@ -88,8 +80,26 @@ public class SimpleAliasService {
     }
 
     public Map<Identifier, Boolean> currentState(UUID boardId, Mapping mapping) {
-        return connectorService.readDigital(boardId, mapping.getAppliances()
-                .stream().map(Appliance::getIdentifier).collect(Collectors.toSet()));
+        Map<Identifier, Boolean> fromCache = mapping.getAppliances().stream()
+                .map(appliance -> new PinCoordinate(boardId, appliance.getIdentifier()))
+                .filter(pinCoordinate -> digitalPinCache.containsKey(pinCoordinate))
+                .collect(Collectors.toMap(
+                        PinCoordinate::getIdentifier,
+                        digitalPinCache::get,
+                        (a, b) -> b
+                ));
+        if (mapping.getAppliances().stream().map(Appliance::getIdentifier)
+                .collect(Collectors.toSet())
+                .containsAll(fromCache.keySet())) {
+            return fromCache;
+        }
+        return cacheBoardState(boardId, connectorService.readDigital(boardId, mapping.getAppliances()
+                .stream().map(Appliance::getIdentifier).collect(Collectors.toSet())));
+    }
+
+    public Map<Identifier, Boolean> cacheBoardState(UUID boardId, Map<Identifier, Boolean> currentState) {
+        currentState.forEach((k, v) -> digitalPinCache.put(new PinCoordinate(boardId, k), v));
+        return currentState;
     }
 
 
@@ -148,7 +158,8 @@ public class SimpleAliasService {
         if (!desiredState.isEmpty()) {
             LOGGER.info("Setting states:");
             desiredState.forEach((k, v) -> LOGGER.info(k+": " + (v ? "true":"false")));
-            return connectorService.writeDigital(boardId, identifiers(boardId, desiredState));
+            return cacheBoardState(boardId, connectorService
+                    .writeDigital(boardId, identifiers(boardId, desiredState)));
         }
         return Collections.emptyMap();
     }

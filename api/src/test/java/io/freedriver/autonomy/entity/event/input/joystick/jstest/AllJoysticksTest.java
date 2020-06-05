@@ -16,19 +16,17 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AllJoysticksTest {
 
-    private ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*4);
+    private final ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*4);
 
-    private String version = "2.1.0";
-    private String type =  "Joystick";
-    private String name = "8BitDo SN30 Pro+";
-    private List<String> axes = Arrays.asList("X, Y, Z, Rx, Ry, Rz, Hat0X, Hat0Y".split(", "));
-    private List<String> buttons = Arrays.asList("BtnA, BtnB, BtnC, BtnX, BtnY, BtnZ, BtnTL, BtnTR, BtnTL2, BtnTR2".split(", "));
+    private final String version = "2.1.0";
+    private final String type =  "Joystick";
+    private final String name = "8BitDo SN30 Pro+";
+    private final List<String> axes = Arrays.asList("X, Y, Z, Rx, Ry, Rz, Hat0X, Hat0Y".split(", "));
+    private final List<String> buttons = Arrays.asList("BtnA, BtnB, BtnC, BtnX, BtnY, BtnZ, BtnTL, BtnTR, BtnTL2, BtnTR2".split(", "));
 
     private List<String> simulate(String version, String type, String name, List<String> axes, List<String> buttons) {
         Random r = new Random(System.currentTimeMillis());
@@ -78,6 +76,15 @@ public class AllJoysticksTest {
     @Test
     public void simulationTest() {
         simulate().forEach(System.out::println);
+
+        JSTestReader.readEvents(simulate())
+                .forEach(jsTestEvent -> {
+                    assertEquals(name, jsTestEvent.getMetadata().getTitle());
+                    assertEquals(name, jsTestEvent.locate().getSubject());
+                    assertEquals((JSTestEventType.isButton(jsTestEvent.getJsTestEventType()) ?
+                            "BUTTON_" : "AXIS_") + jsTestEvent.getNumber(), jsTestEvent.locate().getProperty());
+                });
+
         List<JSTestEvent> jsTestEvents = JSTestReader.readEvents(simulate())
                 .collect(Collectors.toList());
 

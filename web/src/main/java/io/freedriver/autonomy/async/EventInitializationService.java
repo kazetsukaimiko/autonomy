@@ -3,7 +3,6 @@ package io.freedriver.autonomy.async;
 import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.autonomy.service.ConnectorService;
 import kaze.victron.VEDirectDevice;
 import kaze.victron.VEDirectMessage;
 
@@ -30,9 +29,6 @@ public class EventInitializationService extends BaseService {
     private static final Logger LOGGER = Logger.getLogger(EventInitializationService.class.getName());
 
     private static final Map<VEDirectDevice, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
-
-    @Inject
-    private ConnectorService connectorService;
 
     @Inject
     private VEDirectDeviceService deviceService;
@@ -95,11 +91,16 @@ public class EventInitializationService extends BaseService {
     }
 
     public void fireJSTestEvent(JSTestEvent jsTestEvent) {
-        try {
-            LOGGER.warning("Firing JOYSTICK " + jsTestEvent);
-            joystickEvents.fire(new JoystickEvent(Instant.now().toEpochMilli(), jsTestEvent));
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to fire JoystickEvent: ", e);
+        if (jsTestEvent.locate().getSubject() != null) {
+            try {
+                LOGGER.warning("Firing JOYSTICK " + jsTestEvent);
+                joystickEvents.fire(new JoystickEvent(Instant.now().toEpochMilli(), jsTestEvent));
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Failed to fire JoystickEvent: ", e);
+            }
+        } else {
+            // TODO: This is a workaround for a bug. Fix the bug.
+            LOGGER.warning("JSTestEvent ignored as it contains no subject: " + jsTestEvent);
         }
     }
 
