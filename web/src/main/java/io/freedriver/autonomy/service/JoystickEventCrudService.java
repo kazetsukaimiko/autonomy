@@ -1,6 +1,7 @@
 package io.freedriver.autonomy.service;
 
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.service.crud.EventCrudService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -11,8 +12,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @ApplicationScoped
-public class JoystickEventService extends EventService<JoystickEvent> {
-    private static final Logger LOGGER = Logger.getLogger(JoystickEventService.class.getName());
+public class JoystickEventCrudService extends EventCrudService<JoystickEvent> {
+    private static final Logger LOGGER = Logger.getLogger(JoystickEventCrudService.class.getName());
 
     @Transactional
     public synchronized void actOnJoystickEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {

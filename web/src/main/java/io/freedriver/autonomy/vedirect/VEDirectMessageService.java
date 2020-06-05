@@ -10,7 +10,7 @@ import io.freedriver.autonomy.entity.view.ControllerTimeView;
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
-import io.freedriver.autonomy.service.JPACrudService;
+import io.freedriver.autonomy.service.crud.JPACrudService;
 import io.freedriver.autonomy.util.Benchmark;
 import kaze.math.measurement.units.Energy;
 import kaze.math.measurement.units.Potential;
