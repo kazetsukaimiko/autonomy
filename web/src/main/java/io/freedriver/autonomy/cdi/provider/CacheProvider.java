@@ -43,6 +43,8 @@ public class CacheProvider {
     @AutonomyCache
     public Configuration autonomyCacheConfig() {
         return new ConfigurationBuilder()
+                .locking()
+                .lockAcquisitionTimeout(10, TimeUnit.SECONDS)
                 .expiration()
                 .lifespan(10, TimeUnit.SECONDS)
                 .memory()

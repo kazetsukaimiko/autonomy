@@ -168,18 +168,18 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
             CriteriaQuery<Tuple> cq = cb.createTupleQuery();
             Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
             cq.multiselect(
-                    cb.max(root.get(VEDirectMessage_.mainVoltage)),
-                    cb.max(root.get(VEDirectMessage_.panelVoltage)),
                     cb.max(root.get(VEDirectMessage_.panelPower)),
+                    cb.max(root.get(VEDirectMessage_.panelVoltage)),
+                    cb.max(root.get(VEDirectMessage_.mainVoltage)),
                     cb.max(root.get(VEDirectMessage_.yieldToday)))
                 .where(cb.and(cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
                         cb.equal(root.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber())));
             Tuple t = entityManager.createQuery(cq)
                     .getSingleResult();
             return new ControllerHistoryView(
-                    t.get(0, Potential.class).doubleValue(),
+                    t.get(0, Power.class).doubleValue(),
                     t.get(1, Potential.class).doubleValue(),
-                    t.get(2, Power.class).doubleValue(),
+                    t.get(2, Potential.class).doubleValue(),
                     t.get(3, Energy.class).doubleValue());
         });
     }
