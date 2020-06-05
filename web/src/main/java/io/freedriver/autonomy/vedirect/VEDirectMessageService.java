@@ -27,6 +27,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
+import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -81,6 +82,7 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     }
 
     @Override
+    @Transactional
     public VEDirectMessage save(VEDirectMessage entity) {
         return persist(entity);
     }
