@@ -81,7 +81,6 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
         return save(new VEDirectMessage(veDirectMessage));
     }
 
-    @Override
     @Transactional
     public VEDirectMessage save(VEDirectMessage entity) {
         return persist(entity);

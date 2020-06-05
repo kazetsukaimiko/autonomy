@@ -27,7 +27,6 @@ public class JoystickEventService extends EventService<JoystickEvent> {
         return JoystickEvent.class;
     }
 
-    @Override
     @Transactional
     public JoystickEvent save(JoystickEvent entity) {
         return persist(entity);

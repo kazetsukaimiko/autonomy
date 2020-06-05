@@ -8,7 +8,6 @@ import io.freedriver.autonomy.util.Benchmark;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.*;
-import javax.transaction.Transactional;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -19,9 +18,6 @@ public abstract class JPACrudService<E extends EntityBase> {
     protected EntityManager entityManager;
 
     public abstract Class<E> getEntityClass();
-
-    @Transactional
-    public abstract E save(E entity);
 
     public Stream<E> select(BiFunction<Root<E>, CriteriaBuilder, Stream<Predicate>> selectionXFunction, String description) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
