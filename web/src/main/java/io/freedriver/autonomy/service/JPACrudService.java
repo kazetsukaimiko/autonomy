@@ -7,11 +7,7 @@ import io.freedriver.autonomy.util.Benchmark;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaDelete;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -28,10 +24,11 @@ public abstract class JPACrudService<E extends EntityBase> {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<E> cq = cb.createQuery(getEntityClass());
         Root<E> root = cq.from(getEntityClass());
-        return queryStream(cq.select(root)
-                .where(cb.and(selectionXFunction.apply(root, cb)
+        Predicate[] predicates = selectionXFunction.apply(root, cb)
                 .collect(Collectors.toList())
-                .toArray(new Predicate[] {}))), description);
+                .toArray(new Predicate[] {});
+        return queryStream(cq.select(root)
+                .where(cb.and(predicates)), description);
     }
 
     public E persist(E event) {
