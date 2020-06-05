@@ -1,6 +1,7 @@
 package io.freedriver.autonomy.cdi.provider;
 
 import io.freedriver.autonomy.Autonomy;
+import io.freedriver.autonomy.cdi.qualifier.AttributeCache;
 import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
 import io.freedriver.autonomy.cdi.qualifier.OneSecondCache;
 import org.infinispan.cdi.ConfigureCache;
@@ -27,6 +28,7 @@ public class CacheProvider {
 
     @ConfigureCache("attribute-cache")
     @Produces
+    @AttributeCache
     public Configuration attributeCacheConfig() {
         return new ConfigurationBuilder()
                 .memory()
