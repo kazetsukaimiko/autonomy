@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ControllerTimeView {
@@ -33,9 +34,12 @@ public class ControllerTimeView {
                     if (soo == StateOfOperation.OFF) {
                         historicalOffReasons
                                 .forEach(offReason -> {
-                                    String missingKey = mapKey(soo, offReason);
-                                    if (!data.containsKey(missingKey)) {
-                                        data.put(missingKey, 0L);
+                                    Optional<String> key = mapKey(soo, offReason);
+                                    if (key.isPresent()) {
+                                        String missingKey = key.get();
+                                        if (!data.containsKey(missingKey)) {
+                                            data.put(missingKey, 0L);
+                                        }
                                     }
                                 });
                     } else if (!data.containsKey(String.valueOf(soo))) {
@@ -45,18 +49,22 @@ public class ControllerTimeView {
         return this;
     }
 
-    public String mapKey(StateOfOperation state, OffReason offReason) {
-        return (state != StateOfOperation.OFF)
-                ? state.toString()
-                : state + "-" + offReason;
+    public Optional<String> mapKey(StateOfOperation state, OffReason offReason) {
+        return Optional.ofNullable(state)
+            .map(s -> (s != StateOfOperation.OFF)
+                ? s.toString()
+                : s + "-" + offReason);
     }
 
     public ControllerTimeView apply(StateOfOperation state, OffReason off, long count) {
-        String mapKey = mapKey(state, off);
-        if (!data.containsKey(mapKey)) {
-            data.put(mapKey, count);
-        } else {
-            data.put(mapKey, data.get(mapKey)+count);
+        Optional<String> key = mapKey(state, off);
+        if (key.isPresent()) {
+            String mapKey = key.get();
+            if (!data.containsKey(mapKey)) {
+                data.put(mapKey, count);
+            } else {
+                data.put(mapKey, data.get(mapKey) + count);
+            }
         }
         return this;
     }

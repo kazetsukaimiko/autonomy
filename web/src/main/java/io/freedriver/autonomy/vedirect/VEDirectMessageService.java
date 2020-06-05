@@ -192,7 +192,10 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
                 .reduce(new ControllerTimeView(Duration.between(startOfDay, Instant.now())), (v, t) -> v.apply(
                         t.get(root.get(VEDirectMessage_.stateOfOperation)),
                         t.get(root.get(VEDirectMessage_.offReason)),
-                        t.get(cb.count(root))
+                        Optional.ofNullable(t.get(2))
+                            .filter(Long.class::isInstance)
+                            .map(Long.class::cast)
+                            .orElse(0L)
                 ), (a, b) -> b);
     }
 
