@@ -1,6 +1,5 @@
 package io.freedriver.autonomy.vedirect;
 
-import io.freedriver.autonomy.entity.view.ControllerStateView;
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
@@ -33,11 +32,7 @@ public class VEDirect implements VEDirectApi {
     public ControllerView getDeviceOverview(String serial) throws VEDirectApiException {
         VictronDevice device = bySerial(serial)
                 .findFirst().orElseThrow(() -> VEDirectApiException.unknownDevice(serial));
-        return new ControllerView(
-                device,
-                messageService.getControllerTimeViewForToday(device),
-                messageService.max(device).map(ControllerStateView::new).orElse(null),
-                messageService.getControllerHistoryForToday(device));
+        return messageService.getControllerView(device);
     }
 
     @Override
