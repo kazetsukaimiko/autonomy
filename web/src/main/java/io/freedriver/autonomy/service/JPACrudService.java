@@ -8,6 +8,7 @@ import io.freedriver.autonomy.util.Benchmark;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.*;
+import javax.transaction.Transactional;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ public abstract class JPACrudService<E extends EntityBase> {
                 .where(cb.and(predicates)), description);
     }
 
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
     protected E persist(E event) {
         entityManager.persist(event);
         return event;
