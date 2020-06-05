@@ -1,15 +1,19 @@
 package io.freedriver.autonomy.vedirect;
 
 import io.freedriver.autonomy.cdi.AttributeCache;
+import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
 import io.freedriver.autonomy.entity.view.ControllerHistoryView;
 import io.freedriver.autonomy.entity.view.ControllerTimeView;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import io.freedriver.autonomy.service.JPACrudService;
 import io.freedriver.autonomy.util.Benchmark;
+import kaze.math.measurement.units.Energy;
+import kaze.math.measurement.units.Potential;
 import kaze.math.measurement.units.Power;
 import kaze.math.number.ScaledNumber;
 import kaze.victron.VictronDevice;
+import org.infinispan.Cache;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;
@@ -38,15 +42,16 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     private static final Logger LOGGER = Logger.getLogger(VEDirectMessageService.class.getSimpleName());
     private static final Set<VictronDevice> DEVICE_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    //@PersistenceContext(name = Autonomy.DEPLOYMENT, unitName = Autonomy.DEPLOYMENT)
-    //private EntityManager entityManager;
-
-    //@Inject
-//    private Cache<SingularAttribute<VEDir, T>, T> backingCache;
-
     @Inject
     private AttributeCache maxCache;
 
+    @Inject
+    @AutonomyCache
+    private Cache<VictronDevice, ControllerTimeView> timeViewCache;
+
+    @Inject
+    @AutonomyCache
+    private Cache<VictronDevice, ControllerHistoryView> historyViewCache;
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
         devices();
@@ -157,46 +162,52 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     }
 
     public ControllerHistoryView getControllerHistoryForToday(VictronDevice device) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
-        cq.multiselect(
-                cb.max(root.get(VEDirectMessage_.mainVoltage)),
-                cb.max(root.get(VEDirectMessage_.panelVoltage)),
-                cb.max(root.get(VEDirectMessage_.panelPower)),
-                cb.max(root.get(VEDirectMessage_.yieldToday)))
-            .where(cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()));
-        Tuple t = entityManager.createQuery(cq)
-                .getSingleResult();
-        return new ControllerHistoryView(
-                t.get(root.get(VEDirectMessage_.mainVoltage)).doubleValue(),
-                t.get(root.get(VEDirectMessage_.panelVoltage)).doubleValue(),
-                t.get(root.get(VEDirectMessage_.panelPower)).doubleValue(),
-                t.get(root.get(VEDirectMessage_.yieldToday)).doubleValue());
+        return historyViewCache.computeIfAbsent(device, k -> {
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Tuple> cq = cb.createTupleQuery();
+            Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+            cq.multiselect(
+                    cb.max(root.get(VEDirectMessage_.mainVoltage)),
+                    cb.max(root.get(VEDirectMessage_.panelVoltage)),
+                    cb.max(root.get(VEDirectMessage_.panelPower)),
+                    cb.max(root.get(VEDirectMessage_.yieldToday)))
+                .where(cb.and(cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
+                        cb.equal(root.get(VEDirectMessage_.serialNumber), k.getSerialNumber())));
+            Tuple t = entityManager.createQuery(cq)
+                    .getSingleResult();
+            return new ControllerHistoryView(
+                    t.get(0, Potential.class).doubleValue(),
+                    t.get(1, Potential.class).doubleValue(),
+                    t.get(2, Power.class).doubleValue(),
+                    t.get(3, Energy.class).doubleValue());
+        });
     }
 
     public ControllerTimeView getControllerTimeViewForToday(VictronDevice device) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
-        Instant startOfDay = getStartOfDay();
-        cq.multiselect(
-                root.get(VEDirectMessage_.stateOfOperation),
-                root.get(VEDirectMessage_.offReason),
-                cb.count(root))
-                .where(cb.ge(root.get(VEDirectMessage_.timestamp), startOfDay.toEpochMilli()))
-                .groupBy(root.get(VEDirectMessage_.stateOfOperation),
-                        root.get(VEDirectMessage_.offReason));
-        return entityManager.createQuery(cq)
-                .getResultStream()
-                .reduce(new ControllerTimeView(Duration.between(startOfDay, Instant.now())), (v, t) -> v.apply(
-                        t.get(root.get(VEDirectMessage_.stateOfOperation)),
-                        t.get(root.get(VEDirectMessage_.offReason)),
-                        Optional.ofNullable(t.get(2))
-                            .filter(Long.class::isInstance)
-                            .map(Long.class::cast)
-                            .orElse(0L)
-                ), (a, b) -> b);
+        return timeViewCache.computeIfAbsent(device, k -> {
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Tuple> cq = cb.createTupleQuery();
+            Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+            Instant startOfDay = getStartOfDay();
+            cq.multiselect(
+                    root.get(VEDirectMessage_.stateOfOperation),
+                    root.get(VEDirectMessage_.offReason),
+                    cb.count(root))
+                    .where(cb.and(cb.ge(root.get(VEDirectMessage_.timestamp), startOfDay.toEpochMilli()),
+                            cb.equal(root.get(VEDirectMessage_.serialNumber), k.getSerialNumber())))
+                    .groupBy(root.get(VEDirectMessage_.stateOfOperation),
+                            root.get(VEDirectMessage_.offReason));
+            return entityManager.createQuery(cq)
+                    .getResultStream()
+                    .reduce(new ControllerTimeView(Duration.between(startOfDay, Instant.now())), (v, t) -> v.apply(
+                            t.get(root.get(VEDirectMessage_.stateOfOperation)),
+                            t.get(root.get(VEDirectMessage_.offReason)),
+                            Optional.ofNullable(t.get(2))
+                                .filter(Long.class::isInstance)
+                                .map(Long.class::cast)
+                                .orElse(0L)
+                    ), (a, b) -> b);
+        });
     }
 
     /**

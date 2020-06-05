@@ -1,6 +1,5 @@
 package io.freedriver.autonomy.cdi;
 
-import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
 import org.infinispan.Cache;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -12,7 +11,7 @@ import java.util.function.Function;
 public class AttributeCache {
 
     @Inject
-    @AutonomyCache
+    @io.freedriver.autonomy.cdi.qualifier.AttributeCache
     private Cache<SingularAttribute<?, ?>, Object> backingCache;
 
     @SuppressWarnings("unchecked")
