@@ -88,9 +88,8 @@ public class SimpleAliasService {
                         digitalPinCache::get,
                         (a, b) -> b
                 ));
-        if (mapping.getAppliances().stream().map(Appliance::getIdentifier)
-                .collect(Collectors.toSet())
-                .containsAll(fromCache.keySet())) {
+        if (fromCache.keySet().containsAll(mapping.getAppliances().stream().map(Appliance::getIdentifier)
+                .collect(Collectors.toSet()))) {
             return fromCache;
         }
         return cacheBoardState(boardId, connectorService.readDigital(boardId, mapping.getAppliances()
