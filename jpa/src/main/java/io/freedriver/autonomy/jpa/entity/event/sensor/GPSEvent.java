@@ -19,7 +19,7 @@ public class GPSEvent extends Event {
     }
 
     public GPSEvent(long timestamp, EventCoordinate coordinate, EventDescription description, BigDecimal latitude, BigDecimal longitude) {
-        super(timestamp, coordinate, description, SourceType.AUTOMATIC);
+        super(timestamp, coordinate, description, SourceType.NON_HUMAN);
         this.latitude = latitude;
         this.longitude = longitude;
     }

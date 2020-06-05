@@ -12,7 +12,7 @@ public class TemperatureEvent extends Event {
     }
 
     public TemperatureEvent(long timestamp, EventCoordinate coordinate, EventDescription description, TemperatureValue temperature) {
-        super(timestamp, coordinate, description, SourceType.AUTOMATIC);
+        super(timestamp, coordinate, description, SourceType.NON_HUMAN);
         this.temperature = temperature;
     }
 
