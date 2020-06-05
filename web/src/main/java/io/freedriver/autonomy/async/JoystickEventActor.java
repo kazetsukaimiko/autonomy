@@ -16,6 +16,8 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+
+// TODO : Remove
 @ApplicationScoped
 public class JoystickEventActor {
 
