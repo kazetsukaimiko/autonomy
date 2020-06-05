@@ -20,7 +20,7 @@ public class JoystickEventCrudService extends EventCrudService<JoystickEvent> {
         try {
             persist(joystickEvent);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Exception persisting joystickEvent: " + e.getClass().getName()+": " + e.getMessage(), e);
+            LOGGER.log(Level.WARNING, "Exception persisting joystickEvent: " + e.getClass().getName()+": " + e.getMessage());
         }
     }
 
