@@ -288,10 +288,19 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
         Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
+
+        Subquery<Long> lastTimestampQuery = cq.subquery(Long.class);
+        Root<VEDirectMessage> subQueryRoot = lastTimestampQuery.from(VEDirectMessage.class);
+        lastTimestampQuery.select(cb.max(subQueryRoot.get(VEDirectMessage_.timestamp)));
+
         cq.select(veDirectMessageRoot);
-        cq.where(cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber()))
-                .orderBy(cb.desc(veDirectMessageRoot.get(VEDirectMessage_.timestamp)));
-            return entityManager.createQuery(cq).getSingleResult();
+        cq.where(cb.and(
+                cb.equal(veDirectMessageRoot.get(VEDirectMessage_.timestamp), lastTimestampQuery),
+                cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber())));
+            return entityManager.createQuery(cq)
+                    .setFirstResult(0)
+                    .setMaxResults(1)
+                    .getSingleResult();
         }));
     }
 
