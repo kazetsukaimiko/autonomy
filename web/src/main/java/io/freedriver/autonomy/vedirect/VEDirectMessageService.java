@@ -25,7 +25,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -62,33 +67,10 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
         // Add to Cache.
         VictronDevice.of(veDirectMessage)
                 .ifPresent(DEVICE_CACHE::add);
-
         return persist(new VEDirectMessage(veDirectMessage));
     }
 
 
-    // TODO: Revert full buffer
-    public <T> Stream<T> queryStream(CriteriaQuery<T> cq, String description) {
-        return Benchmark.bench(() ->
-                        entityManager
-                                .createQuery(cq)
-                                .getResultStream()
-                                .collect(Collectors.toList())
-                                .stream(),
-                description);
-    }
-
-    // TODO: Revert full buffer
-    public <T> Stream<T> queryStream(CriteriaQuery<T> cq, int limit, String description) {
-        return Benchmark.bench(() ->
-                        entityManager
-                                .createQuery(cq)
-                                .setMaxResults(limit)
-                                .getResultStream()
-                                .collect(Collectors.toList())
-                                .stream(),
-                description);
-    }
 
 
     /**
@@ -99,15 +81,10 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
      * @return
      */
     public Stream<VEDirectMessage> last(VictronDevice device, Duration duration) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
-        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
-        cq.select(root);
-        cq.where(cb.and(
+        return select((root, cb) -> Stream.of(
                 cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()),
-                cb.ge(root.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())));
-        cq.orderBy(cb.desc(root.get(VEDirectMessage_.timestamp)));
-        return queryStream(cq, "for device " + device + " last " + duration.toMillis() + "ms");
+                cb.ge(root.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())
+                ), "for device " + device + " last " + duration.toMillis() + "ms");
     }
 
 
@@ -265,4 +242,8 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
         return localDateTime.toInstant(ZoneOffset.UTC);
     }
 
+    @Override
+    public Class<VEDirectMessage> getEntityClass() {
+        return null;
+    }
 }
