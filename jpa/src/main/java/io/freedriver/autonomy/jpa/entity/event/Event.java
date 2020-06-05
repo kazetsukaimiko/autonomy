@@ -45,6 +45,9 @@ public abstract class Event extends EntityBase implements Serializable {
         this(timestamp, coordinate, description, sourceType, EventPriority.STANDARD);
     }
 
+    public Event(Event event) {
+        this(event.timestamp, event.coordinate, event.description, event.sourceType, event.priority);
+    }
 
     public long getTimestamp() {
         return timestamp;

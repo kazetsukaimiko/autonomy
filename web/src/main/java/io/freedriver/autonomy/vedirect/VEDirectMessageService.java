@@ -27,7 +27,6 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
-import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -71,15 +70,20 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
      * @param veDirectMessage
      * @return
      */
-    @Transactional
+    //@Transactional
     public VEDirectMessage save(kaze.victron.VEDirectMessage veDirectMessage) {
         // Add to Cache.
         VictronDevice.of(veDirectMessage)
                 .ifPresent(DEVICE_CACHE::add);
-        return persist(new VEDirectMessage(veDirectMessage));
+
+        //return persist(new VEDirectMessage(veDirectMessage));
+        return save(new VEDirectMessage(veDirectMessage));
     }
 
-
+    @Override
+    public VEDirectMessage save(VEDirectMessage entity) {
+        return persist(entity);
+    }
 
 
     /**
@@ -248,6 +252,8 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     public Class<VEDirectMessage> getEntityClass() {
         return VEDirectMessage.class;
     }
+
+
 
     public ControllerView getControllerView(VictronDevice device) {
         return Benchmark.bench(() -> new ControllerView(

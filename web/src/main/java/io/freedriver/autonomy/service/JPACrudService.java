@@ -20,6 +20,8 @@ public abstract class JPACrudService<E extends EntityBase> {
 
     public abstract Class<E> getEntityClass();
 
+    @Transactional
+    public abstract E save(E entity);
 
     public Stream<E> select(BiFunction<Root<E>, CriteriaBuilder, Stream<Predicate>> selectionXFunction, String description) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
@@ -32,8 +34,7 @@ public abstract class JPACrudService<E extends EntityBase> {
                 .where(cb.and(predicates)), description);
     }
 
-    @Transactional
-    public E persist(E event) {
+    protected E persist(E event) {
         entityManager.persist(event);
         return event;
     }

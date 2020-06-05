@@ -15,7 +15,7 @@ public class JoystickEventService extends EventService<JoystickEvent> {
 
     public synchronized void actOnJoystickEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
         try {
-            persist(joystickEvent);
+            save(joystickEvent);
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Exception persisting joystickEvent: " + e.getClass().getName()+": " + e.getMessage(), e);
         }
@@ -24,6 +24,11 @@ public class JoystickEventService extends EventService<JoystickEvent> {
     @Override
     public Class<JoystickEvent> getEntityClass() {
         return JoystickEvent.class;
+    }
+
+    @Override
+    public JoystickEvent save(JoystickEvent entity) {
+        return persist(entity);
     }
 
 }
