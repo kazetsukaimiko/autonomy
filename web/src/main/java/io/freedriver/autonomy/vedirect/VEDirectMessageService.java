@@ -1,5 +1,6 @@
 package io.freedriver.autonomy.vedirect;
 
+import io.freedriver.autonomy.cache.CacheKey;
 import io.freedriver.autonomy.cdi.AttributeCache;
 import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
 import io.freedriver.autonomy.entity.view.ControllerHistoryView;
@@ -47,11 +48,11 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
 
     @Inject
     @AutonomyCache
-    private Cache<VictronDevice, ControllerTimeView> timeViewCache;
+    private Cache<CacheKey<VictronDevice, ControllerTimeView>, ControllerTimeView> timeViewCache;
 
     @Inject
     @AutonomyCache
-    private Cache<VictronDevice, ControllerHistoryView> historyViewCache;
+    private Cache<CacheKey<VictronDevice, ControllerHistoryView>, ControllerHistoryView> historyViewCache;
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
         devices();
@@ -162,7 +163,7 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     }
 
     public ControllerHistoryView getControllerHistoryForToday(VictronDevice device) {
-        return historyViewCache.computeIfAbsent(device, k -> {
+        return historyViewCache.computeIfAbsent(new CacheKey<>(device, ControllerHistoryView.class), k -> {
             CriteriaBuilder cb = entityManager.getCriteriaBuilder();
             CriteriaQuery<Tuple> cq = cb.createTupleQuery();
             Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
@@ -172,7 +173,7 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
                     cb.max(root.get(VEDirectMessage_.panelPower)),
                     cb.max(root.get(VEDirectMessage_.yieldToday)))
                 .where(cb.and(cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
-                        cb.equal(root.get(VEDirectMessage_.serialNumber), k.getSerialNumber())));
+                        cb.equal(root.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber())));
             Tuple t = entityManager.createQuery(cq)
                     .getSingleResult();
             return new ControllerHistoryView(
@@ -184,7 +185,7 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     }
 
     public ControllerTimeView getControllerTimeViewForToday(VictronDevice device) {
-        return timeViewCache.computeIfAbsent(device, k -> {
+        return timeViewCache.computeIfAbsent(new CacheKey<>(device, ControllerTimeView.class), k -> {
             CriteriaBuilder cb = entityManager.getCriteriaBuilder();
             CriteriaQuery<Tuple> cq = cb.createTupleQuery();
             Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
@@ -194,7 +195,7 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
                     root.get(VEDirectMessage_.offReason),
                     cb.count(root))
                     .where(cb.and(cb.ge(root.get(VEDirectMessage_.timestamp), startOfDay.toEpochMilli()),
-                            cb.equal(root.get(VEDirectMessage_.serialNumber), k.getSerialNumber())))
+                            cb.equal(root.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber())))
                     .groupBy(root.get(VEDirectMessage_.stateOfOperation),
                             root.get(VEDirectMessage_.offReason));
             return entityManager.createQuery(cq)
