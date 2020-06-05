@@ -1,6 +1,8 @@
 package io.freedriver.autonomy.vedirect;
 
 import io.freedriver.autonomy.cdi.AttributeCache;
+import io.freedriver.autonomy.entity.view.ControllerHistoryView;
+import io.freedriver.autonomy.entity.view.ControllerTimeView;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import io.freedriver.autonomy.service.JPACrudService;
@@ -154,6 +156,45 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
                 "countByDevice {}", device);
     }
 
+    public ControllerHistoryView getControllerHistoryForToday(VictronDevice device) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Tuple> cq = cb.createTupleQuery();
+        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+        cq.multiselect(
+                cb.max(root.get(VEDirectMessage_.mainVoltage)),
+                cb.max(root.get(VEDirectMessage_.panelVoltage)),
+                cb.max(root.get(VEDirectMessage_.panelPower)),
+                cb.max(root.get(VEDirectMessage_.yieldToday)))
+            .where(cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()));
+        Tuple t = entityManager.createQuery(cq)
+                .getSingleResult();
+        return new ControllerHistoryView(
+                t.get(root.get(VEDirectMessage_.mainVoltage)).doubleValue(),
+                t.get(root.get(VEDirectMessage_.panelVoltage)).doubleValue(),
+                t.get(root.get(VEDirectMessage_.panelPower)).doubleValue(),
+                t.get(root.get(VEDirectMessage_.yieldToday)).doubleValue());
+    }
+
+    public ControllerTimeView getControllerTimeViewForToday(VictronDevice device) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Tuple> cq = cb.createTupleQuery();
+        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+        Instant startOfDay = getStartOfDay();
+        cq.multiselect(
+                root.get(VEDirectMessage_.stateOfOperation),
+                root.get(VEDirectMessage_.offReason),
+                cb.count(root))
+                .where(cb.ge(root.get(VEDirectMessage_.timestamp), startOfDay.toEpochMilli()))
+                .groupBy(root.get(VEDirectMessage_.stateOfOperation),
+                        root.get(VEDirectMessage_.offReason));
+        return entityManager.createQuery(cq)
+                .getResultStream()
+                .reduce(new ControllerTimeView(Duration.between(startOfDay, Instant.now())), (v, t) -> v.apply(
+                        t.get(root.get(VEDirectMessage_.stateOfOperation)),
+                        t.get(root.get(VEDirectMessage_.offReason)),
+                        t.get(cb.count(root))
+                ), (a, b) -> b);
+    }
 
     /**
      * Update the Device Cache.

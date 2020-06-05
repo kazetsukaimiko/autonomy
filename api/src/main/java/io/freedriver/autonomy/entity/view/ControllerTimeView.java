@@ -1,24 +1,20 @@
 package io.freedriver.autonomy.entity.view;
 
-import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import kaze.victron.StateOfOperation;
 import kaze.victron.vedirect.OffReason;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class ControllerTimeView {
     private final Map<String, Integer> data;
     private final ChronoUnit unit;
     private final long secondsPerUnit;
 
-    public ControllerTimeView(Map<String, Integer> data, Duration duration) {
-        this.data = data;
+    public ControllerTimeView(Duration duration) {
         if (duration.toSeconds() > 3600) {
             this.unit = ChronoUnit.HOURS;
         } else if (duration.toSeconds() > 60) {
@@ -27,28 +23,8 @@ public class ControllerTimeView {
             this.unit = ChronoUnit.SECONDS;
         }
         this.secondsPerUnit = unit.getDuration().toSeconds();
+        this.data = new LinkedHashMap<>();
     }
-
-    public ControllerTimeView(List<VEDirectMessage> messages, Duration duration) {
-        this(messages
-                .stream()
-                .collect(Collectors.toMap(
-                        ControllerTimeView::makeMapKey,
-                        m -> 1,
-                        Integer::sum)),
-                duration);
-    }
-
-
-    public ControllerTimeView(List<VEDirectMessage> messages) {
-        this(messages, Duration.between(Instant.now(),
-                Instant.ofEpochMilli(messages
-                        .stream()
-                        .min(VEDirectMessage::orderByTimestamp)
-                        .orElseGet(VEDirectMessage::new)
-                        .getTimestamp())).abs());
-    }
-
 
     public ControllerTimeView addMissingMapKeys(Set<StateOfOperation> historicalStates,
                                                 Set<OffReason> historicalOffReasons) {
@@ -69,11 +45,9 @@ public class ControllerTimeView {
         return this;
     }
 
-    public static String makeMapKey(VEDirectMessage message) {
-        if (message.getStateOfOperation() != StateOfOperation.OFF) {
-            return String.valueOf(message.getStateOfOperation());
-        }
-        return StateOfOperation.OFF + "-" + message.getOffReason();
+    public ControllerTimeView apply(StateOfOperation state, OffReason off, long count) {
+
+        return this;
     }
 
     public Map<String, Integer> getData() {

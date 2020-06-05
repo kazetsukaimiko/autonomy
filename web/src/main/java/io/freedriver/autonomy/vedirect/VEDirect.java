@@ -1,8 +1,6 @@
 package io.freedriver.autonomy.vedirect;
 
-import io.freedriver.autonomy.entity.view.ControllerHistoryView;
 import io.freedriver.autonomy.entity.view.ControllerStateView;
-import io.freedriver.autonomy.entity.view.ControllerTimeView;
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
@@ -38,17 +36,12 @@ public class VEDirect implements VEDirectApi {
                 .findFirst().orElseThrow(() -> VEDirectApiException.unknownDevice(serial));
         return new ControllerView(
                 device,
-                new ControllerTimeView(messageService.fromSunUp(device).collect(Collectors.toList()))
+                messageService.getControllerTimeViewForToday(device)
                     .addMissingMapKeys(
                             messageService.distinct(device, VEDirectMessage_.stateOfOperation).collect(Collectors.toSet()),
                             messageService.distinct(device, VEDirectMessage_.offReason).collect(Collectors.toSet())),
                 messageService.max(device).map(ControllerStateView::new).orElse(null),
-                new ControllerHistoryView(
-                        messageService.max(device, VEDirectMessage_.panelPower).doubleValue(),
-                        messageService.max(device, VEDirectMessage_.panelVoltage).doubleValue(),
-                        messageService.max(device, VEDirectMessage_.mainVoltage).doubleValue(),
-                        messageService.max(device, VEDirectMessage_.yieldToday).doubleValue()
-                ));
+                messageService.getControllerHistoryForToday(device));
     }
 
     @Override
