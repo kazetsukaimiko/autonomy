@@ -31,6 +31,8 @@ public class CacheProvider {
     @AttributeCache
     public Configuration attributeCacheConfig() {
         return new ConfigurationBuilder()
+                .locking()
+                .lockAcquisitionTimeout(10, TimeUnit.SECONDS)
                 .memory()
                 .size(100)
                 .build();
