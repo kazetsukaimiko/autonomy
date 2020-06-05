@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ControllerTimeView {
-    private final Map<String, Integer> data;
+    private final Map<String, Long> data;
     private final ChronoUnit unit;
     private final long secondsPerUnit;
 
@@ -33,24 +33,35 @@ public class ControllerTimeView {
                     if (soo == StateOfOperation.OFF) {
                         historicalOffReasons
                                 .forEach(offReason -> {
-                                    String missingKey = StateOfOperation.OFF + "-" + offReason;
+                                    String missingKey = mapKey(soo, offReason);
                                     if (!data.containsKey(missingKey)) {
-                                        data.put(missingKey, 0);
+                                        data.put(missingKey, 0L);
                                     }
                                 });
                     } else if (!data.containsKey(String.valueOf(soo))) {
-                        data.put(String.valueOf(soo), 0);
+                        data.put(String.valueOf(soo), 0L);
                     }
                 });
         return this;
     }
 
-    public ControllerTimeView apply(StateOfOperation state, OffReason off, long count) {
+    public String mapKey(StateOfOperation state, OffReason offReason) {
+        return (state != StateOfOperation.OFF)
+                ? state.toString()
+                : state + "-" + offReason;
+    }
 
+    public ControllerTimeView apply(StateOfOperation state, OffReason off, long count) {
+        String mapKey = mapKey(state, off);
+        if (!data.containsKey(mapKey)) {
+            data.put(mapKey, count);
+        } else {
+            data.put(mapKey, data.get(mapKey)+count);
+        }
         return this;
     }
 
-    public Map<String, Integer> getData() {
+    public Map<String, Long> getData() {
         return data;
     }
 
