@@ -5,6 +5,7 @@ import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -26,6 +27,7 @@ public class JoystickEventService extends EventService<JoystickEvent> {
     }
 
     @Override
+    @Transactional
     public JoystickEvent persist(JoystickEvent event) {
 
 
