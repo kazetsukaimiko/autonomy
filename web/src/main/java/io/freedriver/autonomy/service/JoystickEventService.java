@@ -14,9 +14,10 @@ import java.util.logging.Logger;
 public class JoystickEventService extends EventService<JoystickEvent> {
     private static final Logger LOGGER = Logger.getLogger(JoystickEventService.class.getName());
 
+    @Transactional
     public synchronized void actOnJoystickEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
         try {
-            save(joystickEvent);
+            persist(joystickEvent);
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Exception persisting joystickEvent: " + e.getClass().getName()+": " + e.getMessage(), e);
         }
@@ -25,11 +26,6 @@ public class JoystickEventService extends EventService<JoystickEvent> {
     @Override
     public Class<JoystickEvent> getEntityClass() {
         return JoystickEvent.class;
-    }
-
-    @Transactional
-    public JoystickEvent save(JoystickEvent entity) {
-        return persist(entity);
     }
 
 }

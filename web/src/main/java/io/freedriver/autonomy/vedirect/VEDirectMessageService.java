@@ -71,21 +71,14 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
      * @param veDirectMessage
      * @return
      */
-    //@Transactional
+    @Transactional
     public VEDirectMessage save(kaze.victron.VEDirectMessage veDirectMessage) {
         // Add to Cache.
         VictronDevice.of(veDirectMessage)
                 .ifPresent(DEVICE_CACHE::add);
 
         //return persist(new VEDirectMessage(veDirectMessage));
-        return save(new VEDirectMessage(veDirectMessage));
-    }
-
-    @Transactional
-    public VEDirectMessage save(VEDirectMessage entity) {
-        System.out.println("Something");
-        entityManager.persist(entity);
-        return entity;
+        return persist(new VEDirectMessage(veDirectMessage));
     }
 
 
