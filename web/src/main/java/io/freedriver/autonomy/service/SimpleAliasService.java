@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.service;
 
 import io.freedriver.autonomy.Autonomy;
-import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
+import io.freedriver.autonomy.cdi.qualifier.ConnectorCache;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.rest.provider.ObjectMapperContextResolver;
 import io.freedriver.autonomy.rest.view.AliasView;
@@ -29,12 +29,8 @@ public class SimpleAliasService {
     @Inject
     private ConnectorService connectorService;
 
-    //@Inject
-    //@OneSecondCache
-    //private Cache<UUID, AliasView> oneSecondCache;
-
     @Inject
-    @AutonomyCache
+    @ConnectorCache
     private Cache<PinCoordinate, Boolean> digitalPinCache;
 
     /**

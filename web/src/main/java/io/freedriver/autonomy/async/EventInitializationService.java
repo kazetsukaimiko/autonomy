@@ -3,8 +3,10 @@ package io.freedriver.autonomy.async;
 import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import kaze.victron.VEDirectDevice;
+import kaze.serial.SBMS0Finder;
+import kaze.serial.SBMSMessage;
 import kaze.victron.VEDirectMessage;
+import kaze.victron.VEDirectReader;
 
 import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;
@@ -13,6 +15,7 @@ import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -28,7 +31,8 @@ public class EventInitializationService extends BaseService {
 
     private static final Logger LOGGER = Logger.getLogger(EventInitializationService.class.getName());
 
-    private static final Map<VEDirectDevice, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
+    private static final Map<VEDirectReader, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
+    private static final Map<Path, Future<Boolean>> sbmsUnits =  new ConcurrentHashMap<>();
 
     @Inject
     private VEDirectDeviceService deviceService;
@@ -39,6 +43,9 @@ public class EventInitializationService extends BaseService {
     @Inject
     private Event<VEDirectMessage> veDirectEvents;
 
+    @Inject
+    private Event<SBMSMessage> sbmsEvents;
+
     @Resource
     private ManagedExecutorService pool;
 
@@ -47,6 +54,34 @@ public class EventInitializationService extends BaseService {
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
         initJoystickMonitor();
         initVEDirectMonitor();
+    }
+
+    private void initSBMSMonitor() {
+        LOGGER.info("Initializing SBMSMonitor.");
+        pool.submit(() -> {
+            while (true) {
+                try {
+                    SBMS0Finder.findSBMS0Units()
+                            .forEach(unit -> {
+                                addSBMS(unit);
+
+                            });
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, "Couldn't init SBMS0 units", e);
+                }
+            }
+        });
+    }
+
+    private void addSBMS(Path unit) {
+        if (!sbmsUnits.containsKey(unit) || sbmsUnits.get(unit).isDone()) {
+            LOGGER.info("Adding SBMS0 Events:");
+            sbmsUnits.put(unit, pool.submit(() -> {
+                SBMS0Finder.open(unit)
+                        .forEach(message -> sbmsEvents.fire(message));
+                return true;
+            }));
+        }
     }
 
     private boolean initVEDirectMonitor() {
@@ -67,7 +102,8 @@ public class EventInitializationService extends BaseService {
         return true;
     }
 
-    private boolean veDeviceInactive(VEDirectDevice veDirectDevice) {
+
+    private boolean veDeviceInactive(VEDirectReader veDirectDevice) {
         return Optional.of(veDirectDevice)
                 .filter(devicesInOperation::containsKey)
                 .map(devicesInOperation::get)
@@ -75,7 +111,7 @@ public class EventInitializationService extends BaseService {
                 .orElse(true);
     }
 
-    private synchronized void initVEDirectDevice(final VEDirectDevice veDirectDevice) {
+    private synchronized void initVEDirectDevice(final VEDirectReader veDirectDevice) {
         LOGGER.info("Initializing VEDirectDevice: " + veDirectDevice.toString());
         devicesInOperation.put(veDirectDevice, pool.submit(() -> {
             veDirectDevice.readAsMessages()

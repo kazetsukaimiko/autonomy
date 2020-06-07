@@ -12,9 +12,9 @@ import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import io.freedriver.autonomy.service.crud.JPACrudService;
 import io.freedriver.autonomy.util.Benchmark;
-import kaze.math.measurement.units.Energy;
-import kaze.math.measurement.units.Potential;
-import kaze.math.measurement.units.Power;
+import kaze.math.measurement.types.electrical.Energy;
+import kaze.math.measurement.types.electrical.Potential;
+import kaze.math.measurement.types.electrical.Power;
 import kaze.victron.VictronDevice;
 import org.infinispan.Cache;
 
@@ -28,21 +28,16 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import javax.transaction.Transactional;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Collections;
+import java.time.*;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApplicationScoped // TODO EventService
 public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     private static final Logger LOGGER = Logger.getLogger(VEDirectMessageService.class.getSimpleName());
-    private static final Set<VictronDevice> DEVICE_CACHE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Inject
     private AttributeCache maxCache;
@@ -54,6 +49,10 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     @Inject
     @AutonomyCache
     private Cache<CacheKey<VictronDevice, ControllerHistoryView>, ControllerHistoryView> historyViewCache;
+
+    @Inject
+    @AutonomyCache
+    private Cache<LocalDate, Set<VictronDevice>> victronDeviceCache;
 
     @Inject
     @OneSecondCache
@@ -72,13 +71,8 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
      * @return
      */
     @Transactional
-    public VEDirectMessage save(kaze.victron.VEDirectMessage veDirectMessage) {
-        // Add to Cache.
-        VictronDevice.of(veDirectMessage)
-                .ifPresent(DEVICE_CACHE::add);
-
-        //return persist(new VEDirectMessage(veDirectMessage));
-        return persist(new VEDirectMessage(veDirectMessage));
+    public VEDirectMessage save(VEDirectMessage veDirectMessage) {
+        return persist(veDirectMessage);
     }
 
 
@@ -178,26 +172,28 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
     }
 
     /**
-     * Update the Device Cache.
-     *
-     * @return
-     */
-    private Set<VictronDevice> updateDeviceCache() {
-        distinctDevices()
-                .forEach(DEVICE_CACHE::add);
-        return DEVICE_CACHE;
-    }
-
-    /**
      * Get all known VictronDevices.
      *
      * @return
      */
     public Set<VictronDevice> devices() {
-        if (DEVICE_CACHE.isEmpty()) {
-            return updateDeviceCache();
-        }
-        return DEVICE_CACHE;
+        return victronDeviceCache.computeIfAbsent(LocalDate.now(), ld -> {
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Tuple> cq = cb.createTupleQuery();
+            Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
+            cq.multiselect(
+                    root.get(VEDirectMessage_.productType),
+                    root.get(VEDirectMessage_.serialNumber))
+                    .distinct(true);
+
+            return entityManager
+                    .createQuery(cq)
+                    .getResultStream()
+                    .map(t -> new VictronDevice(
+                            t.get(root.get(VEDirectMessage_.productType)),
+                            t.get(root.get(VEDirectMessage_.serialNumber))))
+                    .collect(Collectors.toSet());
+        });
     }
 
     public Stream<VEDirectMessage> queryAll() {
@@ -220,22 +216,22 @@ public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
 
     public Optional<VEDirectMessage> max(VictronDevice device) {
         return Benchmark.bench(() -> Optional.ofNullable(lastMessageCache.computeIfAbsent(new CacheKey<>(device, VEDirectMessage.class), k -> {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
-        Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
+            Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
 
-        Subquery<Long> lastTimestampQuery = cq.subquery(Long.class);
-        Root<VEDirectMessage> subQueryRoot = lastTimestampQuery.from(VEDirectMessage.class);
-        lastTimestampQuery.select(cb.max(subQueryRoot.get(VEDirectMessage_.timestamp)));
+            Subquery<Long> lastTimestampQuery = cq.subquery(Long.class);
+            Root<VEDirectMessage> subQueryRoot = lastTimestampQuery.from(VEDirectMessage.class);
+            lastTimestampQuery.select(cb.max(subQueryRoot.get(VEDirectMessage_.timestamp)));
 
-        cq.select(veDirectMessageRoot);
-        cq.where(cb.and(
-                cb.equal(veDirectMessageRoot.get(VEDirectMessage_.timestamp), lastTimestampQuery),
-                cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber())));
-            return entityManager.createQuery(cq)
-                    .setFirstResult(0)
-                    .setMaxResults(1)
-                    .getSingleResult();
+            cq.select(veDirectMessageRoot);
+            cq.where(cb.and(
+                    cb.equal(veDirectMessageRoot.get(VEDirectMessage_.timestamp), lastTimestampQuery),
+                    cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber())));
+                return entityManager.createQuery(cq)
+                        .setFirstResult(0)
+                        .setMaxResults(1)
+                        .getSingleResult();
         })), "Last VEDirectMessage for " + device);
     }
 

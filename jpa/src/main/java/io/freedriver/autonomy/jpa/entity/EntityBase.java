@@ -3,10 +3,11 @@ package io.freedriver.autonomy.jpa.entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
+import java.io.Serializable;
 import java.util.Objects;
 
 @MappedSuperclass
-public abstract class EntityBase extends EmbeddedEntityBase {
+public abstract class EntityBase implements Serializable {
     @Id
     @GeneratedValue
     private Long id;

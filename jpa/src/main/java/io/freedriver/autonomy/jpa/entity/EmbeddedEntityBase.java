@@ -2,7 +2,9 @@ package io.freedriver.autonomy.jpa.entity;
 
 import io.freedriver.autonomy.jpa.iface.Positional;
 
-public abstract class EmbeddedEntityBase implements Positional {
+import java.io.Serializable;
+
+public abstract class EmbeddedEntityBase implements Serializable, Positional {
     private long position = 0;
 
     protected EmbeddedEntityBase() {

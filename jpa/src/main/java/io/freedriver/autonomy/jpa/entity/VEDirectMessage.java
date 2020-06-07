@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.jpa.entity;
 
-import kaze.math.measurement.units.Current;
-import kaze.math.measurement.units.Energy;
-import kaze.math.measurement.units.Potential;
-import kaze.math.measurement.units.Power;
+import kaze.math.measurement.types.electrical.Current;
+import kaze.math.measurement.types.electrical.Energy;
+import kaze.math.measurement.types.electrical.Potential;
+import kaze.math.measurement.types.electrical.Power;
 import kaze.victron.*;
 import kaze.victron.vedirect.OffReason;
 
@@ -15,7 +15,8 @@ import java.util.Objects;
         indexes = {
                 @Index(columnList = "TIMESTAMP"),
                 @Index(columnList = "SERIALNUMBER"),
-                @Index(columnList = "OFFREASON")
+                @Index(columnList = "OFFREASON"),
+                @Index(columnList = "SERIALNUMBER,PRODUCTTYPE")
         }
 )
 @Entity

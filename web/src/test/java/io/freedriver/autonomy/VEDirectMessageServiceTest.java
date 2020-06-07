@@ -4,18 +4,12 @@ import io.freedriver.autonomy.jpa.converter.FirmwareVersionConverter;
 import io.freedriver.autonomy.jpa.entity.EntityBase;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.vedirect.VEDirectMessageService;
-import kaze.math.measurement.units.Current;
-import kaze.math.measurement.units.Energy;
-import kaze.math.measurement.units.Potential;
-import kaze.math.measurement.units.Power;
+import kaze.math.measurement.types.electrical.Current;
+import kaze.math.measurement.types.electrical.Energy;
+import kaze.math.measurement.types.electrical.Potential;
+import kaze.math.measurement.types.electrical.Power;
 import kaze.math.number.ScaledNumber;
-import kaze.victron.FirmwareVersion;
-import kaze.victron.LoadOutputState;
-import kaze.victron.RelayState;
-import kaze.victron.StateOfOperation;
-import kaze.victron.TrackerOperation;
-import kaze.victron.VictronDevice;
-import kaze.victron.VictronProduct;
+import kaze.victron.*;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -87,6 +81,7 @@ public class VEDirectMessageServiceTest extends BaseITTest {
                 .collect(Collectors.toList());
 
         List<VEDirectMessage> jpaEntities = messages.stream()
+                .map(VEDirectMessage::new)
                 .map(messageService::save)
                 .collect(Collectors.toList());
 

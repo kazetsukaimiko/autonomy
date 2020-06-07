@@ -1,6 +1,7 @@
 package io.freedriver.autonomy.async;
 
-import kaze.victron.VEDirectDevice;
+import kaze.serial.SBMS0Finder;
+import kaze.victron.VEDirectReader;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.io.IOException;
@@ -15,11 +16,11 @@ import java.util.stream.Stream;
 @ApplicationScoped
 public class VEDirectDeviceService extends BaseService {
     private static final Logger LOGGER = Logger.getLogger(VEDirectDeviceService.class.getName());
-    private static final Set<VEDirectDevice> ALL_DEVICES = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Set<VEDirectReader> ALL_DEVICES = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    public synchronized Stream<VEDirectDevice> allDevices() {
+    public synchronized Stream<VEDirectReader> allDevices() {
         try {
-            VEDirectDevice.allVEDirectDevices()
+            VEDirectReader.allVEDirectDevices(SBMS0Finder::noMatch)
                     .filter(this::veDeviceInactive)
                     .forEach(ALL_DEVICES::add);
         } catch (IOException e) {
@@ -28,7 +29,7 @@ public class VEDirectDeviceService extends BaseService {
         return ALL_DEVICES.stream();
     }
 
-    private boolean veDeviceInactive(VEDirectDevice veDirectDevice) {
+    private boolean veDeviceInactive(VEDirectReader veDirectDevice) {
         return Optional.of(veDirectDevice)
                 .map(device -> !ALL_DEVICES.contains(device))
                 .orElse(true);

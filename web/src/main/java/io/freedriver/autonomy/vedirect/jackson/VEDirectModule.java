@@ -3,12 +3,7 @@ package io.freedriver.autonomy.vedirect.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import kaze.math.measurement.types.Measurement;
-import kaze.math.measurement.units.Charge;
-import kaze.math.measurement.units.Current;
-import kaze.math.measurement.units.Energy;
-import kaze.math.measurement.units.Potential;
-import kaze.math.measurement.units.Power;
-import kaze.math.measurement.units.Resistance;
+import kaze.math.measurement.types.electrical.*;
 import kaze.math.number.ScaledNumber;
 
 import java.util.function.Function;

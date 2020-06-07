@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.jpa.converter.measurement;
 
 import kaze.math.UnitPrefix;
-import kaze.math.measurement.units.Power;
+import kaze.math.measurement.types.electrical.Power;
 import kaze.math.number.ScaledNumber;
 
 import javax.persistence.Converter;

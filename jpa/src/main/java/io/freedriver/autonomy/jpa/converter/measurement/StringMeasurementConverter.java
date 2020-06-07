@@ -1,8 +1,8 @@
 package io.freedriver.autonomy.jpa.converter.measurement;
 
-import kaze.math.Unit;
 import kaze.math.UnitPrefix;
 import kaze.math.measurement.types.Measurement;
+import kaze.math.measurement.units.SIElectricalUnit;
 
 import javax.persistence.AttributeConverter;
 import java.math.BigDecimal;
@@ -18,7 +18,7 @@ public abstract class StringMeasurementConverter<M extends Measurement<M>> imple
 
     public abstract BiFunction<BigDecimal, UnitPrefix, M> constructor();
 
-    public abstract Unit unit();
+    public abstract SIElectricalUnit unit();
 
     @Override
     public final String convertToDatabaseColumn(M m) {

@@ -19,7 +19,7 @@ public abstract class JPACrudService<E extends EntityBase> {
 
     public abstract Class<E> getEntityClass();
 
-    public Stream<E> select(BiFunction<Root<E>, CriteriaBuilder, Stream<Predicate>> selectionXFunction, String description) {
+    protected Stream<E> select(BiFunction<Root<E>, CriteriaBuilder, Stream<Predicate>> selectionXFunction, String description) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<E> cq = cb.createQuery(getEntityClass());
         Root<E> root = cq.from(getEntityClass());

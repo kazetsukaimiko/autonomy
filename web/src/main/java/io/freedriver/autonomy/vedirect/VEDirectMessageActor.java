@@ -80,7 +80,7 @@ public class VEDirectMessageActor {
                     VEDirectMessageChange.allValues(veDirectMessage));
         }
         lastMessage.put(product, veDirectMessage);
-        messageService.save(veDirectMessage);
+        messageService.save(new io.freedriver.autonomy.jpa.entity.VEDirectMessage(veDirectMessage));
     }
 
     @Produces @VEProduct(value = VictronProduct.UNKNOWN, serial = "")

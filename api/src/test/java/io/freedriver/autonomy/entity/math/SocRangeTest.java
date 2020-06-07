@@ -2,7 +2,7 @@ package io.freedriver.autonomy.entity.math;
 
 import io.freedriver.autonomy.jpa.entity.math.SocRange;
 import io.freedriver.autonomy.jpa.entity.math.VoltageSoc;
-import kaze.math.measurement.units.Potential;
+import kaze.math.measurement.types.electrical.Potential;
 import kaze.math.number.ScaledNumber;
 import org.junit.jupiter.api.Test;
 

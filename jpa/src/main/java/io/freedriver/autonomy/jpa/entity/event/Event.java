@@ -3,9 +3,9 @@ package io.freedriver.autonomy.jpa.entity.event;
 import io.freedriver.autonomy.jpa.entity.EntityBase;
 
 import javax.persistence.Embedded;
+import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -13,7 +13,7 @@ import java.util.Objects;
  * in that thing's state.
  */
 @MappedSuperclass
-public abstract class Event extends EntityBase implements Serializable {
+public abstract class Event extends EntityBase {
     public static final long serialVersionUID = -1L;
 
     private long timestamp;
@@ -24,10 +24,10 @@ public abstract class Event extends EntityBase implements Serializable {
     @Embedded
     private EventDescription description;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private SourceType sourceType;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private EventPriority priority = EventPriority.STANDARD;
 
     protected Event() {
