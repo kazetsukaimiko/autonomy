@@ -19,19 +19,6 @@ public enum VEDirectMessageChange {
     ERROR_CODE("Error code", VEDirectMessage::getErrorCode),
     OFF_REASON("Off reason", VEDirectMessage::getOffReason),
     YIELD_YESTERDAY("Yesterday's yield", VEDirectMessage::getYieldYesterday),
-    /*BATTERY_VOLTAGE("Battery Voltage",
-            (o, n) -> tenthOfaVolt(o.getMainVoltage()).compareTo(tenthOfaVolt(n.getMainVoltage())) != 0,
-            (o, n) ->
-                o == n ?
-                    "Current voltage: " + n.getMainVoltage()
-                :
-                    "Main Voltage " + (o.getMainVoltage().lessThan(n.getMainVoltage()) ? "Rose":"Fell")
-                    + " from " + o.getMainVoltage() + " to " + n.getMainVoltage()),*/
-    /*PANEL_YIELD_CHANGE("Panel Power",
-            (o, n) -> o != null && n != null && o.getPanelPower().subtract(o.getPanelPower()).greaterThan(ONE.watts(new BigDecimal("50"))),
-            (o, n) -> o == n ? "Current Panel Power: " + n.getPanelPower() : "Panel Power Change: " + o.getPanelPower() + " -> " + n.getPanelPower())
-
-     */
     ;
 
     private final String fieldName;
