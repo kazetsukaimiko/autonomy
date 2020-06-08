@@ -20,6 +20,7 @@
         <dependency>
             <groupId>kaze.victron</groupId>
             <artifactId>victron-java</artifactId>
+            <version>0.5.0</version>
         </dependency>
 
         <dependency>

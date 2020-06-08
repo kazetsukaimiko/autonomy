@@ -32,7 +32,7 @@ public class EventInitializationService extends BaseService {
     private static final Logger LOGGER = Logger.getLogger(EventInitializationService.class.getName());
 
     private static final Map<VEDirectReader, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
-    private static final Map<Path, Future<Boolean>> sbmsUnits =  new ConcurrentHashMap<>();
+    private static final Map<Path, Future<Instant>> sbmsUnits =  new ConcurrentHashMap<>();
 
     @Inject
     private VEDirectDeviceService deviceService;
@@ -72,14 +72,31 @@ public class EventInitializationService extends BaseService {
         });
     }
 
+    private boolean inSBMSDeadPeriod(Path unit) {
+        try {
+            return Instant.now().isAfter(sbmsUnits.get(unit).get());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
     private void addSBMS(Path unit) {
         if (!sbmsUnits.containsKey(unit) || sbmsUnits.get(unit).isDone()) {
-            LOGGER.info("Adding SBMS0 Events:");
-            sbmsUnits.put(unit, pool.submit(() -> {
-                SBMS0Finder.open(unit)
-                        .forEach(message -> sbmsEvents.fire(message));
-                return true;
-            }));
+            if (!inSBMSDeadPeriod(unit)) {
+                sbmsUnits.put(unit, pool.submit(() -> {
+                    try {
+                        SBMS0Finder.open(unit)
+                                .peek(System.out::println)
+                                .forEach(message -> sbmsEvents.fire(message));
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, "Failed to stream messages: ", e);
+                    }
+                    Duration waitingPeriod = Duration.ofMinutes(1);
+                    LOGGER.info("Blacklisting SBMS " + unit + " for " + waitingPeriod.toMillis() + "ms");
+                    return Instant.now().plus(waitingPeriod);
+                }));
+            }
         }
     }
 
