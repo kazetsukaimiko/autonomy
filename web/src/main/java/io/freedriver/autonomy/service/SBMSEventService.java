@@ -6,6 +6,7 @@ import io.freedriver.autonomy.service.crud.EventCrudService;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
+import javax.transaction.Transactional;
 
 @ApplicationScoped
 public class SBMSEventService extends EventCrudService<SBMSMessage> {
@@ -18,7 +19,8 @@ public class SBMSEventService extends EventCrudService<SBMSMessage> {
     /*
      * EVENT HANDLERS
      */
-    public synchronized void actOnVEDirectMessage(@Observes @Default kaze.serial.SBMSMessage sbmsMessage) {
+    @Transactional
+    public synchronized void actOnSBMSMessage(@Observes @Default kaze.serial.SBMSMessage sbmsMessage) {
         persist(new SBMSMessage(sbmsMessage));
     }
 

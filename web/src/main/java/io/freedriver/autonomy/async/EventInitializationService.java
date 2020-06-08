@@ -95,7 +95,7 @@ public class EventInitializationService extends BaseService {
                     try {
                         SBMS0Finder.open(unit)
                                 .peek(System.out::println)
-                                .forEach(message -> sbmsEvents.fire(message));
+                                .forEach(this::fireSBMS0Message);
                     } catch (Exception e) {
                         LOGGER.log(Level.WARNING, "Failed to stream messages: ", e);
                         Duration waitingPeriod = Duration.ofMinutes(1);
@@ -162,6 +162,14 @@ public class EventInitializationService extends BaseService {
         } else {
             // TODO: This is a workaround for a bug. Fix the bug.
             LOGGER.warning("JSTestEvent ignored as it contains no subject: " + jsTestEvent);
+        }
+    }
+
+    private synchronized void fireSBMS0Message(SBMSMessage sbmsMessage) {
+        try {
+            sbmsEvents.fire(sbmsMessage);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to fire SBMSMessage: ", e);
         }
     }
 
