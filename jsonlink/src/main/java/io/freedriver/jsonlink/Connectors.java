@@ -4,6 +4,10 @@ import io.freedriver.jsonlink.config.ConnectorConfig;
 import jssc.SerialPort;
 import jssc.SerialPortList;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -18,6 +22,8 @@ public final class Connectors {
     private static final Set<Connector> ALL_CONNECTORS = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final Map<String, FailedConnector> FAILED_CONNECTORS = new ConcurrentHashMap<>();
     private static final Logger LOGGER = Logger.getLogger(Connectors.class.getName());
+    private static final String LINUX_SERIAL_BY_ID_PATH = "/dev/serial/by-id/";
+    private static final Set<String> CONNECTOR_MATCHES = Stream.of("Arduino").collect(Collectors.toSet());
 
     private static Consumer<String> callback;
 
@@ -83,14 +89,35 @@ public final class Connectors {
         return Optional.empty();
     }
 
+
+
+
     public static Stream<Connector> allConnectors() {
-        return Stream.of(SerialPortList.getPortNames())
-                .filter(getConfig()::doNotIgnore)
-                .peek(port -> LOGGER.finest("Looking to get " + port))
-                .map(Connectors::findOrOpen)
-                .flatMap(Optional::stream);
+        if (Files.isDirectory(Paths.get(LINUX_SERIAL_BY_ID_PATH))) {
+            try {
+                return Files.list(Paths.get(LINUX_SERIAL_BY_ID_PATH))
+                        .filter(Connectors::match)
+                        .map(Path::toAbsolutePath)
+                        .map(Path::toString)
+                        .filter(getConfig()::doNotIgnore) // TODO : Filter based on symlinkage too
+                        .peek(port -> LOGGER.finest("Looking to get " + port))
+                        .map(Connectors::findOrOpen)
+                        .flatMap(Optional::stream);
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Couldn't scan " + LINUX_SERIAL_BY_ID_PATH, e);
+            }
+        }
+        return Stream.empty();
     }
 
+    public static boolean match(Path path) {
+        return CONNECTOR_MATCHES.stream()
+            .anyMatch(path.toString()::contains);
+    }
+
+    public static boolean noMatch(Path path) {
+        return !match(path);
+    }
 
     public static Stream<Future<Optional<Connector>>> allConnectors(ExecutorService pool) {
         return Stream.of(SerialPortList.getPortNames())
