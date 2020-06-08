@@ -11,8 +11,9 @@ public abstract class MeasurementConverter<M extends Measurement<M>> implements 
 
     @Override
     public BigDecimal convertToDatabaseColumn(M m) {
-        return m.scaleTo(UnitPrefix.ONE).getValue()
-                .getValue();
+        return m != null ? m.scaleTo(UnitPrefix.ONE).getValue()
+                .getValue()
+                : null;
     }
 
     @Override
