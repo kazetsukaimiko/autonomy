@@ -46,7 +46,7 @@ public class Benchmark {
     }
 
     public static Benchmark getDefault() {
-        return INFO;
+        return DEBUG;
     }
 
     public static <T> T bench(Callable<T> callable, String message, Object... args) {
