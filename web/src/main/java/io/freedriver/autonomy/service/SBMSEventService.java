@@ -20,7 +20,7 @@ public class SBMSEventService extends EventCrudService<SBMSMessage> {
      * EVENT HANDLERS
      */
     @Transactional
-    public synchronized void actOnSBMSMessage(@Observes @Default kaze.serial.SBMSMessage sbmsMessage) {
+    public synchronized void actOnSBMSMessage(@Observes @Default com.electrodacus.bms.SBMSMessage sbmsMessage) {
         persist(new SBMSMessage(sbmsMessage));
     }
 

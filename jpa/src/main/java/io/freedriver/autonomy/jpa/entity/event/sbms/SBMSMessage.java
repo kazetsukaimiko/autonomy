@@ -1,10 +1,10 @@
 package io.freedriver.autonomy.jpa.entity.event.sbms;
 
+import com.electrodacus.bms.ErrorCode;
 import io.freedriver.autonomy.jpa.entity.event.*;
 import kaze.math.measurement.types.electrical.Current;
 import kaze.math.measurement.types.electrical.Potential;
 import kaze.math.measurement.types.thermo.Temperature;
-import kaze.serial.ErrorCode;
 
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -36,7 +36,7 @@ public class SBMSMessage extends Event {
     private Current extCurrent;
     private int errorCodes;
 
-    public SBMSMessage(kaze.serial.SBMSMessage message) {
+    public SBMSMessage(com.electrodacus.bms.SBMSMessage message) {
         super(
                 message.getTimestamp().toEpochMilli(),
                 new EventCoordinate(message.getPath().toString(), "SBMS0"),
