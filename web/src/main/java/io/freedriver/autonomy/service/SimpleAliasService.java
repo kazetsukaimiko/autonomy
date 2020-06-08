@@ -211,9 +211,8 @@ public class SimpleAliasService {
                         (req, app) -> req.digitalWrite(new DigitalWrite(app.getIdentifier(),
                                 DigitalState.fromBoolean(setStateAs))), (a, b) -> a);
 
-        // TODO : LOG
-        System.out.println(request);
+        LOGGER.finest(request.toString());
 
-        connectorService.send(mapping.getConnectorId(), request);
+        cacheBoardState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), request).getDigital());
     }
 }

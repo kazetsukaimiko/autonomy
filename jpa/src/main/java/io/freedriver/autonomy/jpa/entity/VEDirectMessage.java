@@ -21,11 +21,8 @@ import java.util.Objects;
 )
 @Entity
 public class VEDirectMessage extends EntityBase {
-    @Id
-    @GeneratedValue
-    private Long id;
 
-    private long timestamp = Instant.now().toEpochMilli();
+    private long timestamp;
 
     @Enumerated(EnumType.STRING)
     private VictronProduct productType;
@@ -279,13 +276,22 @@ public class VEDirectMessage extends EntityBase {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         VEDirectMessage that = (VEDirectMessage) o;
         return timestamp == that.timestamp &&
-                Objects.equals(id, that.id) &&
                 productType == that.productType &&
                 relayState == that.relayState &&
                 Objects.equals(firmwareVersion, that.firmwareVersion) &&
                 Objects.equals(serialNumber, that.serialNumber) &&
+                Objects.equals(mainVoltage, that.mainVoltage) &&
+                Objects.equals(mainCurrent, that.mainCurrent) &&
+                Objects.equals(panelVoltage, that.panelVoltage) &&
+                Objects.equals(panelPower, that.panelPower) &&
+                Objects.equals(resettableYield, that.resettableYield) &&
+                Objects.equals(yieldToday, that.yieldToday) &&
+                Objects.equals(maxPowerToday, that.maxPowerToday) &&
+                Objects.equals(yieldYesterday, that.yieldYesterday) &&
+                Objects.equals(maxPowerYesterday, that.maxPowerYesterday) &&
                 stateOfOperation == that.stateOfOperation &&
                 trackerOperation == that.trackerOperation &&
                 loadOutputState == that.loadOutputState &&
@@ -295,13 +301,12 @@ public class VEDirectMessage extends EntityBase {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, timestamp, productType, relayState, firmwareVersion, serialNumber, stateOfOperation, trackerOperation, loadOutputState, errorCode, offReason);
+        return Objects.hash(super.hashCode(), timestamp, productType, relayState, firmwareVersion, serialNumber, mainVoltage, mainCurrent, panelVoltage, panelPower, resettableYield, yieldToday, maxPowerToday, yieldYesterday, maxPowerYesterday, stateOfOperation, trackerOperation, loadOutputState, errorCode, offReason);
     }
 
     @Override
     public String toString() {
         return "VEDirectMessage{" +
-                "id=" + id +
                 ", timestamp=" + timestamp +
                 ", productType=" + productType +
                 ", relayState=" + relayState +

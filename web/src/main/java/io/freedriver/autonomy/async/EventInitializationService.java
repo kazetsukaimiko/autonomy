@@ -94,7 +94,6 @@ public class EventInitializationService extends BaseService {
                 sbmsUnits.put(unit, pool.submit(() -> {
                     try {
                         SBMS0Finder.open(unit)
-                                .peek(System.out::println)
                                 .forEach(this::fireSBMS0Message);
                     } catch (Exception e) {
                         LOGGER.log(Level.WARNING, "Failed to stream messages: ", e);
