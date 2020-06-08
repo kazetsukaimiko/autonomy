@@ -153,7 +153,7 @@ public class EventInitializationService extends BaseService {
     public void fireJSTestEvent(JSTestEvent jsTestEvent) {
         if (jsTestEvent.locate().getSubject() != null) {
             try {
-                LOGGER.warning("Firing JOYSTICK " + jsTestEvent);
+                LOGGER.finest("Firing JSTestEvent " + jsTestEvent);
                 joystickEvents.fire(new JoystickEvent(Instant.now().toEpochMilli(), jsTestEvent));
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "Failed to fire JoystickEvent: ", e);
@@ -166,6 +166,7 @@ public class EventInitializationService extends BaseService {
 
     private synchronized void fireSBMS0Message(SBMSMessage sbmsMessage) {
         try {
+            LOGGER.finest("Firing SBMSMessage " + sbmsMessage);
             sbmsEvents.fire(sbmsMessage);
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to fire SBMSMessage: ", e);

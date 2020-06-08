@@ -11,7 +11,7 @@ public class Benchmark {
 
     public static final String TIME_PLACEHOLDER = "{execution_time}";
     public static final Benchmark INFO = new Benchmark(Level.INFO);
-    public static final Benchmark DEBUG = new Benchmark(Level.INFO);
+    public static final Benchmark DEBUG = new Benchmark(Level.FINEST);
 
     private final BiConsumer<String, Object[]> logConsumer;
 
