@@ -52,9 +52,9 @@ public class EventInitializationService extends BaseService {
     private AllJoysticks allJoysticks;
 
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
+        initSBMSMonitor();
         initJoystickMonitor();
         initVEDirectMonitor();
-        initSBMSMonitor();
     }
 
     private void initSBMSMonitor() {
