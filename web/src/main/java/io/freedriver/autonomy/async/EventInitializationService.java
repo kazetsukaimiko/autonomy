@@ -54,6 +54,7 @@ public class EventInitializationService extends BaseService {
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
         initJoystickMonitor();
         initVEDirectMonitor();
+        initSBMSMonitor();
     }
 
     private void initSBMSMonitor() {
@@ -61,11 +62,9 @@ public class EventInitializationService extends BaseService {
         pool.submit(() -> {
             while (true) {
                 try {
+                    Thread.sleep(1000);
                     SBMS0Finder.findSBMS0Units()
-                            .forEach(unit -> {
-                                addSBMS(unit);
-
-                            });
+                            .forEach(this::addSBMS);
                 } catch (Exception e) {
                     LOGGER.log(Level.WARNING, "Couldn't init SBMS0 units", e);
                 }
