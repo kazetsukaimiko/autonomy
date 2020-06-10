@@ -94,8 +94,10 @@ public final class Connectors {
 
     public static Stream<Connector> allConnectors() {
         if (Files.isDirectory(Paths.get(LINUX_SERIAL_BY_ID_PATH))) {
-            try {
-                return Files.list(Paths.get(LINUX_SERIAL_BY_ID_PATH))
+            try (Stream<Path> serialDevices = Files.list(Paths.get(LINUX_SERIAL_BY_ID_PATH))) {
+                List<Path> deviceList = serialDevices.collect(Collectors.toList());
+                return deviceList
+                        .stream()
                         .filter(Connectors::match)
                         .map(Path::toAbsolutePath)
                         .map(Path::toString)
