@@ -19,7 +19,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ConnectorTest {
@@ -109,12 +108,6 @@ public class ConnectorTest {
         Connectors.allDevices()
                 .flatMap(ConnectorTest::openDevice)
                 .forEach(connector -> System.out.println(connector.getUUID()));
-    }
-
-    @Test
-    public void allConnectorsHaveUniqueUUID() {
-        assertEquals(Connectors.allDevices().count(), allUUIDs.size());
-        allUUIDs.forEach(System.out::println);
     }
 
     @Test
