@@ -10,9 +10,9 @@ import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 
+import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,7 +35,7 @@ public class ConnectorService {
             .enable(SerializationFeature.INDENT_OUTPUT);
 
 
-    @Inject
+    @Resource
     private ManagedExecutorService executorService;
 
     public List<UUID> getConnectedBoards() {
