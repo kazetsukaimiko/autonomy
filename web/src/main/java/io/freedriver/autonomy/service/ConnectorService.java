@@ -11,10 +11,14 @@ import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -30,6 +34,10 @@ public class ConnectorService {
             .registerModule(new JsonLinkModule())
             .enable(SerializationFeature.INDENT_OUTPUT);
 
+
+    @Inject
+    private ExecutorService executorService;
+
     public List<UUID> getConnectedBoards() {
         return getAllConnectors().stream()
                 .map(Connector::getUUID)
@@ -41,12 +49,29 @@ public class ConnectorService {
      */
 
     private List<Connector> getAllConnectors() {
-        Connectors.allConnectors()
-                .filter(connector -> ACTIVE_CONNECTORS.stream()
-                        .noneMatch(existing -> Objects.equals(existing.device(), connector.device())))
-                .peek(connector -> LOGGER.info("Adding Connector Device: " + connector.device()))
-                .forEach(ACTIVE_CONNECTORS::add);
+        // Remove existing closed.
+        List<Connector> closed = ACTIVE_CONNECTORS.stream()
+                .filter(Connector::isClosed)
+                .collect(Collectors.toList());
+        ACTIVE_CONNECTORS.removeAll(closed);
+
+        // Connect new
+        List<CompletableFuture<Void>> threads = Connectors.allDevices()
+                .filter(device -> ACTIVE_CONNECTORS.stream()
+                        .noneMatch(existing -> Objects.equals(existing.device(), device)))
+                .map(device -> Connectors.findOrOpenAndConsume(device, executorService, ACTIVE_CONNECTORS::add))
+                .collect(Collectors.toList());
+        threads.forEach(this::waitForCompletion);
+
         return ACTIVE_CONNECTORS;
+    }
+
+    private void waitForCompletion(CompletableFuture<Void> voidCompletableFuture) {
+        try {
+            voidCompletableFuture.get();
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to wait for completion of connector", e);
+        }
     }
 
 

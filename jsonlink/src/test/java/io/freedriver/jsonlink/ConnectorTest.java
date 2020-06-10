@@ -1,13 +1,6 @@
 package io.freedriver.jsonlink;
 
-import io.freedriver.jsonlink.jackson.schema.v1.AnalogRead;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalState;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Mode;
-import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import io.freedriver.jsonlink.jackson.schema.v1.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +11,8 @@ import javax.usb.UsbHub;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -29,13 +24,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ConnectorTest {
     private static final Logger LOGGER = Logger.getLogger(ConnectorTest.class.getName());
+    private static final ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*4);
     static Identifier LED_PIN = Identifier.of(40); // Hallway
 
     List<UUID> allUUIDs;
 
     @BeforeEach
     public void init() {
-        allUUIDs = Connectors.allConnectors()
+        allUUIDs = Connectors.allDevices()
+                .flatMap(ConnectorTest::openDevice)
                 .map(Connector::getUUID)
                 .distinct()
                 .peek(uuid -> LOGGER.info(String.valueOf(uuid)))
@@ -72,7 +69,8 @@ public class ConnectorTest {
         Request boardInfo = new Request();
         boardInfo.setBoardInfo(true);
 
-        Connectors.allConnectors()
+        Connectors.allDevices()
+                .flatMap(ConnectorTest::openDevice)
                 .findFirst()
                 .map(connector -> connector.send(boardInfo))
                 .ifPresent(System.out::println);
@@ -88,7 +86,8 @@ public class ConnectorTest {
                 .peek(System.out::println)
                 .forEach(readAllAnalogs::analogRead);
 
-        Connectors.allConnectors()
+        Connectors.allDevices()
+                .flatMap(ConnectorTest::openDevice)
                 .findFirst()
                 .ifPresent(connector -> {
 
@@ -107,13 +106,14 @@ public class ConnectorTest {
 
     @Test
     public void testGetConnectors() {
-        Connectors.allConnectors()
+        Connectors.allDevices()
+                .flatMap(ConnectorTest::openDevice)
                 .forEach(connector -> System.out.println(connector.getUUID()));
     }
 
     @Test
     public void allConnectorsHaveUniqueUUID() {
-        assertEquals(Connectors.allConnectors().count(), allUUIDs.size());
+        assertEquals(Connectors.allDevices().count(), allUUIDs.size());
         allUUIDs.forEach(System.out::println);
     }
 
@@ -130,6 +130,17 @@ public class ConnectorTest {
                 }));
     }
 
+
+    public static Stream<Connector> openDevice(String device) {
+        try {
+            return Connectors.findOrOpen(device, pool)
+                    .get()
+                    .stream();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static Response setStatus(Connector connector, DigitalState pinState) {
         LOGGER.info("Setting status : " + pinState);
         Response r = connector.send(new Request()
@@ -144,11 +155,6 @@ public class ConnectorTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static List<Connector> allConnectors() {
-        return Connectors.allConnectors()
-                .collect(Collectors.toList());
     }
 
 }

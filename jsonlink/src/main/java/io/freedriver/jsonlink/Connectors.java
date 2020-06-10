@@ -2,7 +2,6 @@ package io.freedriver.jsonlink;
 
 import io.freedriver.jsonlink.config.ConnectorConfig;
 import jssc.SerialPort;
-import jssc.SerialPortList;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,37 +61,46 @@ public final class Connectors {
         return FAILED_CONNECTORS;
     }
 
-    private static synchronized Optional<Connector> findOrOpen(String device) {
-        Optional<Connector> found = findByDeviceId(device);
-        if (found.isPresent()) {
-            Connector inQuestion = found.get();
-            if (inQuestion.isClosed()) {
-                ALL_CONNECTORS.remove(inQuestion);
-            } else {
-                return found;
+    public static synchronized CompletableFuture<Optional<Connector>> findOrOpen(
+            String device, ExecutorService pool) {
+        return CompletableFuture
+                .supplyAsync(() -> {
+            Optional<Connector> found = findByDeviceId(device);
+            if (found.isPresent()) {
+                Connector inQuestion = found.get();
+                if (inQuestion.isClosed()) {
+                    ALL_CONNECTORS.remove(inQuestion);
+                } else {
+                    return found;
+                }
             }
-        }
-        if (!getFailedConnectors().containsKey(device)) {
-            try {
-                return Optional.of(createConnector(device).get(5000, TimeUnit.MILLISECONDS));
-            } catch (InterruptedException | ExecutionException e) {
-                //throw new ConnectorException("Couldn't create connector " + device, e);
-                LOGGER.log(Level.SEVERE, "Failed building connector " + device, e);
-                getFailedConnectors()
-                        .put(device, FailedConnector.failed(device));
-            } catch (TimeoutException e) {
-                LOGGER.log(Level.WARNING, "Timed out building connector " + device);
-                getFailedConnectors()
-                        .put(device, FailedConnector.timedOut(device));
+            if (!getFailedConnectors().containsKey(device)) {
+                try {
+                    return Optional.of(createConnector(device).get(2000, TimeUnit.MILLISECONDS));
+                } catch (InterruptedException | ExecutionException e) {
+                    //throw new ConnectorException("Couldn't create connector " + device, e);
+                    LOGGER.log(Level.SEVERE, "Failed building connector " + device, e);
+                    getFailedConnectors()
+                            .put(device, FailedConnector.failed(device));
+                } catch (TimeoutException e) {
+                    LOGGER.log(Level.WARNING, "Timed out building connector " + device);
+                    getFailedConnectors()
+                            .put(device, FailedConnector.timedOut(device));
+                }
             }
-        }
-        return Optional.empty();
+            return Optional.empty();
+        }, pool);
+    }
+
+    public static synchronized CompletableFuture<Void> findOrOpenAndConsume(
+            String device, ExecutorService pool, Consumer<Connector> onCompletion) {
+        return findOrOpen(device, pool)
+                .thenAccept(optional -> optional
+                        .ifPresent(onCompletion));
     }
 
 
-
-
-    public static Stream<Connector> allConnectors() {
+    public static Stream<String> allDevices() {
         if (Files.isDirectory(Paths.get(LINUX_SERIAL_BY_ID_PATH))) {
             try (Stream<Path> serialDevices = Files.list(Paths.get(LINUX_SERIAL_BY_ID_PATH))) {
                 List<Path> deviceList = serialDevices.collect(Collectors.toList());
@@ -101,10 +109,7 @@ public final class Connectors {
                         .filter(Connectors::match)
                         .map(Path::toAbsolutePath)
                         .map(Path::toString)
-                        .filter(getConfig()::doNotIgnore) // TODO : Filter based on symlinkage too
-                        .peek(port -> LOGGER.finest("Looking to get " + port))
-                        .map(Connectors::findOrOpen)
-                        .flatMap(Optional::stream);
+                        .filter(getConfig()::doNotIgnore); // TODO : Filter based on symlinkage too
             } catch (IOException e) {
                 LOGGER.log(Level.WARNING, "Couldn't scan " + LINUX_SERIAL_BY_ID_PATH, e);
             }
@@ -120,14 +125,6 @@ public final class Connectors {
     public static boolean noMatch(Path path) {
         return !match(path);
     }
-
-    public static Stream<Future<Optional<Connector>>> allConnectors(ExecutorService pool) {
-        return Stream.of(SerialPortList.getPortNames())
-                .filter(getConfig()::doNotIgnore)
-                .peek(port -> LOGGER.finest("Looking to get " + port))
-                .map(port -> pool.submit(() -> findOrOpen(port)));
-    }
-
 
     public static Optional<Connector> getConnector(UUID deviceId) {
         return connectors(cs -> cs.filter(connector -> Objects.equals(connector.getUUID(), deviceId)))
