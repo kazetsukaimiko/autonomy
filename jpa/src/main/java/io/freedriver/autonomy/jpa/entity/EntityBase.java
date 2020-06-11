@@ -15,10 +15,6 @@ public abstract class EntityBase implements Serializable {
     public EntityBase() {
     }
 
-    public EntityBase(EntityBase entityBase) {
-        this.id = entityBase.id;
-    }
-
     public Long getId() {
         return id;
     }

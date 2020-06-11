@@ -47,7 +47,6 @@ public class ConnectorService {
     /*
      * INTERNALS / HELPERS
      */
-
     private List<Connector> getAllConnectors() {
         // Remove existing closed.
         List<Connector> closed = ACTIVE_CONNECTORS.stream()
@@ -74,15 +73,10 @@ public class ConnectorService {
         }
     }
 
-
     private Optional<Connector> getConnectorByBoardId(UUID boardId) {
         return getAllConnectors().stream()
                 .filter(connector -> Objects.equals(boardId, connector.getUUID()))
                 .findFirst();
-    }
-
-    private static Path inConfigDirectory(String name) {
-        return Paths.get(CONFIG_PATH.toAbsolutePath().toString(), name);
     }
 
     public String describeBoards() {

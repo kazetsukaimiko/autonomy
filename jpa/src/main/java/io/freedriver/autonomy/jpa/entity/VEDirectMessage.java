@@ -1,5 +1,7 @@
 package io.freedriver.autonomy.jpa.entity;
 
+import io.freedriver.autonomy.jpa.entity.event.Event;
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import kaze.math.measurement.types.electrical.Current;
 import kaze.math.measurement.types.electrical.Energy;
 import kaze.math.measurement.types.electrical.Potential;
@@ -20,9 +22,8 @@ import java.util.Objects;
         }
 )
 @Entity
-public class VEDirectMessage extends EntityBase {
-
-    private long timestamp;
+@Inheritance(strategy = InheritanceType.JOINED)
+public class VEDirectMessage extends Event {
 
     @Enumerated(EnumType.STRING)
     private VictronProduct productType;
@@ -70,36 +71,54 @@ public class VEDirectMessage extends EntityBase {
     public VEDirectMessage() {
     }
 
+    public VEDirectMessage(long timestamp, GenerationOrigin generationOrigin, String sourceClass, String sourceId, String eventId, VictronProduct productType, RelayState relayState, FirmwareVersion firmwareVersion, String serialNumber, Potential mainVoltage, Current mainCurrent, Potential panelVoltage, Power panelPower, Energy resettableYield, Energy yieldToday, Power maxPowerToday, Energy yieldYesterday, Power maxPowerYesterday, StateOfOperation stateOfOperation, TrackerOperation trackerOperation, LoadOutputState loadOutputState, ErrorCode errorCode, OffReason offReason) {
+        super(timestamp, generationOrigin, sourceClass, sourceId, eventId);
+        this.productType = productType;
+        this.relayState = relayState;
+        this.firmwareVersion = firmwareVersion;
+        this.serialNumber = serialNumber;
+        this.mainVoltage = mainVoltage;
+        this.mainCurrent = mainCurrent;
+        this.panelVoltage = panelVoltage;
+        this.panelPower = panelPower;
+        this.resettableYield = resettableYield;
+        this.yieldToday = yieldToday;
+        this.maxPowerToday = maxPowerToday;
+        this.yieldYesterday = yieldYesterday;
+        this.maxPowerYesterday = maxPowerYesterday;
+        this.stateOfOperation = stateOfOperation;
+        this.trackerOperation = trackerOperation;
+        this.loadOutputState = loadOutputState;
+        this.errorCode = errorCode;
+        this.offReason = offReason;
+    }
+
     public VEDirectMessage(kaze.victron.VEDirectMessage veDirectMessage) {
-        this.timestamp = veDirectMessage.getTimestamp().toEpochMilli();
-        this.productType = veDirectMessage.getProductType();
-        this.relayState = veDirectMessage.getRelayState();
-        this.firmwareVersion = veDirectMessage.getFirmwareVersion();
-        this.serialNumber = veDirectMessage.getSerialNumber();
-        this.mainVoltage = veDirectMessage.getMainVoltage();
-
-        this.mainCurrent = veDirectMessage.getMainCurrent();
-        this.panelVoltage = veDirectMessage.getPanelVoltage();
-        this.panelPower = veDirectMessage.getPanelPower();
-        this.resettableYield = veDirectMessage.getResettableYield();
-        this.yieldToday = veDirectMessage.getYieldToday();
-        this.maxPowerToday = veDirectMessage.getMaxPowerToday();
-        this.yieldYesterday = veDirectMessage.getYieldYesterday();
-        this.maxPowerYesterday = veDirectMessage.getMaxPowerYesterday();
-
-        this.stateOfOperation = veDirectMessage.getStateOfOperation();
-        this.trackerOperation = veDirectMessage.getTrackerOperation();
-        this.loadOutputState = veDirectMessage.getLoadOutputState();
-        this.errorCode = veDirectMessage.getErrorCode();
-        this.offReason = veDirectMessage.getOffReason();
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+        this(
+                veDirectMessage.getTimestamp().toEpochMilli(),
+                GenerationOrigin.NON_HUMAN,
+                kaze.victron.VEDirectMessage.class.getSimpleName(),
+                veDirectMessage.getSerialNumber(),
+                null,
+                veDirectMessage.getProductType(),
+                veDirectMessage.getRelayState(),
+                veDirectMessage.getFirmwareVersion(),
+                veDirectMessage.getSerialNumber(),
+                veDirectMessage.getMainVoltage(),
+                veDirectMessage.getMainCurrent(),
+                veDirectMessage.getPanelVoltage(),
+                veDirectMessage.getPanelPower(),
+                veDirectMessage.getResettableYield(),
+                veDirectMessage.getYieldToday(),
+                veDirectMessage.getMaxPowerToday(),
+                veDirectMessage.getYieldYesterday(),
+                veDirectMessage.getMaxPowerYesterday(),
+                veDirectMessage.getStateOfOperation(),
+                veDirectMessage.getTrackerOperation(),
+                veDirectMessage.getLoadOutputState(),
+                veDirectMessage.getErrorCode(),
+                veDirectMessage.getOffReason()
+        );
     }
 
     public VictronProduct getProductType() {
@@ -278,8 +297,7 @@ public class VEDirectMessage extends EntityBase {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         VEDirectMessage that = (VEDirectMessage) o;
-        return timestamp == that.timestamp &&
-                productType == that.productType &&
+        return  productType == that.productType &&
                 relayState == that.relayState &&
                 Objects.equals(firmwareVersion, that.firmwareVersion) &&
                 Objects.equals(serialNumber, that.serialNumber) &&
@@ -301,13 +319,12 @@ public class VEDirectMessage extends EntityBase {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), timestamp, productType, relayState, firmwareVersion, serialNumber, mainVoltage, mainCurrent, panelVoltage, panelPower, resettableYield, yieldToday, maxPowerToday, yieldYesterday, maxPowerYesterday, stateOfOperation, trackerOperation, loadOutputState, errorCode, offReason);
+        return Objects.hash(super.hashCode(), productType, relayState, firmwareVersion, serialNumber, mainVoltage, mainCurrent, panelVoltage, panelPower, resettableYield, yieldToday, maxPowerToday, yieldYesterday, maxPowerYesterday, stateOfOperation, trackerOperation, loadOutputState, errorCode, offReason);
     }
 
     @Override
     public String toString() {
         return "VEDirectMessage{" +
-                ", timestamp=" + timestamp +
                 ", productType=" + productType +
                 ", relayState=" + relayState +
                 ", firmwareVersion=" + firmwareVersion +
@@ -330,62 +347,4 @@ public class VEDirectMessage extends EntityBase {
         return veDirectMessage1 == null ? 0 : -1;
     }
 
-    /*
-    @Override
-    public String toString() {
-        return "VEDirectMessage{" +
-                "id=" + id +
-                ", timestamp=" + timestamp +
-                ", productType=" + productType +
-                ", relayState=" + relayState +
-                ", firmwareVersion=" + firmwareVersion +
-                ", serialNumber='" + serialNumber + '\'' +
-                ", mainVoltage=" + mainVoltage +
-                ", mainCurrent=" + mainCurrent +
-                ", panelVoltage=" + panelVoltage +
-                ", panelPower=" + panelPower +
-                ", stateOfOperation=" + stateOfOperation +
-                ", trackerOperation=" + trackerOperation +
-                ", loadOutputState=" + loadOutputState +
-                ", errorCode=" + errorCode +
-                ", offReason=" + offReason +
-                ", resettableYield=" + resettableYield +
-                ", yieldToday=" + yieldToday +
-                ", maxPowerToday=" + maxPowerToday +
-                ", yieldYesterday=" + yieldYesterday +
-                ", maxPowerYesterday=" + maxPowerYesterday +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        VEDirectMessage that = (VEDirectMessage) o;
-        return id == that.id &&
-                Objects.equals(timestamp, that.timestamp) &&
-                productType == that.productType &&
-                relayState == that.relayState &&
-                Objects.equals(firmwareVersion, that.firmwareVersion) &&
-                Objects.equals(serialNumber, that.serialNumber) &&
-                Objects.equals(mainVoltage, that.mainVoltage) &&
-                Objects.equals(mainCurrent, that.mainCurrent) &&
-                Objects.equals(panelVoltage, that.panelVoltage) &&
-                Objects.equals(panelPower, that.panelPower) &&
-                stateOfOperation == that.stateOfOperation &&
-                trackerOperation == that.trackerOperation &&
-                loadOutputState == that.loadOutputState &&
-                errorCode == that.errorCode &&
-                offReason == that.offReason &&
-                Objects.equals(resettableYield, that.resettableYield) &&
-                Objects.equals(yieldToday, that.yieldToday) &&
-                Objects.equals(maxPowerToday, that.maxPowerToday) &&
-                Objects.equals(yieldYesterday, that.yieldYesterday) &&
-                Objects.equals(maxPowerYesterday, that.maxPowerYesterday);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, timestamp, productType, relayState, firmwareVersion, serialNumber, mainVoltage, mainCurrent, panelVoltage, panelPower, stateOfOperation, trackerOperation, loadOutputState, errorCode, offReason, resettableYield, yieldToday, maxPowerToday, yieldYesterday, maxPowerYesterday);
-    }*/
 }

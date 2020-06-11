@@ -1,9 +1,6 @@
 package io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest;
 
-import io.freedriver.autonomy.jpa.entity.event.EventCoordinate;
-import io.freedriver.autonomy.jpa.entity.event.EventDescription;
 import io.freedriver.autonomy.jpa.entity.event.StateType;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEventType;
 
 import java.time.Instant;
 import java.util.Map;
@@ -144,26 +141,17 @@ public class JSTestEvent {
                 '}';
     }
 
+    public String locateSourceId() {
+        return getMetadata().getTitle();
+    }
+
     /**
      * Returns the source of the event/
      */
-    public EventCoordinate locate() {
-        return new EventCoordinate(
-                getMetadata().getTitle(),
-                (JSTestEventType.isButton(getJsTestEventType()) ?
-                        "BUTTON_" : "AXIS_") + getNumber()
-        );
+    public String locateEventId() {
+        return (JSTestEventType.isInitial(getJsTestEventType()) ?
+                StateType.INITIAL_STATE : StateType.CHANGE_STATE) + "/" +
+                ((JSTestEventType.isButton(getJsTestEventType()) ?
+                        "BUTTON_" : "AXIS_") + getNumber());
     }
-
-    /**
-     * Returns a description of the event.
-     */
-    public EventDescription describe() {
-        return new EventDescription(
-                JSTestEventType.isInitial(getJsTestEventType()) ?
-                        StateType.INITIAL_STATE : StateType.CHANGE_STATE,
-                JoystickEventType.of(this)
-        );
-    }
-
 }

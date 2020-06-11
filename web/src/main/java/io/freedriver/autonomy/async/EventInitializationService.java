@@ -151,7 +151,7 @@ public class EventInitializationService extends BaseService {
     }
 
     public void fireJSTestEvent(JSTestEvent jsTestEvent) {
-        if (jsTestEvent.locate().getSubject() != null) {
+        if (jsTestEvent.getMetadata().getTitle() != null) {
             try {
                 LOGGER.finest("Firing JSTestEvent " + jsTestEvent);
                 joystickEvents.fire(new JoystickEvent(Instant.now().toEpochMilli(), jsTestEvent));

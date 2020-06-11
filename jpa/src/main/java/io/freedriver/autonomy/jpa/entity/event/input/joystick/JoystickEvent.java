@@ -1,9 +1,7 @@
 package io.freedriver.autonomy.jpa.entity.event.input.joystick;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
-import io.freedriver.autonomy.jpa.entity.event.EventCoordinate;
-import io.freedriver.autonomy.jpa.entity.event.EventDescription;
-import io.freedriver.autonomy.jpa.entity.event.SourceType;
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
 
 import javax.persistence.*;
@@ -30,8 +28,10 @@ public class JoystickEvent extends Event {
     public JoystickEvent() {
     }
 
-    public JoystickEvent(long timestamp, EventCoordinate coordinate, EventDescription description, Long number, Long value, boolean initial, JoystickEventType joystickEventType) {
-        super(timestamp, coordinate, description, SourceType.HUMAN);
+    public JoystickEvent(long timestamp, GenerationOrigin generationOrigin, String sourceClass,
+                         String sourceId, String eventId, Long number, Long value, boolean initial,
+                         JoystickEventType joystickEventType) {
+        super(timestamp, generationOrigin, sourceClass, sourceId, eventId);
         this.number = number;
         this.value = value;
         this.initial = initial;
@@ -41,8 +41,10 @@ public class JoystickEvent extends Event {
     public JoystickEvent(long timestamp, JSTestEvent jsTestEvent) {
         this(
                 timestamp,
-                jsTestEvent.locate(),
-                jsTestEvent.describe(),
+                GenerationOrigin.NON_HUMAN,
+                JSTestEvent.class.getSimpleName(),
+                jsTestEvent.locateSourceId(),
+                jsTestEvent.locateEventId(),
                 jsTestEvent.getNumber(),
                 jsTestEvent.getValue(),
                 jsTestEvent.getJsTestEventType().isInitial(),

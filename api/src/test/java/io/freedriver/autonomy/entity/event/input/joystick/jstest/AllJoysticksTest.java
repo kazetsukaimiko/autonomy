@@ -80,9 +80,7 @@ public class AllJoysticksTest {
         JSTestReader.readEvents(simulate())
                 .forEach(jsTestEvent -> {
                     assertEquals(name, jsTestEvent.getMetadata().getTitle());
-                    assertEquals(name, jsTestEvent.locate().getSubject());
-                    assertEquals((JSTestEventType.isButton(jsTestEvent.getJsTestEventType()) ?
-                            "BUTTON_" : "AXIS_") + jsTestEvent.getNumber(), jsTestEvent.locate().getProperty());
+                    assertEquals(name, jsTestEvent.locateSourceId());
                 });
 
         List<JSTestEvent> jsTestEvents = JSTestReader.readEvents(simulate())

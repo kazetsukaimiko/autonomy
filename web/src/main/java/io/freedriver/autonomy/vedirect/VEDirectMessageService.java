@@ -10,7 +10,7 @@ import io.freedriver.autonomy.entity.view.ControllerTimeView;
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
-import io.freedriver.autonomy.service.crud.JPACrudService;
+import io.freedriver.autonomy.service.crud.EventCrudService;
 import io.freedriver.autonomy.util.Benchmark;
 import kaze.math.measurement.types.electrical.Energy;
 import kaze.math.measurement.types.electrical.Potential;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApplicationScoped // TODO EventService
-public class VEDirectMessageService extends JPACrudService<VEDirectMessage> {
+public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
     private static final Logger LOGGER = Logger.getLogger(VEDirectMessageService.class.getSimpleName());
 
     @Inject

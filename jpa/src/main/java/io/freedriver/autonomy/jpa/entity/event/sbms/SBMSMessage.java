@@ -1,17 +1,21 @@
 package io.freedriver.autonomy.jpa.entity.event.sbms;
 
 import com.electrodacus.bms.ErrorCode;
-import io.freedriver.autonomy.jpa.entity.event.*;
+import io.freedriver.autonomy.jpa.entity.event.Event;
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import kaze.math.measurement.types.electrical.Current;
 import kaze.math.measurement.types.electrical.Potential;
 import kaze.math.measurement.types.thermo.Temperature;
 
 import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.Table;
 import java.util.Objects;
 
 @Table
 @Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 public class SBMSMessage extends Event {
 
     private double soc;
@@ -36,36 +40,55 @@ public class SBMSMessage extends Event {
     private Current extCurrent;
     private int errorCodes;
 
+
+    public SBMSMessage(long timestamp, GenerationOrigin generationOrigin, String sourceClass, String sourceId, String eventId, double soc, Potential cellOne, Potential cellTwo, Potential cellThree, Potential cellFour, Potential cellFive, Potential cellSix, Potential cellSeven, Potential cellEight, Temperature internalTemperature, Temperature externalTemperature, boolean charging, boolean discharging, Current batteryCurrent, Current pvCurrent1, Current pvCurrent2, Current extCurrent, int errorCodes) {
+        super(timestamp, generationOrigin, sourceClass, sourceId, eventId);
+        this.soc = soc;
+        this.cellOne = cellOne;
+        this.cellTwo = cellTwo;
+        this.cellThree = cellThree;
+        this.cellFour = cellFour;
+        this.cellFive = cellFive;
+        this.cellSix = cellSix;
+        this.cellSeven = cellSeven;
+        this.cellEight = cellEight;
+        this.internalTemperature = internalTemperature;
+        this.externalTemperature = externalTemperature;
+        this.charging = charging;
+        this.discharging = discharging;
+        this.batteryCurrent = batteryCurrent;
+        this.pvCurrent1 = pvCurrent1;
+        this.pvCurrent2 = pvCurrent2;
+        this.extCurrent = extCurrent;
+        this.errorCodes = errorCodes;
+    }
+
     public SBMSMessage(com.electrodacus.bms.SBMSMessage message) {
-        super(
+        this(
                 message.getTimestamp().toEpochMilli(),
-                new EventCoordinate(message.getPath().toString(), "SBMS0"),
-                new EventDescription(StateType.MAINTAIN_STATE, "REPORT"),
-                SourceType.NON_HUMAN,
-                EventPriority.STANDARD);
-
-        this.soc = message.getSoc();
-        this.cellOne = message.getCellOne();
-        this.cellTwo = message.getCellTwo();
-        this.cellThree = message.getCellThree();
-        this.cellFour = message.getCellFour();
-        this.cellFive = message.getCellFive();
-        this.cellSix = message.getCellSix();
-        this.cellSeven = message.getCellSeven();
-        this.cellEight = message.getCellEight();
-
-        this.internalTemperature = message.getInternalTemperature();
-        this.externalTemperature = message.getExternalTemperature();
-
-        this.charging = message.isCharging();
-        this.discharging = message.isDischarging();
-
-        this.batteryCurrent = message.getBatteryCurrent();
-        this.pvCurrent1 = message.getPvCurrent1();
-        this.pvCurrent2 = message.getPvCurrent2();
-        this.extCurrent = message.getExtCurrent();
-        this.errorCodes = message.getErrorCodes().stream()
-            .collect(ErrorCode.encoding());
+                GenerationOrigin.NON_HUMAN,
+                com.electrodacus.bms.SBMSMessage.class.getSimpleName(),
+                message.getPath().toString(),
+                null,
+                message.getSoc(),
+                message.getCellOne(),
+                message.getCellTwo(),
+                message.getCellThree(),
+                message.getCellFour(),
+                message.getCellFive(),
+                message.getCellSix(),
+                message.getCellSeven(),
+                message.getCellEight(),
+                message.getInternalTemperature(),
+                message.getExternalTemperature(),
+                message.isCharging(),
+                message.isDischarging(),
+                message. getBatteryCurrent(),
+                message.getPvCurrent1(),
+                message.getPvCurrent2(),
+                message.getExtCurrent(),
+                message.getErrorCodes().stream().collect(ErrorCode.encoding())
+        );
     }
 
     public SBMSMessage() {

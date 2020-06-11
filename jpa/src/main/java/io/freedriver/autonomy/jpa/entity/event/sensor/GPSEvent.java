@@ -1,14 +1,18 @@
 package io.freedriver.autonomy.jpa.entity.event.sensor;
 
-import io.freedriver.autonomy.jpa.entity.event.*;
+import io.freedriver.autonomy.jpa.entity.event.Event;
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 
-import javax.persistence.Column;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-//@Table
-//@Entity
+@Table
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 public class GPSEvent extends Event {
+    private static final String GPS_SOURCE = "GPS_LOCATION";
+
     @Column
     private BigDecimal latitude;
 
@@ -18,8 +22,9 @@ public class GPSEvent extends Event {
     public GPSEvent() {
     }
 
-    public GPSEvent(long timestamp, EventCoordinate coordinate, EventDescription description, BigDecimal latitude, BigDecimal longitude) {
-        super(timestamp, coordinate, description, SourceType.NON_HUMAN);
+
+    public GPSEvent(long timestamp, GenerationOrigin generationOrigin, String sourceClass, String sourceId, String eventId, BigDecimal latitude, BigDecimal longitude) {
+        super(timestamp, generationOrigin, sourceClass, sourceId, eventId);
         this.latitude = latitude;
         this.longitude = longitude;
     }
@@ -27,11 +32,10 @@ public class GPSEvent extends Event {
     public GPSEvent(BigDecimal latitude, BigDecimal longitude) {
         this(
                 Instant.now().toEpochMilli(),
-                new EventCoordinate(null, "GPS_LOCATION"),
-                new EventDescription(StateType.CHANGE_STATE,
-                        "lat:" + latitude +
-                                ";lon:" + longitude
-                ),
+                GenerationOrigin.NON_HUMAN,
+                GPSEvent.class.getSimpleName(),
+                GPS_SOURCE,
+                null,
                 latitude, longitude
         );
     }
