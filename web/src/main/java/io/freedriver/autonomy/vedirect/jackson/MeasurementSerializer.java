@@ -3,7 +3,7 @@ package io.freedriver.autonomy.vedirect.jackson;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import kaze.math.measurement.types.Measurement;
+import io.freedriver.math.measurement.types.Measurement;
 
 import java.io.IOException;
 

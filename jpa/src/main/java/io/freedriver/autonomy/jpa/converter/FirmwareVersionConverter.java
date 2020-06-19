@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.jpa.converter;
 
-import kaze.victron.FirmwareVersion;
+import io.freedriver.victron.FirmwareVersion;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;

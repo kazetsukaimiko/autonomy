@@ -2,9 +2,9 @@ package io.freedriver.autonomy.vedirect;
 
 import io.freedriver.autonomy.cdi.qualifier.VEProduct;
 import io.freedriver.autonomy.service.ReportingService;
-import kaze.victron.VEDirectMessage;
-import kaze.victron.VictronDevice;
-import kaze.victron.VictronProduct;
+import io.freedriver.victron.VEDirectMessage;
+import io.freedriver.victron.VictronDevice;
+import io.freedriver.victron.VictronProduct;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;

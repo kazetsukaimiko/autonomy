@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.jpa.converter;
 
-import kaze.victron.FirmwareVersion;
+import io.freedriver.victron.FirmwareVersion;
 import org.junit.jupiter.api.Test;
 
 public class FirmwareVersionConverterTest {

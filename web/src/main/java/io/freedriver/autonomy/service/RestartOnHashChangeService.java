@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.service;
 
-import io.freedriver.util.crypt.CryptUtils;
-import io.freedriver.util.crypt.HashAlgorithms;
+import io.freedriver.base.util.crypt.CryptUtils;
+import io.freedriver.base.util.crypt.HashAlgorithms;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;

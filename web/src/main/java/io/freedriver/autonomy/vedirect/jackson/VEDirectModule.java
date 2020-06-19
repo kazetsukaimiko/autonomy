@@ -2,9 +2,9 @@ package io.freedriver.autonomy.vedirect.jackson;
 
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import kaze.math.measurement.types.Measurement;
-import kaze.math.measurement.types.electrical.*;
-import kaze.math.number.ScaledNumber;
+import io.freedriver.math.measurement.types.Measurement;
+import io.freedriver.math.measurement.types.electrical.*;
+import io.freedriver.math.number.ScaledNumber;
 
 import java.util.function.Function;
 

@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.jpa.converter.measurement;
 
-import kaze.math.UnitPrefix;
-import kaze.math.measurement.types.TemporalMeasurement;
+import io.freedriver.math.UnitPrefix;
+import io.freedriver.math.measurement.types.TemporalMeasurement;
 
 import java.math.BigDecimal;
 

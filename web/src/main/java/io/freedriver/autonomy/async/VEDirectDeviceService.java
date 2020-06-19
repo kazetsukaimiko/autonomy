@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.async;
 
-import com.electrodacus.bms.SBMS0Finder;
-import kaze.victron.VEDirectReader;
+import io.freedriver.electrodacus.sbms.SBMS0Finder;
+import io.freedriver.victron.VEDirectReader;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.io.IOException;

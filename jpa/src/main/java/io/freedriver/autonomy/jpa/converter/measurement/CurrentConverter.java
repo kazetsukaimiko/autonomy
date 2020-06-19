@@ -1,8 +1,8 @@
 package io.freedriver.autonomy.jpa.converter.measurement;
 
-import kaze.math.UnitPrefix;
-import kaze.math.measurement.types.electrical.Current;
-import kaze.math.number.ScaledNumber;
+import io.freedriver.math.UnitPrefix;
+import io.freedriver.math.measurement.types.electrical.Current;
+import io.freedriver.math.number.ScaledNumber;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;

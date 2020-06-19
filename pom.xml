@@ -15,9 +15,8 @@
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <junit.jupiter.version>5.5.2</junit.jupiter.version>
-    <kaze.victron.version>0.5.0</kaze.victron.version>
-    <primefaces.version>7.0</primefaces.version>
+    <!--<junit.jupiter.version>5.5.2</junit.jupiter.version>-->
+    <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
   </properties>
 
   <dependencyManagement>
@@ -31,9 +30,11 @@
       </dependency>
 
       <dependency>
-        <groupId>io.freedriver.ee</groupId>
-        <artifactId>ee-common</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <groupId>io.freedriver</groupId>
+        <artifactId>freedriver-parent</artifactId>
+        <version>${io.freedriver.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
       </dependency>
 
       <dependency>
@@ -52,12 +53,6 @@
         <groupId>io.freedriver.autonomy</groupId>
         <artifactId>jsonlink</artifactId>
         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>kaze.victron</groupId>
-        <artifactId>victron-java</artifactId>
-        <version>${kaze.victron.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

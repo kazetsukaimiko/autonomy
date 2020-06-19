@@ -2,15 +2,15 @@ package io.freedriver.autonomy.entity.math;
 
 import io.freedriver.autonomy.jpa.entity.math.SocRange;
 import io.freedriver.autonomy.jpa.entity.math.VoltageSoc;
-import kaze.math.measurement.types.electrical.Potential;
-import kaze.math.number.ScaledNumber;
+import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.math.number.ScaledNumber;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.stream.IntStream;
 
-import static kaze.math.UnitPrefix.ONE;
+import static io.freedriver.math.UnitPrefix.ONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SocRangeTest {

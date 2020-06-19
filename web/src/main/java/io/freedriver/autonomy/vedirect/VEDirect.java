@@ -4,8 +4,8 @@ import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.rest.VEDirectApi;
-import kaze.victron.VEDirectColumn;
-import kaze.victron.VictronDevice;
+import io.freedriver.victron.VEDirectColumn;
+import io.freedriver.victron.VictronDevice;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -62,7 +62,7 @@ public class VEDirect implements VEDirectApi {
                 ));
     }
 
-    public String keyOf(kaze.victron.VEDirectMessage message, VEDirectColumn column) {
+    public String keyOf(io.freedriver.victron.VEDirectMessage message, VEDirectColumn column) {
         Object o = column.getDefinition().getter().apply(message);
         return (o != null) ? String.valueOf(o) : "NULL";
     }

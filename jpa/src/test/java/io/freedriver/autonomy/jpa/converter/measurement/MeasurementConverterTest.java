@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.jpa.converter.measurement;
 
-import kaze.math.UnitPrefix;
-import kaze.math.measurement.types.Measurement;
+import io.freedriver.math.UnitPrefix;
+import io.freedriver.math.measurement.types.Measurement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

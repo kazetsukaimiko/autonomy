@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.entity.view;
 
-import kaze.victron.VictronDevice;
+import io.freedriver.victron.VictronDevice;
 
 public class ControllerView {
     private final VictronDevice device;

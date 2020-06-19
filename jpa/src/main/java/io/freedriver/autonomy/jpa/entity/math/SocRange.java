@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.jpa.entity.math;
 
-import kaze.math.measurement.types.electrical.Potential;
+import io.freedriver.math.measurement.types.electrical.Potential;
 
 import java.math.BigDecimal;
 import java.util.List;

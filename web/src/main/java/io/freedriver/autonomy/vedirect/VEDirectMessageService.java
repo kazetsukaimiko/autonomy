@@ -12,10 +12,10 @@ import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import io.freedriver.autonomy.service.crud.EventCrudService;
 import io.freedriver.autonomy.util.Benchmark;
-import kaze.math.measurement.types.electrical.Energy;
-import kaze.math.measurement.types.electrical.Potential;
-import kaze.math.measurement.types.electrical.Power;
-import kaze.victron.VictronDevice;
+import io.freedriver.math.measurement.types.electrical.Energy;
+import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.math.measurement.types.electrical.Power;
+import io.freedriver.victron.VictronDevice;
 import org.infinispan.Cache;
 
 import javax.enterprise.context.ApplicationScoped;

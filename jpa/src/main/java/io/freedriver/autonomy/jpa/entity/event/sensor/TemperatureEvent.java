@@ -2,7 +2,7 @@ package io.freedriver.autonomy.jpa.entity.event.sensor;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
-import kaze.math.measurement.types.thermo.Temperature;
+import io.freedriver.math.measurement.types.thermo.Temperature;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

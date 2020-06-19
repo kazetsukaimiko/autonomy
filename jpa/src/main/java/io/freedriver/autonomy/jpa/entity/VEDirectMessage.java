@@ -2,12 +2,12 @@ package io.freedriver.autonomy.jpa.entity;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
-import kaze.math.measurement.types.electrical.Current;
-import kaze.math.measurement.types.electrical.Energy;
-import kaze.math.measurement.types.electrical.Potential;
-import kaze.math.measurement.types.electrical.Power;
-import kaze.victron.*;
-import kaze.victron.vedirect.OffReason;
+import io.freedriver.math.measurement.types.electrical.Current;
+import io.freedriver.math.measurement.types.electrical.Energy;
+import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.math.measurement.types.electrical.Power;
+import io.freedriver.victron.*;
+import io.freedriver.victron.vedirect.OffReason;
 
 import javax.persistence.*;
 import java.time.Instant;
@@ -93,11 +93,11 @@ public class VEDirectMessage extends Event {
         this.offReason = offReason;
     }
 
-    public VEDirectMessage(kaze.victron.VEDirectMessage veDirectMessage) {
+    public VEDirectMessage(io.freedriver.victron.VEDirectMessage veDirectMessage) {
         this(
                 veDirectMessage.getTimestamp().toEpochMilli(),
                 GenerationOrigin.NON_HUMAN,
-                kaze.victron.VEDirectMessage.class.getSimpleName(),
+                io.freedriver.victron.VEDirectMessage.class.getSimpleName(),
                 veDirectMessage.getSerialNumber(),
                 null,
                 veDirectMessage.getProductType(),
@@ -267,8 +267,8 @@ public class VEDirectMessage extends Event {
     }
 
     @Transient
-    public kaze.victron.VEDirectMessage toNative() {
-        kaze.victron.VEDirectMessage nativeMessage = new kaze.victron.VEDirectMessage();
+    public io.freedriver.victron.VEDirectMessage toNative() {
+        io.freedriver.victron.VEDirectMessage nativeMessage = new io.freedriver.victron.VEDirectMessage();
         nativeMessage.setTimestamp(Instant.ofEpochMilli(getTimestamp()));
         nativeMessage.setProductType(getProductType());
         nativeMessage.setRelayState(getRelayState());

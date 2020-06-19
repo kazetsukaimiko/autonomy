@@ -4,12 +4,12 @@ import io.freedriver.autonomy.jpa.converter.FirmwareVersionConverter;
 import io.freedriver.autonomy.jpa.entity.EntityBase;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.vedirect.VEDirectMessageService;
-import kaze.math.measurement.types.electrical.Current;
-import kaze.math.measurement.types.electrical.Energy;
-import kaze.math.measurement.types.electrical.Potential;
-import kaze.math.measurement.types.electrical.Power;
-import kaze.math.number.ScaledNumber;
-import kaze.victron.*;
+import io.freedriver.math.measurement.types.electrical.Current;
+import io.freedriver.math.measurement.types.electrical.Energy;
+import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.math.measurement.types.electrical.Power;
+import io.freedriver.math.number.ScaledNumber;
+import io.freedriver.victron.*;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -77,7 +77,7 @@ public class VEDirectMessageServiceTest extends BaseITTest {
 
 
         // Make 1 minute's worth of data
-        List<kaze.victron.VEDirectMessage> messages = makeMessages(device, 60)
+        List<io.freedriver.victron.VEDirectMessage> messages = makeMessages(device, 60)
                 .collect(Collectors.toList());
 
         List<VEDirectMessage> jpaEntities = messages.stream()
@@ -98,14 +98,14 @@ public class VEDirectMessageServiceTest extends BaseITTest {
         //VEDirectMessage fromService = message
     }
 
-    public Stream<kaze.victron.VEDirectMessage> makeMessages(VictronDevice device, int count) {
+    public Stream<io.freedriver.victron.VEDirectMessage> makeMessages(VictronDevice device, int count) {
         Instant beginning = Instant.now().minus(Duration.ofSeconds(count));
         return IntStream.range(0, count)
                 .mapToObj(seconds -> makeMessage(device, beginning.plus(Duration.ofSeconds(seconds))));
     }
 
-    public kaze.victron.VEDirectMessage makeMessage(VictronDevice device, Instant forInstant) {
-        kaze.victron.VEDirectMessage message = new kaze.victron.VEDirectMessage();
+    public io.freedriver.victron.VEDirectMessage makeMessage(VictronDevice device, Instant forInstant) {
+        io.freedriver.victron.VEDirectMessage message = new io.freedriver.victron.VEDirectMessage();
 
         message.setTimestamp(forInstant);
 

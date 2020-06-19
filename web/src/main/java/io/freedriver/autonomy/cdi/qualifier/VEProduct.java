@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.cdi.qualifier;
 
 
-import kaze.victron.VictronProduct;
+import io.freedriver.victron.VictronProduct;
 
 import javax.enterprise.util.Nonbinding;
 import javax.inject.Qualifier;

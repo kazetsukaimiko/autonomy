@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.jpa.converter.measurement;
 
-import kaze.math.measurement.types.electrical.Current;
+import io.freedriver.math.measurement.types.electrical.Current;
 
 public class CurrentConverterTest extends MeasurementConverterTest<Current, CurrentConverter> {
     @Override

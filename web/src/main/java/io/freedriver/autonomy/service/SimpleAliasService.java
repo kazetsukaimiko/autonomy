@@ -5,11 +5,11 @@ import io.freedriver.autonomy.cdi.qualifier.ConnectorCache;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.rest.provider.ObjectMapperContextResolver;
 import io.freedriver.autonomy.rest.view.AliasView;
+import io.freedriver.base.util.file.DirectoryProviders;
 import io.freedriver.jsonlink.config.v2.Appliance;
 import io.freedriver.jsonlink.config.v2.Mapping;
 import io.freedriver.jsonlink.config.v2.Mappings;
 import io.freedriver.jsonlink.jackson.schema.v1.*;
-import io.freedriver.util.file.DirectoryProviders;
 import org.infinispan.Cache;
 
 import javax.enterprise.context.ApplicationScoped;

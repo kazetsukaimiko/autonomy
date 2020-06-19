@@ -2,7 +2,7 @@ package io.freedriver.autonomy.event.input.joystick.jstest;
 
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSMetadata;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.util.ProcessUtil;
+import io.freedriver.base.util.ProcessUtil;
 
 import java.io.File;
 import java.io.IOException;

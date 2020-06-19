@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.entity.view;
 
-import kaze.victron.StateOfOperation;
-import kaze.victron.vedirect.OffReason;
+import io.freedriver.victron.StateOfOperation;
+import io.freedriver.victron.vedirect.OffReason;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;

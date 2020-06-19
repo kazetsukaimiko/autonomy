@@ -3,8 +3,8 @@ package io.freedriver.autonomy.rest;
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
-import kaze.victron.VEDirectColumn;
-import kaze.victron.VictronDevice;
+import io.freedriver.victron.VEDirectColumn;
+import io.freedriver.victron.VictronDevice;
 
 import javax.ws.rs.*;
 import java.time.temporal.ChronoUnit;

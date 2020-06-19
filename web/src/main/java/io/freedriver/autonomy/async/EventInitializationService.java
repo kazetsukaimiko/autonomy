@@ -1,12 +1,12 @@
 package io.freedriver.autonomy.async;
 
-import com.electrodacus.bms.SBMS0Finder;
-import com.electrodacus.bms.SBMSMessage;
 import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import kaze.victron.VEDirectMessage;
-import kaze.victron.VEDirectReader;
+import io.freedriver.electrodacus.sbms.SBMS0Finder;
+import io.freedriver.electrodacus.sbms.SBMSMessage;
+import io.freedriver.victron.VEDirectMessage;
+import io.freedriver.victron.VEDirectReader;
 
 import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;

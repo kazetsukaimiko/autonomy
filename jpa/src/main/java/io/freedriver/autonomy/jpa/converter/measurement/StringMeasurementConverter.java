@@ -1,8 +1,8 @@
 package io.freedriver.autonomy.jpa.converter.measurement;
 
-import kaze.math.UnitPrefix;
-import kaze.math.measurement.types.Measurement;
-import kaze.math.measurement.units.SIElectricalUnit;
+import io.freedriver.math.UnitPrefix;
+import io.freedriver.math.measurement.types.Measurement;
+import io.freedriver.math.measurement.units.SIElectricalUnit;
 
 import javax.persistence.AttributeConverter;
 import java.math.BigDecimal;

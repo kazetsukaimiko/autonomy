@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.vedirect;
 
-import kaze.victron.VEDirectMessage;
+import io.freedriver.victron.VEDirectMessage;
 
 import java.time.Duration;
 import java.util.stream.Stream;

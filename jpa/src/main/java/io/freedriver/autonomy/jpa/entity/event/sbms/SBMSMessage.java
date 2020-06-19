@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.jpa.entity.event.sbms;
 
-import com.electrodacus.bms.ErrorCode;
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
-import kaze.math.measurement.types.electrical.Current;
-import kaze.math.measurement.types.electrical.Potential;
-import kaze.math.measurement.types.thermo.Temperature;
+import io.freedriver.electrodacus.sbms.ErrorCode;
+import io.freedriver.math.measurement.types.electrical.Current;
+import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.math.measurement.types.thermo.Temperature;
 
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
@@ -63,11 +63,11 @@ public class SBMSMessage extends Event {
         this.errorCodes = errorCodes;
     }
 
-    public SBMSMessage(com.electrodacus.bms.SBMSMessage message) {
+    public SBMSMessage(io.freedriver.electrodacus.sbms.SBMSMessage message) {
         this(
                 message.getTimestamp().toEpochMilli(),
                 GenerationOrigin.NON_HUMAN,
-                com.electrodacus.bms.SBMSMessage.class.getSimpleName(),
+                io.freedriver.electrodacus.sbms.SBMSMessage.class.getSimpleName(),
                 message.getPath().toString(),
                 null,
                 message.getSoc(),

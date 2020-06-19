@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.vedirect;
 
-import kaze.math.measurement.types.electrical.Potential;
-import kaze.victron.VEDirectMessage;
+import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.victron.VEDirectMessage;
 
 import java.math.BigDecimal;
 import java.util.Objects;

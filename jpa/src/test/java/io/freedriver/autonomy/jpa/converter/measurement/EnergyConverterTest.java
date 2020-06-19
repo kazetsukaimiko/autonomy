@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.jpa.converter.measurement;
 
-import kaze.math.measurement.types.electrical.Energy;
+import io.freedriver.math.measurement.types.electrical.Energy;
 
 public class EnergyConverterTest extends TemporalMeasurementConverterTest<Energy, EnergyConverter> {
     @Override
