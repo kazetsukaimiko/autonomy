@@ -36,9 +36,9 @@ public class VEDirectMessageServiceTest extends BaseITTest {
     private static final Random R = new Random(System.currentTimeMillis());
     private static final Duration ONE_HOUR = Duration.ofHours(1);
 
-    private double pvPower = 500;
+    private final double pvPower = 500;
     private double pvYield = 0d;
-    private double mainVoltage = 48;
+    private final double mainVoltage = 48;
     private Instant lastMessage = Instant.now();
 
     @Inject

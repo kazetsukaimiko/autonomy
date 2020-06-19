@@ -1,8 +1,3 @@
 thorntail:
-  h2-server:
-    base-directory: ~/.config/autonomy/
-    user-name: sa
-    password: sa
-    allowOthers: true
   jpa:
     default-datasource: autonomyjta
