@@ -124,13 +124,6 @@
       <artifactId>autonomy-api</artifactId>
     </dependency>
 
-    <!--
-    <dependency>
-      <groupId>kaze.victron</groupId>
-      <artifactId>victron-java</artifactId>
-    </dependency>
-    -->
-
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-core</artifactId>
@@ -160,7 +153,6 @@
 
 
     <!-- JDBC -->
-
     <dependency>
       <groupId>org.mariadb.jdbc</groupId>
       <artifactId>mariadb-java-client</artifactId>
@@ -177,14 +169,12 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit.jupiter.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit.jupiter.version}</version>
       <scope>test</scope>
     </dependency>
 

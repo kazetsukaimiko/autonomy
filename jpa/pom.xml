@@ -17,9 +17,15 @@
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>io.freedriver</groupId>
-            <artifactId>victron</artifactId>
+            <artifactId>math-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.freedriver</groupId>
+            <artifactId>victron-jpa</artifactId>
         </dependency>
 
         <dependency>

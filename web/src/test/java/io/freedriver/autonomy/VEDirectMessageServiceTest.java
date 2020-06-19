@@ -1,6 +1,5 @@
 package io.freedriver.autonomy;
 
-import io.freedriver.autonomy.jpa.converter.FirmwareVersionConverter;
 import io.freedriver.autonomy.jpa.entity.EntityBase;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.vedirect.VEDirectMessageService;
@@ -10,6 +9,7 @@ import io.freedriver.math.measurement.types.electrical.Potential;
 import io.freedriver.math.measurement.types.electrical.Power;
 import io.freedriver.math.number.ScaledNumber;
 import io.freedriver.victron.*;
+import io.freedriver.victron.jpa.FirmwareVersionConverter;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;

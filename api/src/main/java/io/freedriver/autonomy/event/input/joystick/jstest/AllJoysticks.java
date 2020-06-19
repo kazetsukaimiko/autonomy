@@ -85,7 +85,7 @@ public class AllJoysticks implements AutoCloseable {
      * Continuously poll for new joysticks, and add them to the pool.
      */
     public void poll() {
-        LOGGER.info("Polling Joysticks.");
+        LOGGER.info("Watching for Joysticks.");
         while (open) {
             populate();
             Delayable.wait(Duration.ofMillis(100));
@@ -107,10 +107,10 @@ public class AllJoysticks implements AutoCloseable {
     private boolean shouldCreateReader(Path path) {
         if (!getActiveJoysticks().containsKey(path)) {
             if (!getFailedJoystickMap().containsKey(path)) {
-                System.out.println("New joystick: " + path);
+                LOGGER.info("New joystick: " + path);
                 return true;
             } else {
-                System.out.println("Failed joystick: "  + path);
+                LOGGER.info("Failed joystick: "  + path);
             }
         }
         return false;

@@ -43,7 +43,7 @@ public class ConnectorTest {
     public void identifyConnectorsByUSB() throws UsbException {
         getAllUsbDevices(UsbHostManager.getUsbServices()
                 .getRootUsbHub())
-                .forEach(d -> System.out.println(d));
+                .forEach(System.out::println);
     }
 
     @SuppressWarnings("unchecked")
