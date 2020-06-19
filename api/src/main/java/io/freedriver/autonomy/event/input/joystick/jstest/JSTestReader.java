@@ -124,8 +124,8 @@ public class JSTestReader {
             } else if (driverMatcher.matches()) {
                 jsMetadata.setDriverVersion(driverMatcher.group(DRIVERVER));
             } else {
-                LOGGER.warning("Not details:");
-                LOGGER.log(Level.WARNING, event);
+                LOGGER.finest("Not details:");
+                LOGGER.log(Level.FINEST, event);
             }
 
             return true;
