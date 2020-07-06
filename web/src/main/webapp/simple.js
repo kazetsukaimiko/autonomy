@@ -5,9 +5,7 @@ function logger(log) {
 
 function loadAllBoards() {
     const ajax = fs.ajax()
-        //.POST("/rest/workspaces")
-        //.GET("/rest/simple/id/"+uuid)
-        .GET("http://hakobune.local:8080/rest/simple/")
+        .GET("/rest/simple/")
         .accept("application/json")
         .handle(200, function (xhr, request) {
             const boards = JSON.parse(xhr.responseText);
@@ -32,9 +30,7 @@ function loadAllBoards() {
 function loadBoard(uuid) {
     //logger("Loading board " + uuid)
     const ajax = fs.ajax()
-        //.POST("/rest/workspaces")
-        //.GET("/rest/simple/id/"+uuid)
-        .GET("http://hakobune.local:8080/rest/simple/id/" + uuid)
+        .GET("/rest/simple/id/"+uuid)
         .accept("application/json")
         .handle(200, function (xhr, request) {
             //window.location.hash = query;
@@ -53,9 +49,7 @@ function loadBoard(uuid) {
 function loadVEDirectDevices() {
     logger("Loading devices...")
     const ajax = fs.ajax()
-        //.POST("/rest/workspaces")
-        //.GET("/rest/vedirect/device/")
-        .GET("http://hakobune.local:8080/rest/vedirect/device/")
+        .GET("/rest/vedirect/device/")
         .accept("application/json")
         .handle(200, function (xhr, request) {
             const devices = JSON.parse(xhr.responseText);
@@ -78,9 +72,7 @@ function loadVEDirectDevices() {
 function loadVEDirectDevice(serialNumber, type) {
     logger("Loading VEDirect Device Serial: " + serialNumber);
     const ajax = fs.ajax()
-        //.POST("/rest/workspaces")
-        //.GET("/rest/vedirect/device/" + serialNumber)
-        .GET("http://hakobune.local:8080/rest/vedirect/device/" + serialNumber)
+        .GET("/rest/vedirect/device/" + serialNumber)
         .accept("application/json")
         .handle(200, function (xhr, request) {
             const controllerView = JSON.parse(xhr.responseText);
@@ -98,8 +90,7 @@ function setState(uuid, key, state) {
     const payload = {};
     payload[key] = state;
     const ajax = fs.ajax()
-        .POST("http://hakobune.local:8080/rest/simple/id/" + uuid)
-        //.POST("/rest/simple/id/"+uuid)
+        .POST("/rest/simple/id/"+uuid)
         .accept("application/json")
         .handle(200, function (xhr, request) {
             //window.location.hash = query;

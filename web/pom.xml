@@ -57,7 +57,7 @@
               <target>
                 <echo>Installing Autonomy</echo>
                 <copy todir="${user.home}/.local/autonomy" overwrite="true" flatten="true">
-                  <fileset dir="${build.directory}/" includes="autonomy-thorntail.jar" />
+                  <fileset dir="${project.build.directory}/" includes="autonomy-thorntail.jar" />
                   <fileset dir="${basedir}/src/main/systemd/" includes="*.yml" />
 
                 </copy>
@@ -115,7 +115,7 @@
     </dependency>
 
     <dependency>
-      <groupId>io.freedriver.autonomy</groupId>
+      <groupId>io.freedriver</groupId>
       <artifactId>jsonlink</artifactId>
     </dependency>
 

@@ -19,7 +19,7 @@
         </dependency>
 
         <dependency>
-            <groupId>io.freedriver.autonomy</groupId>
+            <groupId>io.freedriver</groupId>
             <artifactId>jsonlink</artifactId>
         </dependency>
 

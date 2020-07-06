@@ -8,7 +8,13 @@ import io.freedriver.math.measurement.types.electrical.Energy;
 import io.freedriver.math.measurement.types.electrical.Potential;
 import io.freedriver.math.measurement.types.electrical.Power;
 import io.freedriver.math.number.ScaledNumber;
-import io.freedriver.victron.*;
+import io.freedriver.victron.FirmwareVersion;
+import io.freedriver.victron.LoadOutputState;
+import io.freedriver.victron.RelayState;
+import io.freedriver.victron.StateOfOperation;
+import io.freedriver.victron.TrackerOperation;
+import io.freedriver.victron.VictronDevice;
+import io.freedriver.victron.VictronProduct;
 import io.freedriver.victron.jpa.FirmwareVersionConverter;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -54,8 +60,8 @@ public class VEDirectMessageServiceTest extends BaseITTest {
                 .addAsResource("META-INF/persistence.xml") // TODO Test xml -> drop and create. Prod -> create.
                 .addPackages(true, FirmwareVersionConverter.class.getPackage())
                 .addPackages(true, VEDirectMessageService.class.getPackage())
-                .addPackages(true, "kaze.math")
-                .addPackages(true, "kaze.victron")
+                .addPackages(true, "io.freedriver.math")
+                .addPackages(true, "io.freedriver.victron")
                 .addPackages(true, "io.freedriver.autonomy.jpa")
                 .addPackages(true, EntityBase.class.getPackage())
                 ;

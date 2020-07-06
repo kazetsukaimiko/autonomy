@@ -48,17 +48,10 @@
         <artifactId>autonomy-jpa</artifactId>
         <version>${project.version}</version>
       </dependency>
-
-      <dependency>
-        <groupId>io.freedriver.autonomy</groupId>
-        <artifactId>jsonlink</artifactId>
-        <version>${project.version}</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
   <modules>
-    <module>jsonlink</module>
     <module>jpa</module>
     <module>api</module>
     <module>web</module>
@@ -76,16 +69,4 @@
       </snapshots>
     </repository>
   </repositories>
-
-  <build>
-    <pluginManagement>
-      <plugins>
-          <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.22.2</version>
-          </plugin>
-        </plugins>
-    </pluginManagement>
-  </build>
-
 </project>

@@ -23,7 +23,7 @@ public class Timing {
         return action((i) -> runnable.run());
     }
 
-    static Timing action(Consumer consumer) {
+    static Timing action(Consumer<Integer> consumer) {
         return new Timing(consumer, 1, null);
     }
 

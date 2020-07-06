@@ -88,6 +88,7 @@ public class InterfaceBuilderParadigm<ENTITY> {
      * We're going to setup the return values for the handler here based on the entity column.
      * Note that while the generics upstream were erased, they're present here.
      */
+    @SuppressWarnings("unchecked") // We actually do check
     private <FIELD> void populateColumnData(ColumnConfiguration<ENTITY, FIELD> entityColumn, ResultInvocationHandler<ENTITY> handler) {
 
         // Not needed here- just for logging.
