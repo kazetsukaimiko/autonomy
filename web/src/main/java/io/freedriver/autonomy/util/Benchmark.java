@@ -38,6 +38,8 @@ public class Benchmark {
         T t;
         try {
             t = callable.call();
+        } catch (RuntimeException rte) {
+            throw rte;
         } catch (Exception e) {
             throw new BenchmarkException("Exception Benchmarking", e);
         }
