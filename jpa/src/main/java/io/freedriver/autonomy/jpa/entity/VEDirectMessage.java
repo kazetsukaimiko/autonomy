@@ -2,6 +2,10 @@ package io.freedriver.autonomy.jpa.entity;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
+import io.freedriver.math.jpa.converter.measurement.CurrentConverter;
+import io.freedriver.math.jpa.converter.measurement.EnergyConverter;
+import io.freedriver.math.jpa.converter.measurement.PotentialConverter;
+import io.freedriver.math.jpa.converter.measurement.PowerConverter;
 import io.freedriver.math.measurement.types.electrical.Current;
 import io.freedriver.math.measurement.types.electrical.Energy;
 import io.freedriver.math.measurement.types.electrical.Potential;
@@ -51,22 +55,31 @@ public class VEDirectMessage extends Event {
 
     private String serialNumber;
 
+    @Convert(converter = PotentialConverter.class)
     private Potential mainVoltage;
 
+    @Convert(converter = CurrentConverter.class)
     private Current mainCurrent;
 
+    @Convert(converter = PotentialConverter.class)
     private Potential panelVoltage;
 
+    @Convert(converter = PowerConverter.class)
     private Power panelPower;
 
+    @Convert(converter = EnergyConverter.class)
     private Energy resettableYield;
 
+    @Convert(converter = EnergyConverter.class)
     private Energy yieldToday;
 
+    @Convert(converter = PowerConverter.class)
     private Power maxPowerToday;
 
+    @Convert(converter = EnergyConverter.class)
     private Energy yieldYesterday;
 
+    @Convert(converter = PowerConverter.class)
     private Power maxPowerYesterday;
 
     @Enumerated(EnumType.STRING)

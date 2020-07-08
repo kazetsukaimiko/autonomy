@@ -3,10 +3,14 @@ package io.freedriver.autonomy.jpa.entity.event.sbms;
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import io.freedriver.electrodacus.sbms.ErrorCode;
+import io.freedriver.math.jpa.converter.measurement.CurrentConverter;
+import io.freedriver.math.jpa.converter.measurement.PotentialConverter;
+import io.freedriver.math.jpa.converter.measurement.TemperatureConverter;
 import io.freedriver.math.measurement.types.electrical.Current;
 import io.freedriver.math.measurement.types.electrical.Potential;
 import io.freedriver.math.measurement.types.thermo.Temperature;
 
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -19,25 +23,41 @@ import java.util.Objects;
 public class SBMSMessage extends Event {
 
     private double soc;
+
+    @Convert(converter = PotentialConverter.class)
     private Potential cellOne;
+    @Convert(converter = PotentialConverter.class)
     private Potential cellTwo;
+    @Convert(converter = PotentialConverter.class)
     private Potential cellThree;
+    @Convert(converter = PotentialConverter.class)
     private Potential cellFour;
+    @Convert(converter = PotentialConverter.class)
     private Potential cellFive;
+    @Convert(converter = PotentialConverter.class)
     private Potential cellSix;
+    @Convert(converter = PotentialConverter.class)
     private Potential cellSeven;
+    @Convert(converter = PotentialConverter.class)
     private Potential cellEight;
 
+    @Convert(converter = TemperatureConverter.class)
     private Temperature internalTemperature;
+    @Convert(converter = TemperatureConverter.class)
     private Temperature externalTemperature;
 
     private boolean charging;
     private boolean discharging;
 
+    @Convert(converter = CurrentConverter.class)
     private Current batteryCurrent;
+    @Convert(converter = CurrentConverter.class)
     private Current pvCurrent1;
+    @Convert(converter = CurrentConverter.class)
     private Current pvCurrent2;
+    @Convert(converter = CurrentConverter.class)
     private Current extCurrent;
+
     private int errorCodes;
 
 
