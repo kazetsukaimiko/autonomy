@@ -28,7 +28,11 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import javax.transaction.Transactional;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -137,11 +141,23 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
             Tuple t = entityManager.createQuery(cq)
                     .getSingleResult();
             return new ControllerHistoryView(
-                    t.get(0, Power.class).doubleValue(),
-                    t.get(1, Potential.class).doubleValue(),
-                    t.get(2, Potential.class).doubleValue(),
-                    t.get(3, Energy.class).doubleValue());
+                    Optional.ofNullable(t.get(0, Power.class))
+                            .map(Number::doubleValue)
+                            .orElse(0d),
+                    Optional.ofNullable(t.get(1, Potential.class))
+                            .map(Number::doubleValue)
+                            .orElse(0d),
+                    Optional.ofNullable(t.get(2, Potential.class))
+                            .map(Number::doubleValue)
+                            .orElse(0d),
+                    Optional.ofNullable(t.get(3, Energy.class))
+                            .map(Number::doubleValue)
+                            .orElse(0d));
         });
+    }
+
+    public static <T> T orDefault(T in, T alt) {
+        return in != null ? in : alt;
     }
 
     public ControllerTimeView getControllerTimeViewForToday(VictronDevice device) {
