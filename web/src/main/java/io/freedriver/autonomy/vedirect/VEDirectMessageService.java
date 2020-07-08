@@ -156,10 +156,6 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
         });
     }
 
-    public static <T> T orDefault(T in, T alt) {
-        return in != null ? in : alt;
-    }
-
     public ControllerTimeView getControllerTimeViewForToday(VictronDevice device) {
         return timeViewCache.computeIfAbsent(new CacheKey<>(device, ControllerTimeView.class), k -> {
             CriteriaBuilder cb = entityManager.getCriteriaBuilder();
