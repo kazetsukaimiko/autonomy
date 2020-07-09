@@ -16,7 +16,14 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.WebApplicationException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,6 +55,16 @@ public class ConnectorService {
      * INTERNALS / HELPERS
      */
     private List<Connector> getAllConnectors() {
+        System.out.println("Active Connectors");
+        ACTIVE_CONNECTORS.stream()
+                .map(Connector::device)
+                .forEach(System.out::println);
+        System.out.println("Failed Connectors");
+        Connectors.getFailedConnectors()
+                .keySet()
+                .stream()
+                .forEach(System.out::println);
+
         // Remove existing closed.
         List<Connector> closed = ACTIVE_CONNECTORS.stream()
                 .filter(Connector::isClosed)
