@@ -30,7 +30,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * The service by which
+ * The service by which we interact with connectors.
  */
 @ApplicationScoped
 public class ConnectorService {
@@ -55,16 +55,6 @@ public class ConnectorService {
      * INTERNALS / HELPERS
      */
     private List<Connector> getAllConnectors() {
-        System.out.println("Active Connectors");
-        ACTIVE_CONNECTORS.stream()
-                .map(Connector::device)
-                .forEach(System.out::println);
-        System.out.println("Failed Connectors");
-        Connectors.getFailedConnectors()
-                .keySet()
-                .stream()
-                .forEach(System.out::println);
-
         // Remove existing closed.
         List<Connector> closed = ACTIVE_CONNECTORS.stream()
                 .filter(Connector::isClosed)
