@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.rest;
+package io.freedriver.autonomy.jaxrs.endpoint;
 
 import javax.ws.rs.POST;
 

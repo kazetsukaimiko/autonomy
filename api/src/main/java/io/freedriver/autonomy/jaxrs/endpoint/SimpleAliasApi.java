@@ -1,6 +1,6 @@
-package io.freedriver.autonomy.rest;
+package io.freedriver.autonomy.jaxrs.endpoint;
 
-import io.freedriver.autonomy.rest.view.AliasView;
+import io.freedriver.autonomy.jaxrs.view.AliasView;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;

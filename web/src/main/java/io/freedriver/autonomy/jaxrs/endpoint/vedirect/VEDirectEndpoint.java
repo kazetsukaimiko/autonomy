@@ -1,9 +1,10 @@
-package io.freedriver.autonomy.vedirect;
+package io.freedriver.autonomy.jaxrs.endpoint.vedirect;
 
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
+import io.freedriver.autonomy.jaxrs.endpoint.VEDirectApi;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
-import io.freedriver.autonomy.rest.VEDirectApi;
+import io.freedriver.autonomy.vedirect.VEDirectMessageService;
 import io.freedriver.victron.VEDirectColumn;
 import io.freedriver.victron.VictronDevice;
 
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RequestScoped
-public class VEDirect implements VEDirectApi {
+public class VEDirectEndpoint implements VEDirectApi {
     @Inject
     private VEDirectMessageService messageService;
 

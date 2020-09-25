@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.rest;
+package io.freedriver.autonomy.jaxrs.endpoint.config;
 
 import io.freedriver.jsonlink.config.ConnectorConfig;
 

@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.rest;
+package io.freedriver.autonomy.jaxrs.endpoint;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 

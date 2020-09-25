@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.rest;
+package io.freedriver.autonomy.jaxrs;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;

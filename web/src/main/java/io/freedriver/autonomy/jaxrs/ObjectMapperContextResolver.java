@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.rest.provider;
+package io.freedriver.autonomy.jaxrs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.freedriver.autonomy.vedirect.jackson.VEDirectModule;

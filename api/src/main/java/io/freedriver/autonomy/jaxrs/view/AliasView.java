@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.rest.view;
+package io.freedriver.autonomy.jaxrs.view;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

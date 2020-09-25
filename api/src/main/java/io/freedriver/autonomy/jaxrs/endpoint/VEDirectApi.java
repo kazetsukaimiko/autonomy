@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.rest;
+package io.freedriver.autonomy.jaxrs.endpoint;
 
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
@@ -6,7 +6,11 @@ import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.victron.VEDirectColumn;
 import io.freedriver.victron.VictronDevice;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;

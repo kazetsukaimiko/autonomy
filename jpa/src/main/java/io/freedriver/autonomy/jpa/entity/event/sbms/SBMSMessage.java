@@ -8,16 +8,28 @@ import io.freedriver.math.jpa.converter.measurement.PotentialConverter;
 import io.freedriver.math.jpa.converter.measurement.TemperatureConverter;
 import io.freedriver.math.measurement.types.electrical.Current;
 import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.math.measurement.types.electrical.Power;
 import io.freedriver.math.measurement.types.thermo.Temperature;
+import io.freedriver.math.number.NumberOperations;
+import io.freedriver.math.number.ScaledNumber;
 
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.Table;
 import java.util.Objects;
+import java.util.stream.Stream;
 
-@Table
+@Table(
+        indexes = {
+                @Index(columnList = "TIMESTAMP"),
+                @Index(columnList = "SOURCEID"),
+                @Index(columnList = "OFFREASON"),
+                @Index(columnList = "SERIALNUMBER,PRODUCTTYPE")
+        }
+)
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 public class SBMSMessage extends Event {
@@ -256,6 +268,24 @@ public class SBMSMessage extends Event {
 
     public void setErrorCodes(int errorCodes) {
         this.errorCodes = errorCodes;
+    }
+
+    public Potential totalVoltage() {
+        return Stream.of(
+                getCellOne(),
+                getCellTwo(),
+                getCellThree(),
+                getCellFour(),
+                getCellFive(),
+                getCellSix(),
+                getCellSeven(),
+                getCellEight())
+                .reduce(new Potential(ScaledNumber.ZERO), NumberOperations::add);
+    }
+
+    public Power totalPower() {
+        return totalVoltage()
+                .toPower(getBatteryCurrent());
     }
 
     @Override

@@ -31,8 +31,6 @@ import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -247,10 +245,6 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
         })), "Last VEDirectMessage for " + device);
     }
 
-    public static Instant getStartOfDay() {
-        LocalDateTime localDateTime = LocalDateTime.now().toLocalDate().atStartOfDay();
-        return localDateTime.toInstant(ZoneOffset.UTC);
-    }
 
     @Override
     public Class<VEDirectMessage> getEntityClass() {
