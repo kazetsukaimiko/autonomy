@@ -1,0 +1,14 @@
+[Unit]
+Description=Autonomy Daemon
+After=network.target
+Requires=h2.service
+
+[Service]
+ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -jar %h/.local/autonomy/autonomy-thorntail.jar -s%h/.config/autonomy/datasource-config.yml -DrestartOn=%h/.local/autonomy/autonomy-thorntail.jar -DrestartCommand="%h/bin/restartAutonomy.sh"
+ExecStop=/bin/kill $MAINPID
+ExecStopPost=systemctl --user stop h2
+KillMode=control-group
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

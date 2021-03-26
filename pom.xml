@@ -1,72 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.freedriver.autonomy</groupId>
   <artifactId>autonomy</artifactId>
-  <name>Autonomy</name>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-
+  <name>Autonomy</name>
+  <modules>
+    <module>jpa</module>
+    <module>api</module>
+    <module>quarkus</module>
+  </modules>
   <properties>
-    <version.thorntail>2.6.0.Final</version.thorntail>
+    <failOnMissingWebXml>false</failOnMissingWebXml>
+    <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
-    <failOnMissingWebXml>false</failOnMissingWebXml>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-    <!--<junit.jupiter.version>5.5.2</junit.jupiter.version>-->
-    <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
+    <version.thorntail>2.6.0.Final</version.thorntail>
   </properties>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>io.thorntail</groupId>
         <artifactId>bom-all</artifactId>
         <version>${version.thorntail}</version>
-        <scope>import</scope>
         <type>pom</type>
+        <scope>import</scope>
       </dependency>
-
       <dependency>
         <groupId>io.freedriver</groupId>
         <artifactId>freedriver-parent</artifactId>
         <version>${io.freedriver.version}</version>
-        <scope>import</scope>
         <type>pom</type>
+        <scope>import</scope>
       </dependency>
-
       <dependency>
         <groupId>io.freedriver.autonomy</groupId>
         <artifactId>autonomy-api</artifactId>
         <version>${project.version}</version>
       </dependency>
-
       <dependency>
         <groupId>io.freedriver.autonomy</groupId>
         <artifactId>autonomy-jpa</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-quarkus</artifactId>
+        <version>${project.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
-
-  <modules>
-    <module>jpa</module>
-    <module>api</module>
-    <module>web</module>
-  </modules>
-
   <repositories>
     <repository>
-      <id>oss.sonatype.org-snapshot</id>
-      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
       <releases>
         <enabled>false</enabled>
       </releases>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
+      <id>oss.sonatype.org-snapshot</id>
+      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
   </repositories>
 </project>

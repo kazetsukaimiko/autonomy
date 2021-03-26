@@ -25,9 +25,7 @@ import java.util.stream.Stream;
 @Table(
         indexes = {
                 @Index(columnList = "TIMESTAMP"),
-                @Index(columnList = "SOURCEID"),
-                @Index(columnList = "OFFREASON"),
-                @Index(columnList = "SERIALNUMBER,PRODUCTTYPE")
+                @Index(columnList = "SOURCEID")
         }
 )
 @Entity

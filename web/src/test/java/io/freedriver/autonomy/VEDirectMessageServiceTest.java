@@ -57,7 +57,7 @@ public class VEDirectMessageServiceTest extends BaseITTest {
 
                 .addPackages(false, Autonomy.PACKAGE)
                 .addAsResource("project-defaults.yml") // TODO Test yaml with memory only
-                .addAsResource("META-INF/persistence.xml") // TODO Test xml -> drop and create. Prod -> create.
+                .addAsResource("META-INF/autonomy-pu.xml") // TODO Test xml -> drop and create. Prod -> create.
                 .addPackages(true, FirmwareVersionConverter.class.getPackage())
                 .addPackages(true, VEDirectMessageService.class.getPackage())
                 .addPackages(true, "io.freedriver.math")
