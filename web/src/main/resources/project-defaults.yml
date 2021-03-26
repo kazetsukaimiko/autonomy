@@ -1,3 +1,0 @@
-thorntail:
-  jpa:
-    default-datasource: autonomyjta
