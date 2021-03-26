@@ -150,7 +150,7 @@
 
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.8</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>copy</id>
@@ -159,8 +159,10 @@
                             <target>
                                 <echo>Installing Autonomy</echo>
                                 <copy todir="${user.home}/.local/autonomy" overwrite="true" flatten="true">
-
                                     <fileset dir="${project.build.directory}/quarkus-app/" includes="*"/>
+                                </copy>
+                                <copy todir="${user.home}/.local/autonomy/" overwrite="true" flatten="false">
+                                    <fileset dir="${project.build.directory}/quarkus-app/" includes="**"/>
                                 </copy>
                                 <copy todir="${user.home}/.local/share/systemd/user/" overwrite="true"
                                       flatten="true">
