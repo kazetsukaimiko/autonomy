@@ -1,9 +1,10 @@
 package io.freedriver.autonomy.service;
 
 public class SensorValues {
-    private int min = 0;
-    private int raw = 0;
-    private int max = 0;
+    private int min = -1;
+    private int raw = -1;
+    private int max = -1;
+    private float percentage = -1;
 
     public SensorValues() {
     }
@@ -32,14 +33,25 @@ public class SensorValues {
         this.max = max;
     }
 
+    public float getPercentage() {
+        return percentage;
+    }
+
+    public void setPercentage(float percentage) {
+        this.percentage = percentage;
+    }
+
     public SensorValues apply(int value) {
-        if (value > max) {
+        if (value > max || max == -1) {
             max = value;
         }
-        if (value < min) {
+        if (value < min || min == -1) {
             min = value;
         }
         raw = value;
+        if (min != -1 && max != -1 && value != -1) {
+            percentage = (value - min) / (max - min);
+        }
         return this;
     }
 }

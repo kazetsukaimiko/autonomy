@@ -207,6 +207,8 @@ public class SimpleAliasService {
                 .put(analogSensor.getName(), sensorValues.getMin());
         view.getSensorMaxes()
                 .put(analogSensor.getName(), sensorValues.getMax());
+        view.getSensorPercentages()
+                .put(analogSensor.getName(), sensorValues.getPercentage());
     }
 
     public Optional<AnalogSensor> getAnalogSensorByPin(Mapping mapping, PinCoordinate coordinate) {
