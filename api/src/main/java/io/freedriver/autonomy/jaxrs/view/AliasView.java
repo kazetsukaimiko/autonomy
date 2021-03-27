@@ -11,7 +11,7 @@ public class AliasView {
     Map<String, Integer> sensors = new LinkedHashMap<>();
     Map<String, Integer> sensorMins = new LinkedHashMap<>();
     Map<String, Integer> sensorMaxes = new LinkedHashMap<>();
-    Map<String, Integer> sensorPercentages = new LinkedHashMap<>();
+    Map<String, Float> sensorPercentages = new LinkedHashMap<>();
 
     public AliasView() {
     }
@@ -64,11 +64,11 @@ public class AliasView {
         this.sensorMaxes = sensorMaxes;
     }
 
-    public Map<String, Integer> getSensorPercentages() {
+    public Map<String, Float> getSensorPercentages() {
         return sensorPercentages;
     }
 
-    public void setSensorPercentages(Map<String, Integer> sensorPercentages) {
+    public void setSensorPercentages(Map<String, Float> sensorPercentages) {
         this.sensorPercentages = sensorPercentages;
     }
 }
