@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.Connectors;
 import io.freedriver.jsonlink.jackson.JsonLinkModule;
+import io.freedriver.jsonlink.jackson.schema.v1.AnalogRead;
 import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
@@ -28,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The service by which we interact with connectors.
@@ -99,10 +101,17 @@ public class ConnectorService {
                 .orElseThrow(() -> new WebApplicationException("Board not found, present devices: " + ACTIVE_CONNECTORS.stream().map(Connector::device).collect(Collectors.joining(",")), 404));
     }
 
+    @Deprecated
     public synchronized Map<Identifier, Boolean> readDigital(UUID boardId, Collection<Identifier> pins) {
         return send(boardId, pins.stream()
                 .reduce(new Request(), Request::digitalRead, (a, b) -> a))
                 .getDigital();
+    }
+
+    public synchronized Response readDigitalAndAnalog(UUID boardId, Collection<Identifier> pins, Stream<AnalogRead> analogReads) {
+        return send(boardId, pins.stream()
+                .reduce(new Request(), Request::digitalRead, (a, b) -> a)
+                .analogRead(analogReads));
     }
 
     public synchronized Map<Identifier, Boolean> writeDigital(UUID boardId, Map<Identifier, Boolean> state) {

@@ -2,13 +2,16 @@ package io.freedriver.autonomy.service;
 
 import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.cdi.qualifier.ConnectorCache;
+import io.freedriver.autonomy.cdi.qualifier.SensorCache;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
 import io.freedriver.autonomy.jaxrs.view.AliasView;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.base.util.file.DirectoryProviders;
+import io.freedriver.jsonlink.config.v2.AnalogSensor;
 import io.freedriver.jsonlink.config.v2.Appliance;
 import io.freedriver.jsonlink.config.v2.Mapping;
 import io.freedriver.jsonlink.config.v2.Mappings;
+import io.freedriver.jsonlink.jackson.schema.v1.AnalogResponse;
 import io.freedriver.jsonlink.jackson.schema.v1.DigitalState;
 import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
@@ -46,6 +49,10 @@ public class SimpleAliasService {
     @Inject
     @ConnectorCache
     Cache<PinCoordinate, Boolean> digitalPinCache;
+
+    @Inject
+    @SensorCache
+    Cache<PinCoordinate, SensorValues> sensorCache;
 
     /**
      * Conversion from aliases to their mapped pin numbers for controller i/o.
@@ -102,13 +109,38 @@ public class SimpleAliasService {
                 .collect(Collectors.toSet()))) {
             return fromCache;
         }
-        return cacheBoardState(boardId, connectorService.readDigital(boardId, mapping.getAppliances()
-                .stream().map(Appliance::getIdentifier).collect(Collectors.toSet())));
+        return cacheBoardState(boardId, connectorService
+                .readDigitalAndAnalog(
+                        boardId,
+                        mapping.getAppliances().stream().map(Appliance::getIdentifier).collect(Collectors.toSet()),
+                        mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead))
+        ).getDigital();
     }
 
     public Map<Identifier, Boolean> cacheBoardState(UUID boardId, Map<Identifier, Boolean> currentState) {
         currentState.forEach((k, v) -> digitalPinCache.put(new PinCoordinate(boardId, k), v));
         return currentState;
+    }
+
+    public Response cacheBoardState(UUID boardId, Response currentState) {
+        // Cache Digital Pins
+        currentState.getDigital().forEach((k, v) ->
+                digitalPinCache.put(new PinCoordinate(boardId, k), v));
+
+        // Cache Analog Pins
+        currentState.getAnalog().forEach(analogResponse -> applyAnalogCache(boardId, analogResponse));
+
+        return currentState;
+    }
+
+    private void applyAnalogCache(UUID boardId, AnalogResponse analogResponse) {
+        PinCoordinate coordinate = new PinCoordinate(boardId, analogResponse.getPin());
+        SensorValues values = new SensorValues();
+        if (sensorCache.containsKey(coordinate)) {
+            values = sensorCache.get(coordinate);
+        }
+        values.apply(analogResponse.getRaw());
+        sensorCache.put(coordinate, values);
     }
 
 
@@ -128,13 +160,13 @@ public class SimpleAliasService {
         Mapping mapping = getMapping(boardId);
         AliasView aliasView = new AliasView();
 
-        Map<Identifier, Boolean> actualState = currentState(boardId, mapping);
+        Map<Identifier, Boolean> digitalState = currentState(boardId, mapping);
         aliasView.setApplianceStates(mapping.getAppliances()
                 .stream()
-                .filter(appliance -> actualState.containsKey(appliance.getIdentifier()))
+                .filter(appliance -> digitalState.containsKey(appliance.getIdentifier()))
                 .collect(Collectors.toMap(
                         Appliance::getName,
-                        appliance -> actualState.get(appliance.getIdentifier()),
+                        appliance -> digitalState.get(appliance.getIdentifier()),
                         (a, b) -> a
                 )));
 
@@ -147,7 +179,7 @@ public class SimpleAliasService {
                                         if (!hm.containsKey(group)) {
                                             hm.put(group, new HashSet<>());
                                         }
-                                        hm.get(group).add(actualState.get(app.getIdentifier()));
+                                        hm.get(group).add(digitalState.get(app.getIdentifier()));
                                     });
                             return hm;
                         },
@@ -160,7 +192,28 @@ public class SimpleAliasService {
                         e -> !e.getValue().contains(false)
                 )));
 
+        sensorCache.entrySet().stream()
+                .filter(e -> Objects.equals(boardId, e.getKey().getBoardId()))
+                .forEach(e -> getAnalogSensorByPin(mapping, e.getKey())
+                        .ifPresent(analogSensor -> applySensorMetrics(aliasView, analogSensor, e.getValue())));
+
         return aliasView;
+    }
+
+    private void applySensorMetrics(AliasView view, AnalogSensor analogSensor, SensorValues sensorValues) {
+        view.getSensors()
+                .put(analogSensor.getName(), sensorValues.getRaw());
+        view.getSensorMins()
+                .put(analogSensor.getName(), sensorValues.getMin());
+        view.getSensorMaxes()
+                .put(analogSensor.getName(), sensorValues.getMax());
+    }
+
+    public Optional<AnalogSensor> getAnalogSensorByPin(Mapping mapping, PinCoordinate coordinate) {
+        return mapping.getAnalogSensors()
+                .stream()
+                .filter(analogSensor -> Objects.equals(coordinate.getIdentifier(), analogSensor.getPin()))
+                .findFirst();
     }
 
     public Map<Identifier, Boolean> setState(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
@@ -210,12 +263,12 @@ public class SimpleAliasService {
     }
 
     private void toggleAppliances(Mapping mapping, List<String> appliances) {
-        Map<Identifier, Boolean> actualState = currentState(mapping.getConnectorId(), mapping);
+        Map<Identifier, Boolean> digitalState = currentState(mapping.getConnectorId(), mapping);
         // Whether they should be turned on or not.
         boolean setStateAs = mapping.getAppliances()
                 .stream()
                 .filter(appliance -> appliances.contains(appliance.getName()))
-                .noneMatch(appliance -> actualState.get(appliance.getIdentifier()));
+                .noneMatch(appliance -> digitalState.get(appliance.getIdentifier()));
 
         Request request = mapping.getAppliances()
                 .stream()

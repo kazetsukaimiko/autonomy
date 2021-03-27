@@ -8,6 +8,9 @@ public class AliasView {
     Map<String, Boolean> applianceStates = new LinkedHashMap<>();
     Map<String, Boolean> groupStates = new LinkedHashMap<>();
     Map<String, Set<String>> groups = new LinkedHashMap<>();
+    Map<String, Integer> sensors = new LinkedHashMap<>();
+    Map<String, Integer> sensorMins = new LinkedHashMap<>();
+    Map<String, Integer> sensorMaxes = new LinkedHashMap<>();
 
     public AliasView() {
     }
@@ -34,5 +37,29 @@ public class AliasView {
 
     public void setGroups(Map<String, Set<String>> groups) {
         this.groups = groups;
+    }
+
+    public Map<String, Integer> getSensors() {
+        return sensors;
+    }
+
+    public void setSensors(Map<String, Integer> sensors) {
+        this.sensors = sensors;
+    }
+
+    public Map<String, Integer> getSensorMins() {
+        return sensorMins;
+    }
+
+    public void setSensorMins(Map<String, Integer> sensorMins) {
+        this.sensorMins = sensorMins;
+    }
+
+    public Map<String, Integer> getSensorMaxes() {
+        return sensorMaxes;
+    }
+
+    public void setSensorMaxes(Map<String, Integer> sensorMaxes) {
+        this.sensorMaxes = sensorMaxes;
     }
 }
