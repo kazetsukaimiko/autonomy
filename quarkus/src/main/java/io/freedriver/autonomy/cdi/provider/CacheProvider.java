@@ -100,7 +100,7 @@ public class CacheProvider {
     }
 
 
-    private <V, K> Cache<K,V> createCache(String cacheName, Supplier<Configuration> configuration) {
+    private synchronized <V, K> Cache<K,V> createCache(String cacheName, Supplier<Configuration> configuration) {
         return embeddedCacheManager.cacheExists(cacheName)
                 ? embeddedCacheManager.getCache(cacheName)
                 : embeddedCacheManager.createCache(
