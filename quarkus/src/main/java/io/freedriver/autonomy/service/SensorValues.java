@@ -49,8 +49,8 @@ public class SensorValues {
             min = value;
         }
         raw = value;
-        if (min != -1 && max != -1 && value != -1) {
-            percentage = (value - min) / (max - min);
+        if (min != -1 && max != -1 && value != -1 && (max - min) > 0) {
+            percentage = ((float)value - (float)min) / ((float)max - (float)min);
         }
         return this;
     }
