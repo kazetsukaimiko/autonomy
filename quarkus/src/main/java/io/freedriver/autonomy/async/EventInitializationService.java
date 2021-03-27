@@ -155,7 +155,7 @@ public class EventInitializationService extends BaseService {
                 LOGGER.finest("Firing JSTestEvent " + jsTestEvent);
                 joystickEvents.fire(new JoystickEvent(Instant.now().toEpochMilli(), jsTestEvent));
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Failed to fire JoystickEvent: ", e);
+                LOGGER.log(Level.WARNING, "Failed to fire JoystickEvent: " + jsTestEvent, e);
             }
         } else {
             // TODO: This is a workaround for a bug. Fix the bug.
@@ -168,7 +168,7 @@ public class EventInitializationService extends BaseService {
             LOGGER.finest("Firing SBMSMessage " + sbmsMessage);
             sbmsEvents.fire(sbmsMessage);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to fire SBMSMessage: ", e);
+            LOGGER.log(Level.WARNING, "Failed to fire SBMSMessage: " + sbmsMessage, e);
         }
     }
 
@@ -176,7 +176,7 @@ public class EventInitializationService extends BaseService {
         try {
             veDirectEvents.fire(veDirectMessage);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to fire VEDirectMessage: ", e);
+            LOGGER.log(Level.WARNING, "Failed to fire VEDirectMessage: " + veDirectMessage, e);
         }
     }
 
