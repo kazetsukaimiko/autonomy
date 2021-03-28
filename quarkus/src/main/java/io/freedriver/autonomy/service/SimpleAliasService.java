@@ -5,7 +5,10 @@ import io.freedriver.autonomy.cdi.qualifier.ConnectorCache;
 import io.freedriver.autonomy.cdi.qualifier.SensorCache;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
 import io.freedriver.autonomy.jaxrs.view.AliasView;
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.sensors.FloatValueSensorEvent;
+import io.freedriver.autonomy.service.crud.EventCrudService;
 import io.freedriver.base.util.file.DirectoryProviders;
 import io.freedriver.jsonlink.config.v2.AnalogSensor;
 import io.freedriver.jsonlink.config.v2.Appliance;
@@ -49,7 +52,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApplicationScoped
-public class SimpleAliasService {
+public class SimpleAliasService  {
     private static final Logger LOGGER = Logger.getLogger(SimpleAliasService.class.getName());
 
     private static Path HISTORY_FILE = DirectoryProviders.CONFIG
@@ -63,6 +66,9 @@ public class SimpleAliasService {
 
     @Inject
     ConnectorService connectorService;
+
+    @Inject
+    FloatValueSensorEventService floatValueSensorService;
 
     @Inject
     @ConnectorCache
@@ -128,7 +134,9 @@ public class SimpleAliasService {
             try {
                 Request readAnalogPinsAnyway = new Request()
                         .analogRead(mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead));
-                cacheBoardState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), readAnalogPinsAnyway));
+                Response response = connectorService.send(mapping.getConnectorId(), readAnalogPinsAnyway);
+                cacheBoardState(mapping.getConnectorId(), response);
+                sendAnalogSensorEvents(mapping, response);
                 return true;
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "Couldn't cache Analog Pin State. ", e);
@@ -214,11 +222,30 @@ public class SimpleAliasService {
         currentState.getAnalog()
                 .forEach(analogResponse -> applyAnalogCache(boardId, analogResponse));
 
-        // Cache Analog Pins
-        currentState.getAnalog().forEach(analogResponse -> applyAnalogCache(boardId, analogResponse));
         persistAnalogCache();
-
         return currentState;
+    }
+
+    private void sendAnalogSensorEvents(Mapping mapping, Response currentState) {
+        currentState.getAnalog()
+                .forEach(analogResponse -> getAnalogSensorByMapping(mapping, analogResponse)
+                    .ifPresent(analogSensor -> {
+                        FloatValueSensorEvent event = new FloatValueSensorEvent();
+                        event.setBoardId(mapping.getConnectorId());
+                        event.setSensorName(mapping.getConnectorId() + "/" +analogSensor.getName()+"/live");
+                        event.setGenerationOrigin(GenerationOrigin.NON_HUMAN);
+                        event.setSourceId(mapping.getConnectorId().toString());
+                        event.setEventId("analog/"+analogSensor.getPin().getPin());
+                        event.setValue(analogResponse.getRaw());
+                        floatValueSensorService.save(event);
+                }));
+    }
+
+    private Optional<AnalogSensor> getAnalogSensorByMapping(Mapping mapping, AnalogResponse analogResponse) {
+        return mapping.getAnalogSensors()
+                .stream()
+                .filter(analogSensor -> Objects.equals(analogSensor.getPin(), analogResponse.getPin()))
+                .findFirst();
     }
 
     private synchronized SensorHistory readSensorHistory() {
@@ -407,7 +434,9 @@ public class SimpleAliasService {
             mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead)
                     .forEach(r::analogRead);
 
-            return cacheBoardState(boardId, connectorService.send(boardId, r));
+            Response response = connectorService.send(boardId, r);
+            sendAnalogSensorEvents(mapping, response);
+            return cacheBoardState(boardId, response);
         }
         return new Response();
     }
@@ -472,4 +501,5 @@ public class SimpleAliasService {
         cacheBoardState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), request));
         //cacheBoardDigitalState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), request).getDigital());
     }
+
 }
