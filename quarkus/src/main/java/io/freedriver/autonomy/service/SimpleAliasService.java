@@ -42,6 +42,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -326,14 +327,23 @@ public class SimpleAliasService {
                 .forEach(e -> getAnalogSensorByPin(mapping, e.getKey())
                         .ifPresent(analogSensor -> applySensorMetrics(aliasView, analogSensor, e.getValue())));
 
-        String sensors = aliasView.getSensorPercentages()
+
+        Map<String, String> sensorMinMaxes = Stream.concat(aliasView.getSensorMins().keySet().stream(), aliasView.getSensorMaxes().keySet().stream())
+                .collect(Collectors.toSet())
+                .stream()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        key -> key + ": " +aliasView.getSensorMins().get(key)+ "-" + aliasView.getSensorMaxes().get(key) + "; " + aliasView.getSensors().get(key),
+                        (a, b) -> a));
+
+        String sensorPercentages = aliasView.getSensorPercentages()
                 .entrySet()
                 .stream()
-                .map(e -> e.getKey() + ": " + e.getValue())
+                .map(e -> e.getKey() + ": " + e.getValue() + " values " + sensorMinMaxes.get(e.getKey()))
                 .collect(Collectors.joining("\n"));
 
 
-        LOGGER.info("Sensor percentages; \n" + sensors);
+        LOGGER.info("Sensor percentages; \n" + sensorPercentages);
 
         return aliasView;
     }
