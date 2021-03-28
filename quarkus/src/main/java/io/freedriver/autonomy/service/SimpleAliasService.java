@@ -19,7 +19,6 @@ import io.freedriver.jsonlink.jackson.schema.v1.Mode;
 import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
-import io.quarkus.runtime.StartupEvent;
 import org.infinispan.Cache;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -27,10 +26,11 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -331,13 +331,32 @@ public class SimpleAliasService {
 
     private void applySensorMetrics(AliasView view, AnalogSensor analogSensor, SensorValues sensorValues) {
         view.getSensors()
-                .put(analogSensor.getName(), sensorValues.getRaw());
+                .put(analogSensor.getName(), scaleSensor(analogSensor, sensorValues.getRaw()));
         view.getSensorMins()
-                .put(analogSensor.getName(), sensorValues.getMin());
+                .put(analogSensor.getName(), scaleSensor(analogSensor, sensorValues.getMin()));
         view.getSensorMaxes()
-                .put(analogSensor.getName(), sensorValues.getMax());
+                .put(analogSensor.getName(), scaleSensor(analogSensor, sensorValues.getMax()));
         view.getSensorPercentages()
-                .put(analogSensor.getName(), sensorValues.getPercentage());
+                .put(analogSensor.getName(), getSensorPercentage(
+                        view.getSensorMins().get(analogSensor.getName()),
+                        view.getSensorMaxes().get(analogSensor.getName()),
+                        view.getSensors().get(analogSensor.getName()),
+                        analogSensor));
+    }
+    
+    public float getSensorPercentage(float scaledMin, float scaledMax, float scaledValue, AnalogSensor analogSensor) {
+        float percentage = BigDecimal.valueOf((scaledValue - scaledMin) / (scaledMax - scaledMin))
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(2, RoundingMode.HALF_UP)
+                .floatValue();
+        return analogSensor.isInverted()
+                ? 100F - percentage
+                : percentage;
+    }
+
+    public float scaleSensor(AnalogSensor analogSensor, int sensorValue) {
+        float v1 = sensorValue * (analogSensor.getVoltage() / 1023f);
+        return (analogSensor.getVoltage() - v1) * (analogSensor.getResistance() / v1);
     }
 
     public Optional<AnalogSensor> getAnalogSensorByPin(Mapping mapping, PinCoordinate coordinate) {
