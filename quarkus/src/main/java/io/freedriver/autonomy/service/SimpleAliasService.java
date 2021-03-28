@@ -326,6 +326,15 @@ public class SimpleAliasService {
                 .forEach(e -> getAnalogSensorByPin(mapping, e.getKey())
                         .ifPresent(analogSensor -> applySensorMetrics(aliasView, analogSensor, e.getValue())));
 
+        String sensors = aliasView.getSensorPercentages()
+                .entrySet()
+                .stream()
+                .map(e -> e.getKey() + ": " + e.getValue())
+                .collect(Collectors.joining("\n"));
+
+
+        LOGGER.info("Sensor percentages; \n" + sensors);
+
         return aliasView;
     }
 
@@ -343,7 +352,7 @@ public class SimpleAliasService {
                         view.getSensors().get(analogSensor.getName()),
                         analogSensor));
     }
-    
+
     public float getSensorPercentage(float scaledMin, float scaledMax, float scaledValue, AnalogSensor analogSensor) {
         float percentage = BigDecimal.valueOf((scaledValue - scaledMin) / (scaledMax - scaledMin))
                 .multiply(BigDecimal.valueOf(100))

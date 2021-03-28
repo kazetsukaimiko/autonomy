@@ -207,6 +207,8 @@ function populateToggles(controlsPane, uuid, aliasView) {
             getGroup(controlsPane, key).appendChild(button);
         }
     }
+
+
 }
 
 function getCharts() {
