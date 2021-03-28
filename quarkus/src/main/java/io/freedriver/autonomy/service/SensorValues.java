@@ -43,6 +43,9 @@ public class SensorValues {
     public void setPercentage(float percentage) {
         this.percentage = percentage;
     }
+    // 267 : 260, 1000
+    // 267 : 0, 267
+    // 267 :
 
     public SensorValues apply(int value) {
         if (value > max || max == -1) {

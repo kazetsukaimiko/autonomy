@@ -27,6 +27,8 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,6 +49,12 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class SimpleAliasService {
     private static final Logger LOGGER = Logger.getLogger(SimpleAliasService.class.getName());
+
+    private static Path HISTORY_FILE = DirectoryProviders.CONFIG
+            .getProvider()
+            .subdir(Autonomy.DEPLOYMENT)
+            .file("sensor_history.json")
+            .get();
 
     // Arbitrary. TODO: Rethink.
     private ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*10);
@@ -177,8 +185,48 @@ public class SimpleAliasService {
 
         // Cache Analog Pins
         currentState.getAnalog().forEach(analogResponse -> applyAnalogCache(boardId, analogResponse));
+        persistAnalogCache();
 
         return currentState;
+    }
+
+    private synchronized SensorHistory readSensorHistory() {
+        SensorHistory sensorHistory = new SensorHistory();
+        try {
+            if (Files.exists(HISTORY_FILE) && Files.isReadable(HISTORY_FILE)) {
+                sensorHistory = ObjectMapperContextResolver.getMapper().readValue(
+                        HISTORY_FILE.toFile(),
+                        SensorHistory.class
+                );
+            }
+        } catch (IOException ioe) {
+            LOGGER.log(Level.WARNING, "Couldn't read sensor history file", ioe);
+        }
+        return sensorHistory;
+    }
+
+    private synchronized void writeSensorHistory(SensorHistory sensorHistory) {
+        try {
+            ObjectMapperContextResolver.getMapper().writeValue(HISTORY_FILE.toFile(), sensorHistory);
+        } catch (IOException ioe) {
+            LOGGER.log(Level.WARNING, "Couldn't write sensor history file", ioe);
+        }
+    }
+
+    private synchronized void persistAnalogCache() {
+        SensorHistory sensorHistory = readSensorHistory();
+        sensorCache
+                .forEach((key, value) -> {
+                    if (!sensorHistory.getHistory().containsKey(key.getBoardId())) {
+                        sensorHistory.getHistory().put(key.getBoardId(), new BoardAnalogHistory());
+                    }
+                    BoardAnalogHistory boardHistory = sensorHistory.getHistory().get(key.getBoardId());
+                    boardHistory.getMinimums()
+                            .put(key.getIdentifier(), value.getMin());
+                    boardHistory.getMaximums()
+                            .put(key.getIdentifier(), value.getMax());
+                });
+        writeSensorHistory(sensorHistory);
     }
 
     private void applyAnalogCache(UUID boardId, AnalogResponse analogResponse) {
