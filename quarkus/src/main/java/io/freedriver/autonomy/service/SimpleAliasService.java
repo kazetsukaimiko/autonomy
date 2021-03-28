@@ -27,6 +27,7 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +37,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -43,6 +47,9 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class SimpleAliasService {
     private static final Logger LOGGER = Logger.getLogger(SimpleAliasService.class.getName());
+
+    // Arbitrary. TODO: Rethink.
+    private ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*10);
 
     @Inject
     ConnectorService connectorService;
@@ -55,27 +62,40 @@ public class SimpleAliasService {
     @SensorCache
     Cache<PinCoordinate, SensorValues> sensorCache;
 
+    public void waitFor(Duration duration) throws InterruptedException {
+        Thread.sleep(duration.toMillis());
+    }
 
-    public void init(@Observes StartupEvent ev) {
+    public void refreshAnalogPins() {
         while (true) {
             try {
-                getMappings()
+                List<Future<Boolean>> requests = getMappings()
                         .getMappings()
-                        .forEach(this::cacheAnalogPins);
-            } catch (IOException ioe) {
-                LOGGER.log(Level.WARNING, "Couldn't cache Analog Pin State. ", ioe);
+                        .stream()
+                        .map(this::cacheAnalogPins)
+                        .collect(Collectors.toList());
+                while(!requests.stream().allMatch(Future::isDone)) {
+                    waitFor(Duration.ofMillis(1));
+                }
+                waitFor(Duration.ofMillis(500));
+            } catch (IOException | InterruptedException e) {
+                LOGGER.log(Level.WARNING, "Couldn't cache Analog Pin State. ", e);
             }
         }
     }
 
-    public void cacheAnalogPins(Mapping mapping) {
-        try {
-            Request readAnalogPinsAnyway = new Request()
-                    .analogRead(mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead));
-            cacheBoardState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), readAnalogPinsAnyway));
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Couldn't cache Analog Pin State. ", e);
-        }
+    public Future<Boolean> cacheAnalogPins(Mapping mapping) {
+        return pool.submit(() -> {
+            try {
+                Request readAnalogPinsAnyway = new Request()
+                        .analogRead(mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead));
+                cacheBoardState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), readAnalogPinsAnyway));
+                return true;
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Couldn't cache Analog Pin State. ", e);
+                return false;
+            }
+        });
     }
 
     /**

@@ -3,6 +3,7 @@ package io.freedriver.autonomy.async;
 import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.service.SimpleAliasService;
 import io.freedriver.electrodacus.sbms.SBMS0Finder;
 import io.freedriver.electrodacus.sbms.SBMSMessage;
 import io.freedriver.victron.VEDirectMessage;
@@ -35,12 +36,15 @@ public class EventInitializationService extends BaseService {
     private final Map<Path, Future<Boolean>> sbmsUnits =  new ConcurrentHashMap<>();
     private final Map<Path, Instant> sbmsUnitsDead = new ConcurrentHashMap<>();
 
-    private final ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private final ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*10);
 
     private AllJoysticks allJoysticks;
 
     @Inject
     VEDirectDeviceService deviceService;
+
+    @Inject
+    SimpleAliasService simpleAliasService;
 
     @Inject
     Event<JoystickEvent> joystickEvents;
@@ -55,6 +59,14 @@ public class EventInitializationService extends BaseService {
         initSBMSMonitor();
         initJoystickMonitor();
         initVEDirectMonitor();
+        initSimpleAliasMonitor();
+    }
+
+    private void initSimpleAliasMonitor() {
+        LOGGER.info("Initializing SimpleAliasMonitor.");
+        pool.submit(() -> {
+            simpleAliasService.refreshAnalogPins();
+        });
     }
 
     private void initSBMSMonitor() {
