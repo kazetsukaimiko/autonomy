@@ -45,6 +45,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class SimpleAliasService {
@@ -74,7 +75,36 @@ public class SimpleAliasService {
         Thread.sleep(duration.toMillis());
     }
 
+    public void populateSensorCacheFromHistory() {
+        SensorHistory sensorHistory = readSensorHistory();
+        sensorHistory.getHistory()
+                .forEach(this::populateBoardHistory);
+    }
+
+    public void populateBoardHistory(UUID boardId, BoardAnalogHistory boardAnalogHistory) {
+        Stream.concat(boardAnalogHistory.getMaximums().keySet().stream(), boardAnalogHistory.getMinimums().keySet().stream())
+                .collect(Collectors.toSet())
+                .stream()
+                .map(identifier -> new PinCoordinate(boardId, identifier))
+                .forEach(coordinate -> populatePinHistory(coordinate, boardAnalogHistory));
+    }
+
+    private void populatePinHistory(PinCoordinate coordinate, BoardAnalogHistory boardAnalogHistory) {
+        SensorValues sensorValues = new SensorValues();
+        if (boardAnalogHistory.getMinimums().containsKey(coordinate.getIdentifier())) {
+            sensorValues.setMin(boardAnalogHistory.getMinimums().get(coordinate.getIdentifier()));
+        }
+        if (boardAnalogHistory.getMaximums().containsKey(coordinate.getIdentifier())) {
+            sensorValues.setMax(boardAnalogHistory.getMaximums().get(coordinate.getIdentifier()));
+        }
+        if (boardAnalogHistory.getLastKnowns().containsKey(coordinate.getIdentifier())) {
+            sensorValues.setRaw(boardAnalogHistory.getLastKnowns().get(coordinate.getIdentifier()));
+        }
+        sensorCache.put(coordinate, sensorValues);
+    }
+
     public void refreshAnalogPins() {
+        populateSensorCacheFromHistory();
         while (true) {
             try {
                 List<Future<Boolean>> requests = getMappings()
@@ -225,6 +255,8 @@ public class SimpleAliasService {
                             .put(key.getIdentifier(), value.getMin());
                     boardHistory.getMaximums()
                             .put(key.getIdentifier(), value.getMax());
+                    boardHistory.getLastKnowns()
+                            .put(key.getIdentifier(), value.getRaw());
                 });
         writeSensorHistory(sensorHistory);
     }
