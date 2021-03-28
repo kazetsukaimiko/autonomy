@@ -37,6 +37,8 @@ function loadBoard(uuid) {
             const aliasView = JSON.parse(xhr.responseText);
             //toggleOff("#controls");
             populateToggles(getControls(uuid), uuid, aliasView);
+            loadSensorView(uuid, aliasView);
+
             toggleOn("#" + getControlsId(uuid)); // TODO : Activate Section.
         })
         .handleOthers(function (xhr, request) {
@@ -97,6 +99,7 @@ function setState(uuid, key, state) {
             const state = JSON.parse(xhr.responseText);
             toggleOff("#controls");
             populateToggles(document.getElementById("controls"), uuid, state);
+            loadSensorView(uuid, aliasView);
 
             toggleOn(".controls"); // TODO : Activate Section.
         })
@@ -232,6 +235,13 @@ function loadControllerView(serialNumber, controllerView) {
     loadControllerGauge(serialNumber, controllerState['panelPower'], controllerHistory['maxPanelPower'],
         "pv-power", "PV Power", "W");
 
+}
+
+
+function loadSensorView(uuid, aliasView) {
+    for (let key in aliasView["sensors"]) {
+         loadControllerGauge("sensor://"+uuid+"/"+key, aliasView["sensorPercentages"][key], 100, key, key, "%");
+    }
 }
 
 /*

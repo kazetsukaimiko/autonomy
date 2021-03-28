@@ -363,8 +363,8 @@ public class SimpleAliasService {
                         analogSensor));
     }
 
-    public float getSensorPercentage(float scaledMin, float scaledMax, float scaledValue, AnalogSensor analogSensor) {
-        float percentage = BigDecimal.valueOf((scaledValue - scaledMin) / (scaledMax - scaledMin))
+    public float getSensorPercentage(float min, float max, float current, AnalogSensor analogSensor) {
+        float percentage = BigDecimal.valueOf((current - min) / (max - min))
                 .multiply(BigDecimal.valueOf(100))
                 .setScale(2, RoundingMode.HALF_UP)
                 .floatValue();
@@ -374,8 +374,10 @@ public class SimpleAliasService {
     }
 
     public float scaleSensor(AnalogSensor analogSensor, int sensorValue) {
-        float v1 = sensorValue * (analogSensor.getVoltage() / 1023f);
-        return (analogSensor.getVoltage() - v1) * (analogSensor.getResistance() / v1);
+        return sensorValue;
+
+        //float v1 = sensorValue * (analogSensor.getVoltage() / 1023f);
+        //return (analogSensor.getVoltage() - v1) * (analogSensor.getResistance() / v1);
     }
 
     public Optional<AnalogSensor> getAnalogSensorByPin(Mapping mapping, PinCoordinate coordinate) {
