@@ -1,5 +1,8 @@
 package io.freedriver.autonomy.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public class SensorValues {
     private int min = -1;
     private int raw = -1;
@@ -50,7 +53,10 @@ public class SensorValues {
         }
         raw = value;
         if (min != -1 && max != -1 && value != -1 && (max - min) > 0) {
-            percentage = ((float)value - (float)min) / ((float)max - (float)min);
+            percentage = BigDecimal.valueOf(((float)value - (float)min) / ((float)max - (float)min))
+                    .multiply(BigDecimal.valueOf(100))
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .floatValue();
         }
         return this;
     }
