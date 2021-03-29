@@ -108,7 +108,7 @@ public class CacheProvider {
                 .locking()
                 .lockAcquisitionTimeout(10, TimeUnit.SECONDS)
                 .expiration()
-                .lifespan(10, TimeUnit.MINUTES)
+                .lifespan(10, TimeUnit.HOURS)
                 .memory()
                 .maxCount(1000)
                 .build());

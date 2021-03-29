@@ -13,16 +13,27 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class SpeechService extends JPACrudService<SpeechEvent> {
     private static final Logger LOGGER = Logger.getLogger(SpeechService.class.getName());
 
+    private static final Duration LIMIT = Duration.ofDays(1);
+
+    /*
     @Inject
     @SpeechCache
     Cache<String, SpeechEvent> speechCache;
+     */
+
+    List<SpeechEvent> recentEvents = new ArrayList<>();
 
     @Override
     public Class<SpeechEvent> getEntityClass() {
@@ -41,29 +52,41 @@ public class SpeechService extends JPACrudService<SpeechEvent> {
                         (!haveRecentActivityOnSubject(event) && !lastActivityOnSubjectIdentical(event));
     }
 
+    private Optional<SpeechEvent> getLatestSameSubject(SpeechEvent event) {
+        return recentEvents.stream()
+                .filter(previousEvent -> Objects.equals(previousEvent.getSubject(), event.getSubject()))
+                .max(Comparator.comparingLong(SpeechEvent::getTimestamp));
+    }
+
+
     // Don't spam stuff.
     private boolean haveRecentActivityOnSubject(SpeechEvent event) {
-        if (speechCache.containsKey(event.getSubject())) {
-            return Instant.ofEpochMilli(speechCache.get(event.getSubject()).getTimestamp())
-                    .plus(Duration.ofSeconds(20))
-                    .isAfter(Instant.now());
-        }
-        return false;
+        Optional<SpeechEvent> recentBySubject = getLatestSameSubject(event);
+        return recentBySubject
+                .map(speechEvent -> Instant.ofEpochMilli(speechEvent.getTimestamp())
+                    .plus(Duration.ofSeconds(30))
+                    .isAfter(Instant.now()))
+                .orElse(false);
     }
 
     // Ensure we don't repeat messages.
     private boolean lastActivityOnSubjectIdentical(SpeechEvent event) {
-        if (speechCache.containsKey(event.getSubject())) {
-            return Objects.equals(event.getText(), speechCache.get(event.getSubject()).getText());
-        }
-        return false;
+        Optional<SpeechEvent> recentBySubject = getLatestSameSubject(event);
+        return recentBySubject
+                .map(previousEvent -> Objects.equals(event.getText(), previousEvent.getText()))
+                .orElse(false);
     }
 
     private synchronized void speak(SpeechEvent event) {
         if (shouldActOnEvent(event)) {
             // Festival.speak(event.getText());
             LOGGER.info("SPEAK: " + event.getText());
-            speechCache.put(event.getSubject(), event);
+            recentEvents.add(event);
+            recentEvents = recentEvents.stream()
+                    .filter(previousEvent -> Instant.ofEpochMilli(previousEvent.getTimestamp())
+                            .plus(LIMIT)
+                            .isBefore(Instant.now()))
+                    .collect(Collectors.toList());
             persist(event);
         }
     }
