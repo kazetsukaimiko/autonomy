@@ -6,6 +6,7 @@ import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
 import io.freedriver.autonomy.cdi.qualifier.ConnectorCache;
 import io.freedriver.autonomy.cdi.qualifier.OneSecondCache;
 import io.freedriver.autonomy.cdi.qualifier.SensorCache;
+import io.freedriver.autonomy.cdi.qualifier.SpeechCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -27,6 +28,7 @@ public class CacheProvider {
     public static final String ATTRIBUTE_CACHE = "attribute_cache";
     public static final String CONNECTOR_CACHE = "connector_cache";
     public static final String SENSOR_CACHE = "sensor_cache";
+    public static final String SPEECH_CACHE = "speech_cache";
 
     private final EmbeddedCacheManager embeddedCacheManager = new DefaultCacheManager(true);
     private Map<String, Configuration> configurations = new HashMap<>();
@@ -98,6 +100,20 @@ public class CacheProvider {
                 .maxCount(100)
                 .build());
     }
+
+    @Produces
+    @SpeechCache
+    public <K, V> Cache<K, V> speechCache() {
+        return createCache(Autonomy.DEPLOYMENT, () -> new ConfigurationBuilder()
+                .locking()
+                .lockAcquisitionTimeout(10, TimeUnit.SECONDS)
+                .expiration()
+                .lifespan(10, TimeUnit.MINUTES)
+                .memory()
+                .maxCount(1000)
+                .build());
+    }
+
 
 
     private synchronized <V, K> Cache<K,V> createCache(String cacheName, Supplier<Configuration> configuration) {

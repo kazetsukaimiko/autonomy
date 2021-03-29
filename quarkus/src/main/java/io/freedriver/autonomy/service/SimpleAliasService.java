@@ -8,8 +8,11 @@ import io.freedriver.autonomy.jaxrs.view.AliasView;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.jpa.entity.event.input.sensors.FloatValueSensorEvent;
+import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEvent;
+import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEventType;
 import io.freedriver.autonomy.service.crud.EventCrudService;
 import io.freedriver.base.util.file.DirectoryProviders;
+import io.freedriver.jsonlink.config.v2.AnalogAlert;
 import io.freedriver.jsonlink.config.v2.AnalogSensor;
 import io.freedriver.jsonlink.config.v2.Appliance;
 import io.freedriver.jsonlink.config.v2.Mapping;
@@ -22,9 +25,11 @@ import io.freedriver.jsonlink.jackson.schema.v1.Mode;
 import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import liquibase.pro.packaged.I;
 import org.infinispan.Cache;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
@@ -77,6 +82,9 @@ public class SimpleAliasService  {
     @Inject
     @SensorCache
     Cache<PinCoordinate, SensorValues> sensorCache;
+
+    @Inject
+    Event<SpeechEvent> speech;
 
     public void waitFor(Duration duration) throws InterruptedException {
         Thread.sleep(duration.toMillis());
@@ -135,7 +143,7 @@ public class SimpleAliasService  {
                 Request readAnalogPinsAnyway = new Request()
                         .analogRead(mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead));
                 Response response = connectorService.send(mapping.getConnectorId(), readAnalogPinsAnyway);
-                cacheBoardState(mapping.getConnectorId(), response);
+                cacheBoardState(mapping, response);
                 sendAnalogSensorEvents(mapping, response);
                 return true;
             } catch (Exception e) {
@@ -200,7 +208,7 @@ public class SimpleAliasService  {
                 .collect(Collectors.toSet()))) {
             return digitalStateFromCache;
         }
-        return cacheBoardState(boardId, connectorService
+        return cacheBoardState(mapping, connectorService
                 .readDigitalAndAnalog(
                         boardId,
                         mapping.getAppliances().stream().map(Appliance::getIdentifier).collect(Collectors.toSet()),
@@ -213,17 +221,55 @@ public class SimpleAliasService  {
         return digitalState;
     }
 
-    public Response cacheBoardState(UUID boardId, Response currentState) {
+    public Response cacheBoardState(Mapping mapping, Response currentState) {
         // Cache Digital Pins
         currentState.getDigital().forEach((k, v) ->
-                digitalPinCache.put(new PinCoordinate(boardId, k), v));
+                digitalPinCache.put(new PinCoordinate(mapping.getConnectorId(), k), v));
 
         // Cache Analog Pins
         currentState.getAnalog()
-                .forEach(analogResponse -> applyAnalogCache(boardId, analogResponse));
+                .forEach(analogResponse -> applyAnalogCache(mapping.getConnectorId(), analogResponse));
 
         persistAnalogCache();
+
+        Map<String, Float> percentages = mapping.getAnalogSensors()
+            .stream()
+            .filter(analogSensor -> sensorCache.keySet()
+                .stream()
+                .anyMatch(coordinate -> Objects.equals(coordinate, new PinCoordinate(mapping.getConnectorId(), analogSensor.getPin()))))
+            .collect(Collectors.toMap(
+                    AnalogSensor::getName,
+                    as -> sensorCache.get(new PinCoordinate(mapping.getConnectorId(), as.getPin())).getPercentage(),
+                    (a, b) -> b
+            ));
+
+        // Fire Alert events as needed
+        mapping.getAnalogAlerts()
+                .forEach(analogAlert -> {
+                    if (percentages.keySet().containsAll(analogAlert.getSensors())) {
+                        if (analogAlert.getMatching().test(
+                                analogAlert.getValue(),
+                                analogAlert.getCondition(),
+                                percentages.entrySet().stream()
+                                    .filter(e -> analogAlert.getSensors().stream()
+                                        .anyMatch(name -> Objects.equals(name, e.getKey())))
+                                        .map(Map.Entry::getValue))) {
+                            speak(analogAlert);
+                        }
+                    } else {
+                        LOGGER.warning("Couldn't process AnalogAlert- missing mappings. " + analogAlert);
+                    }
+                });
+
         return currentState;
+    }
+
+    private void speak(AnalogAlert analogAlert) {
+        SpeechEvent speechEvent = new SpeechEvent();
+        speechEvent.setSubject(String.join("/", analogAlert.getSensors()));
+        speechEvent.setSpeechEventType(SpeechEventType.INFO);
+        speechEvent.setText(analogAlert.getContent());
+        speech.fire(speechEvent);
     }
 
     private void sendAnalogSensorEvents(Mapping mapping, Response currentState) {
@@ -286,6 +332,7 @@ public class SimpleAliasService  {
                     boardHistory.getLastKnowns()
                             .put(key.getIdentifier(), value.getRaw());
                 });
+
         writeSensorHistory(sensorHistory);
     }
 
@@ -436,7 +483,7 @@ public class SimpleAliasService  {
 
             Response response = connectorService.send(boardId, r);
             sendAnalogSensorEvents(mapping, response);
-            return cacheBoardState(boardId, response);
+            return cacheBoardState(mapping, response);
         }
         return new Response();
     }
@@ -498,7 +545,7 @@ public class SimpleAliasService  {
 
         LOGGER.finest(request.toString());
 
-        cacheBoardState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), request));
+        cacheBoardState(mapping, connectorService.send(mapping.getConnectorId(), request));
         //cacheBoardDigitalState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), request).getDigital());
     }
 
