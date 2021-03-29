@@ -266,6 +266,7 @@ public class SimpleAliasService  {
 
     private void speak(AnalogAlert analogAlert) {
         SpeechEvent speechEvent = new SpeechEvent();
+        speechEvent.setSourceId("sensors://"+String.join(",", analogAlert.getSensors()));
         speechEvent.setSourceClass(getClass().getName());
         speechEvent.setSubject(String.join("/", analogAlert.getSensors()));
         speechEvent.setSpeechEventType(SpeechEventType.INFO);
@@ -281,6 +282,7 @@ public class SimpleAliasService  {
                         event.setBoardId(mapping.getConnectorId());
                         event.setSensorName(mapping.getConnectorId() + "/" +analogSensor.getName()+"/live");
                         event.setGenerationOrigin(GenerationOrigin.NON_HUMAN);
+                        event.setSourceId(mapping.getConnectorId().toString());
                         event.setSourceClass(getClass().getName());
                         event.setSourceId(mapping.getConnectorId().toString());
                         event.setEventId("analog/"+analogSensor.getPin().getPin());
