@@ -62,7 +62,7 @@ public class SpeechService extends JPACrudService<SpeechEvent> {
     private synchronized void speak(SpeechEvent event) {
         if (shouldActOnEvent(event)) {
             // Festival.speak(event.getText());
-            LOGGER.info("SPEAK: " + event.getText())
+            LOGGER.info("SPEAK: " + event.getText());
             speechCache.put(event.getSubject(), event);
             persist(event);
         }

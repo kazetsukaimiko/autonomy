@@ -421,7 +421,7 @@ public class SimpleAliasService  {
                 .collect(Collectors.joining("\n"));
 
 
-        LOGGER.info("Sensor percentages; \n" + sensorPercentages);
+        //LOGGER.info("Sensor percentages; \n" + sensorPercentages);
 
         return aliasView;
     }
