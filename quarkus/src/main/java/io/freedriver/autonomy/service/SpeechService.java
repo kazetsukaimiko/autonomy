@@ -14,9 +14,11 @@ import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class SpeechService extends JPACrudService<SpeechEvent> {
+    private static final Logger LOGGER = Logger.getLogger(SpeechService.class.getName());
 
     @Inject
     @SpeechCache
@@ -59,7 +61,8 @@ public class SpeechService extends JPACrudService<SpeechEvent> {
 
     private synchronized void speak(SpeechEvent event) {
         if (shouldActOnEvent(event)) {
-            Festival.speak(event.getText());
+            // Festival.speak(event.getText());
+            LOGGER.info("SPEAK: " + event.getText())
             speechCache.put(event.getSubject(), event);
             persist(event);
         }
