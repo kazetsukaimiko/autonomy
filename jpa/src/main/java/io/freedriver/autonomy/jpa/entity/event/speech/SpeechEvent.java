@@ -3,8 +3,15 @@ package io.freedriver.autonomy.jpa.entity.event.speech;
 import io.freedriver.autonomy.jpa.entity.event.Event;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.Table;
 import java.util.Objects;
 
+@Entity
+@Table
+@Inheritance(strategy = InheritanceType.JOINED)
 public class SpeechEvent extends Event {
 
     @Column
