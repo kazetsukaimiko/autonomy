@@ -254,7 +254,7 @@ public class SimpleAliasService  {
                                     .filter(e -> analogAlert.getSensors().stream()
                                         .anyMatch(name -> Objects.equals(name, e.getKey())))
                                         .map(Map.Entry::getValue))) {
-                            speak(analogAlert);
+                            speak(analogAlert, percentages);
                         }
                     } else {
                         LOGGER.warning("Couldn't process AnalogAlert- missing mappings. " + analogAlert);
@@ -264,7 +264,12 @@ public class SimpleAliasService  {
         return currentState;
     }
 
-    private void speak(AnalogAlert analogAlert) {
+    private void speak(AnalogAlert analogAlert, Map<String, Float> percentages) {
+        LOGGER.info("AnalogAlert qualified: " + analogAlert);
+        LOGGER.info("Percentages: \n" + percentages.entrySet()
+                .stream()
+                .map(e -> e.getKey() + ": " + e.getValue())
+                .collect(Collectors.joining("\n")));
         SpeechEvent speechEvent = new SpeechEvent();
         speechEvent.setSourceId("sensors://"+String.join(",", analogAlert.getSensors()));
         speechEvent.setSourceClass(getClass().getName());
