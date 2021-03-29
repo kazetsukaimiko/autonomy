@@ -10,6 +10,7 @@ import org.infinispan.Cache;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
@@ -26,6 +27,7 @@ public class SpeechService extends JPACrudService<SpeechEvent> {
         return SpeechEvent.class;
     }
 
+    @Transactional
     public void observeEvent(@Observes SpeechEvent speechEvent) {
         speak(speechEvent);
     }
@@ -58,8 +60,8 @@ public class SpeechService extends JPACrudService<SpeechEvent> {
     private synchronized void speak(SpeechEvent event) {
         if (shouldActOnEvent(event)) {
             Festival.speak(event.getText());
-            persist(event);
             speechCache.put(event.getSubject(), event);
+            persist(event);
         }
     }
 }
