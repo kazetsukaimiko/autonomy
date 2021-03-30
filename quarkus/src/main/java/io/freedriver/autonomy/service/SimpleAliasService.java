@@ -242,7 +242,7 @@ public class SimpleAliasService  {
                 .anyMatch(coordinate -> Objects.equals(coordinate, new PinCoordinate(mapping.getConnectorId(), analogSensor.getPin()))))
             .collect(Collectors.toMap(
                     AnalogSensor::getName,
-                    as -> sensorCache.get(new PinCoordinate(mapping.getConnectorId(), as.getPin())).getPercentage(),
+                    as -> averageSensorMetrics(as, sensorCache.get(new PinCoordinate(mapping.getConnectorId(), as.getPin()))).getPercentage(),
                     (a, b) -> b
             ));
 
