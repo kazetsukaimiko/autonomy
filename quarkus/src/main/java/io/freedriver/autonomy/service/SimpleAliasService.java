@@ -434,6 +434,7 @@ public class SimpleAliasService  {
                 .add(sensorValues);
 
         SensorValues averagedForTime = new SensorValues();
+
         averagedForTime.setRecordedOn(sensorValues.getRecordedOn());
         SensorValues latest = sensorAverages.get(analogSensor)
                 .stream()
@@ -446,7 +447,10 @@ public class SimpleAliasService  {
                 .average()
                 .orElse(latest.getRaw()))
                 .intValue();
-
+        
+        averagedForTime.setMin(latest.getMin());
+        averagedForTime.setMax(latest.getMax());
+        averagedForTime.setRaw(average);
         averagedForTime.apply(average);
 
         return averagedForTime;
