@@ -2,14 +2,24 @@ package io.freedriver.autonomy.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 
 public class SensorValues {
+    private Instant recordedOn = Instant.now();
     private int min = -1;
     private int raw = -1;
     private int max = -1;
-    private float percentage = -1;
+    private double percentage = -1;
 
     public SensorValues() {
+    }
+
+    public Instant getRecordedOn() {
+        return recordedOn;
+    }
+
+    public void setRecordedOn(Instant recordedOn) {
+        this.recordedOn = recordedOn;
     }
 
     public int getMin() {
@@ -36,11 +46,11 @@ public class SensorValues {
         this.max = max;
     }
 
-    public float getPercentage() {
+    public double getPercentage() {
         return percentage;
     }
 
-    public void setPercentage(float percentage) {
+    public void setPercentage(double percentage) {
         this.percentage = percentage;
     }
     // 267 : 260, 1000
@@ -56,10 +66,10 @@ public class SensorValues {
         }
         raw = value;
         if (min != -1 && max != -1 && value != -1 && (max - min) > 0) {
-            percentage = BigDecimal.valueOf(((float)value - (float)min) / ((float)max - (float)min))
+            percentage = BigDecimal.valueOf(((double)value - (double)min) / ((double)max - (double)min))
                     .multiply(BigDecimal.valueOf(100))
                     .setScale(2, RoundingMode.HALF_UP)
-                    .floatValue();
+                    .doubleValue();
         }
         return this;
     }

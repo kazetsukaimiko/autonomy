@@ -7,10 +7,9 @@ import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
 import io.freedriver.autonomy.jaxrs.view.AliasView;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
-import io.freedriver.autonomy.jpa.entity.event.input.sensors.FloatValueSensorEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.sensors.DoubleValueSensorEvent;
 import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEvent;
 import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEventType;
-import io.freedriver.autonomy.service.crud.EventCrudService;
 import io.freedriver.base.util.file.DirectoryProviders;
 import io.freedriver.jsonlink.config.v2.AnalogAlert;
 import io.freedriver.jsonlink.config.v2.AnalogSensor;
@@ -25,7 +24,6 @@ import io.freedriver.jsonlink.jackson.schema.v1.Mode;
 import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
-import liquibase.pro.packaged.I;
 import org.infinispan.Cache;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -39,18 +37,21 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -68,6 +69,8 @@ public class SimpleAliasService  {
 
     // Arbitrary. TODO: Rethink.
     private ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*10);
+
+    private final Map<AnalogSensor, List<SensorValues>> sensorAverages = new HashMap<>();
 
     @Inject
     ConnectorService connectorService;
@@ -232,7 +235,7 @@ public class SimpleAliasService  {
 
         persistAnalogCache();
 
-        Map<String, Float> percentages = mapping.getAnalogSensors()
+        Map<String, Double> percentages = mapping.getAnalogSensors()
             .stream()
             .filter(analogSensor -> sensorCache.keySet()
                 .stream()
@@ -264,7 +267,7 @@ public class SimpleAliasService  {
         return currentState;
     }
 
-    private void speak(AnalogAlert analogAlert, Map<String, Float> percentages) {
+    private void speak(AnalogAlert analogAlert, Map<String, Double> percentages) {
         LOGGER.info("AnalogAlert qualified: " + analogAlert);
         LOGGER.info("Percentages: \n" + percentages.entrySet()
                 .stream()
@@ -283,7 +286,7 @@ public class SimpleAliasService  {
         currentState.getAnalog()
                 .forEach(analogResponse -> getAnalogSensorByMapping(mapping, analogResponse)
                     .ifPresent(analogSensor -> {
-                        FloatValueSensorEvent event = new FloatValueSensorEvent();
+                        DoubleValueSensorEvent event = new DoubleValueSensorEvent();
                         event.setBoardId(mapping.getConnectorId());
                         event.setSensorName(mapping.getConnectorId() + "/" +analogSensor.getName()+"/live");
                         event.setGenerationOrigin(GenerationOrigin.NON_HUMAN);
@@ -408,58 +411,76 @@ public class SimpleAliasService  {
         sensorCache.entrySet().stream()
                 .filter(e -> Objects.equals(boardId, e.getKey().getBoardId()))
                 .forEach(e -> getAnalogSensorByPin(mapping, e.getKey())
-                        .ifPresent(analogSensor -> applySensorMetrics(aliasView, analogSensor, e.getValue())));
-
-
-        Map<String, String> sensorMinMaxes = Stream.concat(aliasView.getSensorMins().keySet().stream(), aliasView.getSensorMaxes().keySet().stream())
-                .collect(Collectors.toSet())
-                .stream()
-                .collect(Collectors.toMap(
-                        Function.identity(),
-                        key -> key + ": " +aliasView.getSensorMins().get(key)+ "-" + aliasView.getSensorMaxes().get(key) + "; " + aliasView.getSensors().get(key),
-                        (a, b) -> a));
-
-        String sensorPercentages = aliasView.getSensorPercentages()
-                .entrySet()
-                .stream()
-                .map(e -> e.getKey() + ": " + e.getValue() + " values " + sensorMinMaxes.get(e.getKey()))
-                .collect(Collectors.joining("\n"));
-
-
-        //LOGGER.info("Sensor percentages; \n" + sensorPercentages);
+                        .ifPresent(analogSensor -> {
+                            applySensorMetrics(aliasView, analogSensor, averageSensorMetrics(analogSensor, e.getValue()));
+                        }));
 
         return aliasView;
     }
 
-    private void applySensorMetrics(AliasView view, AnalogSensor analogSensor, SensorValues sensorValues) {
-        view.getSensors()
-                .put(analogSensor.getName(), scaleSensor(analogSensor, sensorValues.getRaw()));
-        view.getSensorMins()
-                .put(analogSensor.getName(), scaleSensor(analogSensor, sensorValues.getMin()));
-        view.getSensorMaxes()
-                .put(analogSensor.getName(), scaleSensor(analogSensor, sensorValues.getMax()));
-        view.getSensorPercentages()
-                .put(analogSensor.getName(), getSensorPercentage(
-                        view.getSensorMins().get(analogSensor.getName()),
-                        view.getSensorMaxes().get(analogSensor.getName()),
-                        view.getSensors().get(analogSensor.getName()),
-                        analogSensor));
+
+    private synchronized SensorValues averageSensorMetrics(AnalogSensor analogSensor, SensorValues sensorValues) {
+        if (!sensorAverages.containsKey(analogSensor)) {
+            sensorAverages.put(analogSensor, new ArrayList<>());
+        } else {
+            Instant expiresOn = Instant.now().plus(Duration.ofMillis(analogSensor.getAverageOver()));
+            sensorAverages.get(analogSensor)
+                    .removeIf(historical -> historical.getRecordedOn().isAfter(expiresOn));
+        }
+        sensorAverages.get(analogSensor)
+                .add(sensorValues);
+
+        SensorValues averagedForTime = new SensorValues();
+        averagedForTime.setRecordedOn(sensorValues.getRecordedOn());
+        SensorValues latest = sensorAverages.get(analogSensor)
+                .stream()
+                .max(Comparator.comparing(SensorValues::getRecordedOn))
+                .orElse(sensorValues);
+
+        int average = Double.valueOf(sensorAverages.get(analogSensor)
+                .stream()
+                .mapToInt(SensorValues::getRaw)
+                .average()
+                .orElse(latest.getRaw()))
+                .intValue();
+
+        averagedForTime.apply(average);
+
+        return averagedForTime;
     }
 
-    public float getSensorPercentage(float min, float max, float current, AnalogSensor analogSensor) {
-        float percentage = BigDecimal.valueOf((current - min) / (max - min))
+    private void applySensorMetrics(AliasView view, AnalogSensor analogSensor, SensorValues averagePacket) {
+        view.getSensors()
+                .put(analogSensor.getName(), Integer.valueOf(averagePacket.getRaw()).doubleValue());
+        view.getSensorMins()
+                .put(analogSensor.getName(), Integer.valueOf(averagePacket.getMin()).doubleValue());
+        view.getSensorMaxes()
+                .put(analogSensor.getName(), Integer.valueOf(averagePacket.getMax()).doubleValue());
+        view.getSensorPercentages()
+                .put(analogSensor.getName(),
+                            getSensorPercentage(
+                                    averagePacket.getMin(),
+                                averagePacket.getMax(),
+                                averagePacket.getRaw(),
+                                analogSensor));
+    }
+
+
+
+    public double getSensorPercentage(double min, double max, double current, AnalogSensor analogSensor) {
+        double percentage = BigDecimal.valueOf((current - min) / (max - min))
                 .multiply(BigDecimal.valueOf(100))
                 .setScale(2, RoundingMode.HALF_UP)
-                .floatValue();
+                .doubleValue();
         return analogSensor.isInverted()
                 ? 100F - percentage
                 : percentage;
     }
 
-    public float scaleSensor(AnalogSensor analogSensor, int sensorValue) {
+    public double scaleSensor(AnalogSensor analogSensor, int sensorValue) {
         return sensorValue;
 
-        //float v1 = sensorValue * (analogSensor.getVoltage() / 1023f);
+        //double v1 = sensorValue * (analogSensor.getVoltage() / 1023f);
         //return (analogSensor.getVoltage() - v1) * (analogSensor.getResistance() / v1);
     }
 

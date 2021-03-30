@@ -1,16 +1,16 @@
 package io.freedriver.autonomy.service;
 
-import io.freedriver.autonomy.jpa.entity.event.input.sensors.FloatValueSensorEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.sensors.DoubleValueSensorEvent;
 import io.freedriver.autonomy.service.crud.EventCrudService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;
 
 @ApplicationScoped
-public class FloatValueSensorEventService extends EventCrudService<FloatValueSensorEvent> {
+public class FloatValueSensorEventService extends EventCrudService<DoubleValueSensorEvent> {
     @Override
-    public Class<FloatValueSensorEvent> getEntityClass() {
-        return FloatValueSensorEvent.class;
+    public Class<DoubleValueSensorEvent> getEntityClass() {
+        return DoubleValueSensorEvent.class;
     }
 
     /**
@@ -20,7 +20,7 @@ public class FloatValueSensorEventService extends EventCrudService<FloatValueSen
      * @return
      */
     @Transactional
-    public FloatValueSensorEvent save(FloatValueSensorEvent event) {
+    public DoubleValueSensorEvent save(DoubleValueSensorEvent event) {
         return persist(event);
     }
 }

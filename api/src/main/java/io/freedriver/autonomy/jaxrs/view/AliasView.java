@@ -8,10 +8,10 @@ public class AliasView {
     Map<String, Boolean> applianceStates = new LinkedHashMap<>();
     Map<String, Boolean> groupStates = new LinkedHashMap<>();
     Map<String, Set<String>> groups = new LinkedHashMap<>();
-    Map<String, Float> sensors = new LinkedHashMap<>();
-    Map<String, Float> sensorMins = new LinkedHashMap<>();
-    Map<String, Float> sensorMaxes = new LinkedHashMap<>();
-    Map<String, Float> sensorPercentages = new LinkedHashMap<>();
+    Map<String, Double> sensors = new LinkedHashMap<>();
+    Map<String, Double> sensorMins = new LinkedHashMap<>();
+    Map<String, Double> sensorMaxes = new LinkedHashMap<>();
+    Map<String, Double> sensorPercentages = new LinkedHashMap<>();
 
     public AliasView() {
     }
@@ -40,35 +40,35 @@ public class AliasView {
         this.groups = groups;
     }
 
-    public Map<String, Float> getSensors() {
+    public Map<String, Double> getSensors() {
         return sensors;
     }
 
-    public void setSensors(Map<String, Float> sensors) {
+    public void setSensors(Map<String, Double> sensors) {
         this.sensors = sensors;
     }
 
-    public Map<String, Float> getSensorMins() {
+    public Map<String, Double> getSensorMins() {
         return sensorMins;
     }
 
-    public void setSensorMins(Map<String, Float> sensorMins) {
+    public void setSensorMins(Map<String, Double> sensorMins) {
         this.sensorMins = sensorMins;
     }
 
-    public Map<String, Float> getSensorMaxes() {
+    public Map<String, Double> getSensorMaxes() {
         return sensorMaxes;
     }
 
-    public void setSensorMaxes(Map<String, Float> sensorMaxes) {
+    public void setSensorMaxes(Map<String, Double> sensorMaxes) {
         this.sensorMaxes = sensorMaxes;
     }
 
-    public Map<String, Float> getSensorPercentages() {
+    public Map<String, Double> getSensorPercentages() {
         return sensorPercentages;
     }
 
-    public void setSensorPercentages(Map<String, Float> sensorPercentages) {
+    public void setSensorPercentages(Map<String, Double> sensorPercentages) {
         this.sensorPercentages = sensorPercentages;
     }
 }

@@ -14,28 +14,28 @@ import java.util.UUID;
 @Entity
 @Table
 @Inheritance(strategy = InheritanceType.JOINED)
-public class FloatValueSensorEvent extends SensorEvent {
+public class DoubleValueSensorEvent extends SensorEvent {
     @Column
-    private float value;
+    private double value;
 
-    public FloatValueSensorEvent() {
+    public DoubleValueSensorEvent() {
     }
 
-    public FloatValueSensorEvent(UUID boardId, String sensorName, float value) {
+    public DoubleValueSensorEvent(UUID boardId, String sensorName, double value) {
         super(boardId, sensorName);
         this.value = value;
     }
 
-    public FloatValueSensorEvent(long timestamp, GenerationOrigin generationOrigin, String sourceClass, String sourceId, String eventId, UUID boardId, String sensorName, float value) {
+    public DoubleValueSensorEvent(long timestamp, GenerationOrigin generationOrigin, String sourceClass, String sourceId, String eventId, UUID boardId, String sensorName, double value) {
         super(timestamp, generationOrigin, sourceClass, sourceId, eventId, boardId, sensorName);
         this.value = value;
     }
 
-    public float getValue() {
+    public double getValue() {
         return value;
     }
 
-    public void setValue(float value) {
+    public void setValue(double value) {
         this.value = value;
     }
 
@@ -51,8 +51,8 @@ public class FloatValueSensorEvent extends SensorEvent {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
-        FloatValueSensorEvent that = (FloatValueSensorEvent) o;
-        return Float.compare(that.value, value) == 0;
+        DoubleValueSensorEvent that = (DoubleValueSensorEvent) o;
+        return Double.compare(that.value, value) == 0;
     }
 
     @Override
