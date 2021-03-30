@@ -420,6 +420,9 @@ public class SimpleAliasService  {
 
 
     private synchronized SensorValues averageSensorMetrics(AnalogSensor analogSensor, SensorValues sensorValues) {
+        if (analogSensor.getAverageOver() < 0) {
+            return sensorValues;
+        }
         if (!sensorAverages.containsKey(analogSensor)) {
             sensorAverages.put(analogSensor, new ArrayList<>());
         } else {
