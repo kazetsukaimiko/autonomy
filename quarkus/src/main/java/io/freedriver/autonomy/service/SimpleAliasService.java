@@ -32,8 +32,6 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -46,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -229,6 +226,7 @@ public class SimpleAliasService  {
         currentState.getDigital().forEach((k, v) ->
                 digitalPinCache.put(new PinCoordinate(mapping.getConnectorId(), k), v));
 
+        /*
         // Cache Analog Pins
         currentState.getAnalog()
                 .forEach(analogResponse -> applyAnalogCache(mapping.getConnectorId(), analogResponse));
@@ -263,6 +261,8 @@ public class SimpleAliasService  {
                         LOGGER.warning("Couldn't process AnalogAlert- missing mappings. " + analogAlert);
                     }
                 });
+
+         */
 
         return currentState;
     }
@@ -359,19 +359,6 @@ public class SimpleAliasService  {
         sensorCache.put(coordinate, values);
     }
 
-
-    public AliasView newView(UUID boardId) throws IOException {
-        return makeView(boardId);
-        /*
-        return oneSecondCache.computeIfAbsent(boardId, uuid -> {
-            try {
-                return makeView(uuid);
-            } catch (IOException e) {
-                throw new ViewCreationException("Problem creating view", e);
-            }
-        });*/
-    }
-
     public AliasView makeView(UUID boardId) throws IOException {
         Mapping mapping = getMapping(boardId);
         AliasView aliasView = new AliasView();
@@ -408,12 +395,15 @@ public class SimpleAliasService  {
                         e -> !e.getValue().contains(false)
                 )));
 
+        /*
         sensorCache.entrySet().stream()
                 .filter(e -> Objects.equals(boardId, e.getKey().getBoardId()))
                 .forEach(e -> getAnalogSensorByPin(mapping, e.getKey())
                         .ifPresent(analogSensor -> {
                             applySensorMetrics(aliasView, analogSensor, averageSensorMetrics(analogSensor, e.getValue()));
                         }));
+
+         */
 
         return aliasView;
     }
@@ -447,7 +437,7 @@ public class SimpleAliasService  {
                 .average()
                 .orElse(latest.getRaw()))
                 .intValue();
-        
+
         averagedForTime.setMin(latest.getMin());
         averagedForTime.setMax(latest.getMax());
         averagedForTime.setRaw(average);
@@ -456,6 +446,9 @@ public class SimpleAliasService  {
         return averagedForTime;
     }
 
+
+
+    /*
     private void applySensorMetrics(AliasView view, AnalogSensor analogSensor, SensorValues averagePacket) {
         view.getSensors()
                 .put(analogSensor.getName(), Integer.valueOf(averagePacket.getRaw()).doubleValue());
@@ -473,15 +466,19 @@ public class SimpleAliasService  {
     }
 
 
-
     public double getSensorPercentage(double min, double max, double current, AnalogSensor analogSensor) {
         double percentage = BigDecimal.valueOf((current - min) / (max - min))
                 .multiply(BigDecimal.valueOf(100))
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
-        return analogSensor.isInverted()
-                ? 100F - percentage
+
+        double base = (analogSensor.getFactor() != null && analogSensor.getMode() != null)
+                ? analogSensor.getMode().realPercent(percentage, analogSensor.getFactor())
                 : percentage;
+
+        return analogSensor.isInverted()
+                ? 100F - base
+                : base;
     }
 
     public double scaleSensor(AnalogSensor analogSensor, int sensorValue) {
@@ -491,12 +488,15 @@ public class SimpleAliasService  {
         //return (analogSensor.getVoltage() - v1) * (analogSensor.getResistance() / v1);
     }
 
+
     public Optional<AnalogSensor> getAnalogSensorByPin(Mapping mapping, PinCoordinate coordinate) {
         return mapping.getAnalogSensors()
                 .stream()
                 .filter(analogSensor -> Objects.equals(coordinate.getIdentifier(), analogSensor.getPin()))
                 .findFirst();
     }
+
+     */
 
     public Response setState(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
         Mapping mapping = getMapping(boardId);
@@ -578,7 +578,7 @@ public class SimpleAliasService  {
                         (req, app) -> req.digitalWrite(new DigitalWrite(app.getIdentifier(),
                                 DigitalState.fromBoolean(setStateAs))), (a, b) -> a);
         // Read Analog pins
-        request.analogRead(mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead));
+        //request.analogRead(mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead));
 
         LOGGER.finest(request.toString());
 

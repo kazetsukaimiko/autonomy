@@ -41,7 +41,7 @@ public class SimpleAliasHandler implements SimpleAliasApi {
     @Override
     public AliasView getState(UUID boardId) throws IOException {
         LOGGER.fine("Getting state of " + boardId);
-        return simpleAliasService.newView(boardId);
+        return simpleAliasService.makeView(boardId);
     }
 
     @Override
