@@ -52,7 +52,8 @@ public class TTLEnforcementService {
 
     private void applyTTLToEventService(Duration ttl, EventCrudService<?> eventCrudService) {
         try {
-            eventCrudService.applyTTL(ttl);
+            int culled = eventCrudService.applyTTL(ttl);
+            LOGGER.info("Culled " + culled + " from " + eventCrudService.getClass().getSimpleName());
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Could not apply TTL to "+eventCrudService.getClass().getSimpleName()+": ", e);
         }
