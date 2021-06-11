@@ -20,7 +20,7 @@ Autonomy is the automation software suite used in my bus conversion. It integrat
 * Other stuff I can't remember
 
 ## How it works
-Internally Autonomy is quite event driven, although not as much as it could be. In a nutshell I have:
+In a nutshell I have:
 * A DIY arcade joystick board wired into buttons on my walls
 * An Arduino 2560 MEGA connected to two 16 channel relay controllers
 
@@ -44,7 +44,7 @@ Additionally the GPIO to appliance mappings allow for REST control:
 Autonomy is built on Java/Jakarta EE 8+, making use of JAX-RS, CDI, JPA2 among other technologies. Its history includes deployments on Wildfly, Wildfly Swarm, Thorntail.io and now Quarkus. 
 
 Currently there are several modules:
-* api - the JAX-RS APIs and data model  specific to Autonomy 
+* api - the JAX-RS APIs and data model specific to Autonomy 
 * jpa - the JPA entities specific to Autonomy, generates a static metamodel used for typesafe CriteriaQueries
 * quarkus - Quarkus deployment and all Java EE Service code.
 * ui - is an ongoing attempt to experiment with FE technologies to formalize UI development and testing
@@ -54,6 +54,8 @@ Autonomy makes heavy use of my upstream freedriver project, tools which are not 
 https://github.com/kazetsukaimiko/freedriver/ 
 
 The REST control video above is from a long time ago when to read pin states one had to ask the Arduino prior to issuing commands- since then I've placed an [Infinispan Cache](https://infinispan.org/) in front of GPIO control which has made the REST interface much more responsive. A neat side effect is concurrency related.... REST services that talk to serial create some interesting concurrency issues, which the cache alleviates.
+
+Internally Autonomy is quite event driven, although not as much as it could be. Instead of binding joystick reads to action, they are sent using the CDI Event bus and received by services classes using @Observes. Currently there is only one service with several REST APIs, although I hope to move to microservices, see below.
 
 ## Future plans
 With the migration to Quarkus, the goal is to break up Autonomy as a monolithic web application into several microservices, using a message bus/service rather than vanilla CDI events:
