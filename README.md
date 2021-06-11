@@ -27,6 +27,7 @@ In a nutshell I have:
 Using Autonomy I create a mapping from GPIO to appliance (Ardunio Digital pins), or GPIO to sensor (Arduino Analog pins):
 * 46 -> "laundry"
 * 40 -> "hallway"
+
 I then have a second pair of mappings from joystick:state to appliance which toggles those appliances:
 * 11:0 -> "hallway"
 * 10:0 -> "laundry"
