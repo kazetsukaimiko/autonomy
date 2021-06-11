@@ -20,6 +20,22 @@ Autonomy is the automation software suite used in my bus conversion. It integrat
 * Other stuff I can't remember
 
 ## How it works
+Internally Autonomy is quite event driven, although not as much as it could be. In a nutshell I have:
+* A DIY arcade joystick board wired into buttons on my walls
+* An Arduino 2560 MEGA connected to two 16 channel relay controllers
+
+Using Autonomy I create a mapping from GPIO to appliance (Ardunio Digital pins), or GPIO to sensor (Arduino Analog pins):
+* 46 -> "laundry"
+* 40 -> "hallway"
+I then have a second pair of mappings from joystick:state to appliance which toggles those appliances:
+* 11:0 -> "hallway"
+* 10:0 -> "laundry"
+
+So that when the Joystick button 11 (11) is released (0), that toggles GPIO 40.
+![](/readme/button_action.gif)
+
+Additionally the GPIO to appliance mappings allow for REST control:
+![](/readme/remote.gif)
 
 ## Architecture
 Autonomy is built on Java/Jakarta EE 8+, making use of JAX-RS, CDI, JPA2 among other technologies. Its history includes deployments on Wildfly, Wildfly Swarm, Thorntail.io and now Quarkus. 
