@@ -35,21 +35,76 @@ import java.util.stream.Stream;
  * The service by which we interact with connectors.
  */
 @ApplicationScoped
-public class ConnectorService extends ConnectorServiceCommon {
-    private static final Logger LOGGER = Logger.getLogger(ConnectorService.class.getName());
-    //private static final List<Connector> ACTIVE_CONNECTORS = new ArrayList<>();
+public class ConnectorServiceCommon {
+    private static final Logger LOGGER = Logger.getLogger(ConnectorServiceCommon.class.getName());
+    private static final List<Connector> ACTIVE_CONNECTORS = new ArrayList<>();
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .registerModule(new JsonLinkModule())
             .enable(SerializationFeature.INDENT_OUTPUT);
 
 
-    private void waitForCompletion(CompletableFuture<Void> voidCompletableFuture) {
+    protected ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+    public List<UUID> getConnectedBoards() {
+        return getAllConnectors().stream()
+                .map(Connector::getUUID)
+                .collect(Collectors.toList());
+    }
+
+    /*
+     * INTERNALS / HELPERS
+     */
+    protected List<Connector> getAllConnectors() {
+        // Remove existing closed.
+        List<Connector> closed = ACTIVE_CONNECTORS.stream()
+                .filter(this::connectorIsClosed)
+                .collect(Collectors.toList());
+        ACTIVE_CONNECTORS.removeAll(closed);
+
+        // Connect new
+        List<CompletableFuture<Void>> threads = Connectors.allDevices()
+                .filter(device -> ACTIVE_CONNECTORS.stream()
+                        .noneMatch(existing -> Objects.equals(existing.device(), device)))
+                .map(device -> Connectors.findOrOpenAndConsume(device, executorService, ACTIVE_CONNECTORS::add))
+                .collect(Collectors.toList());
+        threads.forEach(this::waitForCompletion);
+
+        return ACTIVE_CONNECTORS;
+    }
+
+    protected boolean connectorIsClosed(Connector connector) {
+        return connector.
+                isClosed();
+    }
+
+    protected void waitForCompletion(CompletableFuture<Void> voidCompletableFuture) {
         try {
             voidCompletableFuture.get();
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to wait for completion of connector", e);
         }
+    }
+
+    protected Optional<Connector> getConnectorByBoardId(UUID boardId) {
+        return getAllConnectors().stream()
+                .filter(connector -> Objects.equals(boardId, connector.getUUID()))
+                .findFirst();
+    }
+
+/*
+    public String describeBoards() {
+        return getAllConnectors().stream()
+                .map(Connector::getUUID)
+                .sorted(Comparator.comparing(UUID::toString))
+                .map(UUID::toString)
+                .collect(Collectors.joining(","));
+    }*/
+
+    public synchronized Response send(UUID uuid, Request request) {
+        return getConnectorByBoardId(uuid)
+                .map(connector -> connector.send(request))
+                .orElseThrow(() -> new WebApplicationException("Board not found, present devices: " + ACTIVE_CONNECTORS.stream().map(Connector::device).collect(Collectors.joining(",")), 404));
     }
 
     /*
@@ -59,8 +114,6 @@ public class ConnectorService extends ConnectorServiceCommon {
                 .reduce(new Request(), Request::digitalRead, (a, b) -> a))
                 .getDigital();
     }
-
-     */
 
     public synchronized Response readDigitalAndAnalog(UUID boardId, Collection<Identifier> pins, Stream<AnalogRead> analogReads) {
         return send(boardId, pins.stream()
@@ -74,4 +127,6 @@ public class ConnectorService extends ConnectorServiceCommon {
         return send(boardId, request)
                 .getDigital();
     }
+
+     */
 }

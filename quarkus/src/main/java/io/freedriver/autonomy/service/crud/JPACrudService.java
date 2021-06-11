@@ -12,6 +12,7 @@ import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.ws.rs.core.MediaType;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -24,7 +25,7 @@ public abstract class JPACrudService<E extends EntityBase> {
 
     public abstract Class<E> getEntityClass();
 
-    protected Stream<E> select(BiFunction<Root<E>, CriteriaBuilder, Stream<Predicate>> selectionXFunction, String description) {
+    public Stream<E> select(BiFunction<Root<E>, CriteriaBuilder, Stream<Predicate>> selectionXFunction, String description) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<E> cq = cb.createQuery(getEntityClass());
         Root<E> root = cq.from(getEntityClass());

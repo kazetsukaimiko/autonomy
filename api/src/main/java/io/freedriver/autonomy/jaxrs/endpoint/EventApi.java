@@ -11,6 +11,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Path(EventApi.ROOT)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-public interface EventApi<ID> extends CRUDApi<Event, ID> {
-    public static final String ROOT = "/event";
+public interface EventApi<EVENT extends Event> extends ReadApi<EVENT, Long> {
+    String ROOT = "/event";
 }

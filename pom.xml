@@ -11,6 +11,7 @@
     <module>jpa</module>
     <module>api</module>
     <module>quarkus</module>
+    <module>environment</module>
   </modules>
   <properties>
     <failOnMissingWebXml>false</failOnMissingWebXml>
@@ -39,6 +40,11 @@
       <dependency>
         <groupId>io.freedriver.autonomy</groupId>
         <artifactId>autonomy-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>environment</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
