@@ -7,7 +7,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;
 
 @ApplicationScoped
-public class FloatValueSensorEventService extends EventCrudService<DoubleValueSensorEvent> {
+public class DoubleValueSensorEventService extends EventCrudService<DoubleValueSensorEvent> {
     @Override
     public Class<DoubleValueSensorEvent> getEntityClass() {
         return DoubleValueSensorEvent.class;

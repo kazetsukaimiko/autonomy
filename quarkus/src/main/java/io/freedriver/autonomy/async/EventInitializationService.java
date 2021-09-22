@@ -7,7 +7,7 @@ import io.freedriver.autonomy.service.SimpleAliasService;
 import io.freedriver.electrodacus.sbms.SBMS0Finder;
 import io.freedriver.electrodacus.sbms.SBMSMessage;
 import io.freedriver.victron.VEDirectMessage;
-import io.freedriver.victron.VEDirectReader;
+import io.freedriver.victron.VEDirectStreamer;
 import io.quarkus.runtime.StartupEvent;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -32,7 +32,7 @@ public class EventInitializationService extends BaseService {
 
     private static final Logger LOGGER = Logger.getLogger(EventInitializationService.class.getName());
 
-    private final Map<VEDirectReader, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
+    private final Map<VEDirectStreamer, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
     private final Map<Path, Future<Boolean>> sbmsUnits =  new ConcurrentHashMap<>();
     private final Map<Path, Instant> sbmsUnitsDead = new ConcurrentHashMap<>();
 
@@ -138,7 +138,7 @@ public class EventInitializationService extends BaseService {
     }
 
 
-    private boolean veDeviceInactive(VEDirectReader veDirectDevice) {
+    private boolean veDeviceInactive(VEDirectStreamer veDirectDevice) {
         return Optional.of(veDirectDevice)
                 .filter(devicesInOperation::containsKey)
                 .map(devicesInOperation::get)
@@ -146,10 +146,10 @@ public class EventInitializationService extends BaseService {
                 .orElse(true);
     }
 
-    private synchronized void initVEDirectDevice(final VEDirectReader veDirectDevice) {
+    private synchronized void initVEDirectDevice(final VEDirectStreamer veDirectDevice) {
         LOGGER.info("Initializing VEDirectDevice: " + veDirectDevice.toString());
         devicesInOperation.put(veDirectDevice, pool.submit(() -> {
-            veDirectDevice.readAsMessages()
+            veDirectDevice.stream()
                     .forEach(this::fireVEDirectMessage);
             return initVEDirectMonitor();
         }));

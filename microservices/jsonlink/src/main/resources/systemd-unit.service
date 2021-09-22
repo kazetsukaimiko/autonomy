@@ -1,0 +1,13 @@
+[Unit]
+Description=Autonomy Microservice ${project.artifactId} Daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -jar %h/.local/autonomy/microservices/${project.artifactId}/quarkus-run.jar -DrestartOn=%h/.local/autonomy/microservices/${project.artifactId}/quarkus-run.jar -DrestartCommand="%h/bin/restartAutonomy.sh"
+ExecStop=/bin/kill $MAINPID
+ExecStopPost=systemctl --user stop h2
+KillMode=control-group
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

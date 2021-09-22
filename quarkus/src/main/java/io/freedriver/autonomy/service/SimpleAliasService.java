@@ -73,7 +73,7 @@ public class SimpleAliasService  {
     ConnectorService connectorService;
 
     @Inject
-    FloatValueSensorEventService floatValueSensorService;
+    DoubleValueSensorEventService floatValueSensorService;
 
     @Inject
     @ConnectorCache
@@ -209,7 +209,7 @@ public class SimpleAliasService  {
             return digitalStateFromCache;
         }
         return cacheBoardState(mapping, connectorService
-                .readDigitalAndAnalog(
+                .readPins(
                         boardId,
                         mapping.getAppliances().stream().map(Appliance::getIdentifier).collect(Collectors.toSet()),
                         mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead))

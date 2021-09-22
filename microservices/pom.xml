@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.freedriver.autonomy.microservices</groupId>
+  <artifactId>microservices-parent</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Autonomy Microservices</name>
+  <modules>
+    <module>common</module>
+    <module>bms</module>
+    <module>input</module>
+    <module>jsonlink</module>
+    <module>mapping</module>
+    <module>vedirect</module>
+  </modules>
+    
+  <properties>
+    <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
+    <compiler-plugin.version>3.8.1</compiler-plugin.version>
+    <maven.compiler.parameters>true</maven.compiler.parameters>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <quarkus-plugin.version>1.13.7.Final</quarkus-plugin.version>
+    <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
+    <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
+    <quarkus.platform.version>1.13.7.Final</quarkus.platform.version>
+    <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
+    <microservice.unit.name>autonomy-${project.artifactId}</microservice.unit.name>
+  </properties>
+    
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>${quarkus.platform.artifact-id}</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy.microservices</groupId>
+        <artifactId>microservices-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy.microservices</groupId>
+        <artifactId>bms-microservice</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy.microservices</groupId>
+        <artifactId>input-microservice</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy.microservices</groupId>
+        <artifactId>jsonlink-microservice</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy.microservices</groupId>
+        <artifactId>mapping-microservice</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy.microservices</groupId>
+        <artifactId>vedirect-microservice</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+    
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>oss.sonatype.org-snapshot</id>
+      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+  </repositories>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+
+        <!-- Ant -->
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>3.0.0</version>
+          <executions>
+            <execution>
+              <id>clean</id>
+              <phase>clean</phase>
+              <configuration>
+                <target>
+                  <echo>Removing ${project.artifactId} Microservice</echo>
+                  <!-- Delete the SystemD Units -->
+                  <delete>
+                    <fileset  dir="${user.home}/.local/share/systemd/user/" includes="${microservice.unit.name}.service" />
+                  </delete>
+                  <!-- Remove the Microservice -->
+                  <delete dir="${user.home}/.local/autonomy/microservices/${project.artifactId}" />
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>copy</id>
+              <phase>install</phase>
+              <configuration>
+                <target>
+                  <echo>Installing ${project.artifactId} Microservice</echo>
+                  <!-- JARs -->
+                  <copy todir="${user.home}/.local/autonomy/microservices/${project.artifactId}" overwrite="true" flatten="false">
+                    <fileset dir="${project.build.directory}/quarkus-app/" includes="**"/>
+                  </copy>
+                  <!-- Service Units -->
+                  <copy todir="${user.home}/.local/share/systemd/user/" overwrite="true" flatten="false">
+                    <fileset dir="${basedir}/target/classes/" includes="systemd-unit.service"/>
+                    <globmapper from="*.service" to="${microservice.unit.name}.service"/>
+                  </copy>
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

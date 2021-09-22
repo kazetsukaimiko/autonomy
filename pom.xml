@@ -11,6 +11,7 @@
     <module>jpa</module>
     <module>api</module>
     <module>quarkus</module>
+    <module>microservices</module>
     <module>environment</module>
   </modules>
   <properties>
@@ -23,13 +24,6 @@
   </properties>
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>io.thorntail</groupId>
-        <artifactId>bom-all</artifactId>
-        <version>${version.thorntail}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
       <dependency>
         <groupId>io.freedriver</groupId>
         <artifactId>freedriver-parent</artifactId>
@@ -52,11 +46,20 @@
         <artifactId>autonomy-jpa</artifactId>
         <version>${project.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>io.freedriver.autonomy.microservices</groupId>
+        <artifactId>microservices-parent</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!--
       <dependency>
         <groupId>io.freedriver.autonomy</groupId>
         <artifactId>autonomy-quarkus</artifactId>
         <version>${project.version}</version>
       </dependency>
+      -->
     </dependencies>
   </dependencyManagement>
   <repositories>
