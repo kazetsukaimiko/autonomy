@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.microservices.resteasyjackson;
+package io.freedriver.autonomy.bms.resteasyjackson;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;

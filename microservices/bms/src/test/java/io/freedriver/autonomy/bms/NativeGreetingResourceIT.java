@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.microservices;
+package io.freedriver.autonomy.bms;
 
 import io.quarkus.test.junit.NativeImageTest;
 

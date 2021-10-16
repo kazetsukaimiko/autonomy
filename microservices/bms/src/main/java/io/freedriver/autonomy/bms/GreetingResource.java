@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.microservices;
+package io.freedriver.autonomy.bms;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

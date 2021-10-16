@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.microservices.resteasyjackson;
+package io.freedriver.autonomy.bms.resteasyjackson;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
