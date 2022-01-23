@@ -6,27 +6,56 @@
   <artifactId>autonomy</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Autonomy Java Parent</name>
+  <name>Autonomy</name>
   <modules>
-    <module>modules</module>
-    <module>deployments</module>
+    <module>jpa</module>
+    <module>api</module>
+    <module>quarkus</module>
+    <module>environment</module>
   </modules>
-
   <properties>
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <version.thorntail>2.6.0.Final</version.thorntail>
   </properties>
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>io.thorntail</groupId>
+        <artifactId>bom-all</artifactId>
+        <version>${version.thorntail}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>io.freedriver</groupId>
         <artifactId>freedriver-parent</artifactId>
         <version>${io.freedriver.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>environment</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-jpa</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-quarkus</artifactId>
+        <version>${project.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
