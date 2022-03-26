@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <parent>
         <groupId>io.freedriver.autonomy</groupId>
-        <artifactId>autonomy</artifactId>
+        <artifactId>autonomy-modules</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
