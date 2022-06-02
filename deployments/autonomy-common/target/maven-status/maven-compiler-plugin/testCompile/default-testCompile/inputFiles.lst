@@ -1,0 +1,5 @@
+/home/luna/workspace/autonomy/deployments/autonomy-common/src/test/java/io/freedriver/autonomy/deployments/common/util/MessageConverterTest.java
+/home/luna/workspace/autonomy/deployments/autonomy-common/src/test/java/io/freedriver/autonomy/deployments/common/event/MQTTEventBridgeTest.java
+/home/luna/workspace/autonomy/deployments/autonomy-common/src/test/java/io/freedriver/autonomy/deployments/common/event/TestEvent.java
+/home/luna/workspace/autonomy/deployments/autonomy-common/src/test/java/io/freedriver/autonomy/deployments/common/util/JacksonMessageConverterTest.java
+/home/luna/workspace/autonomy/deployments/autonomy-common/src/test/java/io/freedriver/autonomy/deployments/common/event/TestEventService.java

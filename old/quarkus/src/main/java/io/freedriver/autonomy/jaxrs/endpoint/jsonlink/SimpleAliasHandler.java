@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.jaxrs.endpoint.jsonlink;
 
 import io.freedriver.autonomy.jaxrs.endpoint.SimpleAliasApi;
-import io.freedriver.autonomy.jaxrs.view.AliasView;
+import io.freedriver.autonomy.jaxrs.payload.AliasView;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.autonomy.service.SimpleAliasService;
 import io.freedriver.jsonlink.config.v2.Appliance;

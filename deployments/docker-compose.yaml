@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+    autonomy-mqtt:
+      profiles: ["java"]
+      environment:
+        QUARKUS_DATASOURCE_MQTT_USERNAME: ${MYSQL_USER}
+        QUARKUS_DATASOURCE_MQTT_PASSWORD: ${MYSQL_PASSWORD}
+        QUARKUS_DATASOURCE_MQTT_JDBC_URL: jdbc:mariadb://db:3306/mqtt
+        QUARKUS_DATASOURCE_MQTT_DB-KIND: mariadb
+      build:
+        context: ./autonomy-mqtt
+        dockerfile: src/main/docker/Dockerfile.jvm
+        args:
+          TIMEZONE: ${TIMEZONE}
+      image: quarkus/autonomy-mqtt-jvm
+      volumes:
+        - ./autonomy-mqtt/:/autonomy-mqtt/
+      ports:
+        - "8081:8080"
+        - "8444:8443"
+        - "1883:1883"
+      networks:
+        - autonomy
+networks:
+  autonomy:
+    driver: bridge
+volumes:
+  dbData:
+

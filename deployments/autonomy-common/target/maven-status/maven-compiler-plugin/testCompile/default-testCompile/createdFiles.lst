@@ -1,0 +1,8 @@
+io/freedriver/autonomy/deployments/common/event/TestEvent.class
+io/freedriver/autonomy/deployments/common/event/TestEventService.class
+io/freedriver/autonomy/deployments/common/util/MessageConverterTest.class
+io/freedriver/autonomy/deployments/common/util/MessageConverterTest$Cat.class
+io/freedriver/autonomy/deployments/common/event/MQTTEventBridgeTest.class
+io/freedriver/autonomy/deployments/common/util/MessageConverterTest$Animal.class
+io/freedriver/autonomy/deployments/common/util/JacksonMessageConverterTest.class
+io/freedriver/autonomy/deployments/common/util/MessageConverterTest$Dog.class

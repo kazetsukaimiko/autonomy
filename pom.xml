@@ -3,22 +3,35 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.freedriver.autonomy</groupId>
-  <artifactId>autonomy</artifactId>
+  <artifactId>autonomy-java-parent</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Autonomy Java Parent</name>
 
   <modules>
-    <module>stacks</module>
+    <module>modules</module>
+    <module>deployments</module>
   </modules>
 
   <properties>
-    <failOnMissingWebXml>false</failOnMissingWebXml>
-    <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <!-- Plugins -->
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>11</maven.compiler.release>
+
+    <compiler-plugin.version>3.8.1</compiler-plugin.version>
+    <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
+    <failsafe.useModulePath>false</failsafe.useModulePath>
+
+    <!-- 1st Party -->
+    <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
+
+    <!-- 3rd Party -->
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -28,8 +41,20 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-jpa</artifactId>
+        <version>${project.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
+
   <repositories>
     <repository>
       <releases>
