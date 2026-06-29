@@ -41,11 +41,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.freedriver</groupId>
-            <artifactId>electrodacus</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
         </dependency>
