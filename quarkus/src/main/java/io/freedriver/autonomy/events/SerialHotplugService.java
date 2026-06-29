@@ -8,6 +8,13 @@ import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Reacts to serial device hotplug signals from freedriver {@code inotify-cdi}.
+ *
+ * <p>{@link io.freedriver.inotify.cdi.InotifyCdiBridge} publishes {@link InotifyFilesystemEvent}
+ * when {@link io.freedriver.inotify.cdi.InotifyLifecycle} receives kernel inotify notifications
+ * for {@code /dev/serial/by-id}.
+ */
 @ApplicationScoped
 @Slf4j
 public class SerialHotplugService {
