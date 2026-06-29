@@ -1,22 +1,22 @@
 package io.freedriver.autonomy.jaxrs.endpoint;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.victron.VEDirectColumn;
 import io.freedriver.victron.VictronDevice;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 
 @Path(VEDirectApi.ROOT)
 @Produces(APPLICATION_JSON)

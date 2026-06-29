@@ -2,10 +2,10 @@ package io.freedriver.autonomy.jpa.entity.event.sensor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import javax.persistence.*;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
+import jakarta.persistence.*;
 
 @Table
 @Entity

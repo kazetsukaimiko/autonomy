@@ -1,10 +1,9 @@
 package io.freedriver.autonomy.service;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.transaction.Transactional;
-
 import io.freedriver.autonomy.jpa.entity.event.input.sensors.DoubleValueSensorEvent;
 import io.freedriver.autonomy.service.crud.EventCrudService;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class FloatValueSensorEventService extends EventCrudService<DoubleValueSensorEvent> {

@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.jpa.entity.event.input.joystick;
 
 import java.util.Objects;
-import javax.persistence.*;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
+import jakarta.persistence.*;
 
 @Entity
 @Table

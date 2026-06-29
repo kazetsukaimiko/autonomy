@@ -10,16 +10,16 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>autonomy-quarkus</artifactId>
     <properties>
-        <compiler-plugin.version>3.8.1</compiler-plugin.version>
+        <compiler-plugin.version>3.12.1</compiler-plugin.version>
         <maven.compiler.parameters>true</maven.compiler.parameters>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus-plugin.version>1.12.2.Final</quarkus-plugin.version>
-        <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
+        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-        <quarkus.platform.version>1.12.2.Final</quarkus.platform.version>
+        <quarkus.platform.version>3.37.0</quarkus.platform.version>
+        <quarkus-plugin.version>${quarkus.platform.version}</quarkus-plugin.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     </properties>
     <dependencyManagement>
@@ -49,17 +49,16 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-websockets</artifactId>
-            <version>1.13.3.Final</version>
         </dependency>
 
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-reactive</artifactId>
+            <artifactId>quarkus-rest</artifactId>
         </dependency>
 
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-jackson</artifactId>
+            <artifactId>quarkus-rest-jackson</artifactId>
         </dependency>
 
         <dependency>
@@ -88,9 +87,9 @@
         </dependency>
 
         <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-infinispan-embedded</artifactId>
-            <version>1.6.1.Final</version>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <version>15.0.0.Final</version>
         </dependency>
 
 
@@ -118,7 +117,7 @@
         <dependency>
             <groupId>io.github.classgraph</groupId>
             <artifactId>classgraph</artifactId>
-            <version>LATEST</version>
+            <version>4.8.162</version>
         </dependency>
 
     </dependencies>
@@ -171,10 +170,10 @@
                                 </copy>
                                 <copy todir="${user.home}/.local/share/systemd/user/" overwrite="true"
                                       flatten="true">
-                                    <fileset dir="${basedir}/src/main/systemd/" includes="*.service"/>
+                                    <fileset dir="${basedir}/../../deploy/systemd/" includes="*.service"/>
                                 </copy>
                                 <copy todir="${user.home}/bin/" overwrite="true" flatten="true">
-                                    <fileset dir="${basedir}/src/main/systemd/" includes="*.sh"/>
+                                    <fileset dir="${basedir}/../../deploy/systemd/" includes="*.sh"/>
                                 </copy>
                                 <chmod file="${user.home}/bin/restartAutonomy.sh" perm="755"/>
                                 <chmod file="${user.home}/bin/startAutonomy.sh" perm="755"/>

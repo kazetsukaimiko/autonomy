@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.jaxrs.endpoint;
 
-import javax.ws.rs.POST;
+import jakarta.ws.rs.POST;
 
 public interface CreateApi<ENTITY, ID> {
     @POST

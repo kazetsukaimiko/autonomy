@@ -43,12 +43,6 @@
 
       <dependency>
         <groupId>io.freedriver.autonomy</groupId>
-        <artifactId>environment</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.freedriver.autonomy</groupId>
         <artifactId>autonomy-jpa</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -57,6 +51,19 @@
         <groupId>io.freedriver.autonomy</groupId>
         <artifactId>autonomy-quarkus</artifactId>
         <version>${project.version}</version>
+      </dependency>
+
+      <!-- Common Jakarta EE APIs for use across modules (persistence for entities, ws.rs for JAX-RS contracts in api). Versions chosen to match Quarkus 3 / Jakarta EE 10 and freedriver. -->
+      <dependency>
+        <groupId>jakarta.persistence</groupId>
+        <artifactId>jakarta.persistence-api</artifactId>
+        <version>3.2.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jakarta.ws.rs</groupId>
+        <artifactId>jakarta.ws.rs-api</artifactId>
+        <version>3.1.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

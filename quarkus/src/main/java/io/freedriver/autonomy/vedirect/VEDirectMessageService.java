@@ -8,14 +8,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.persistence.Tuple;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-import javax.persistence.criteria.Subquery;
-import javax.transaction.Transactional;
 
 import io.freedriver.autonomy.cache.CacheKey;
 import io.freedriver.autonomy.cdi.AttributeCache;
@@ -33,6 +25,14 @@ import io.freedriver.math.measurement.types.electrical.Energy;
 import io.freedriver.math.measurement.types.electrical.Potential;
 import io.freedriver.math.measurement.types.electrical.Power;
 import io.freedriver.victron.VictronDevice;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+import jakarta.transaction.Transactional;
 import org.infinispan.Cache;
 
 @ApplicationScoped // TODO EventService

@@ -6,18 +6,18 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 import io.freedriver.autonomy.jaxrs.endpoint.SimpleAliasApi;
 import io.freedriver.autonomy.jaxrs.view.AliasView;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.autonomy.service.SimpleAliasService;
 import io.freedriver.jsonlink.config.v2.Appliance;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 @RequestScoped
 @Path(SimpleAliasApi.ROOT)

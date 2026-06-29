@@ -1,12 +1,13 @@
 [Unit]
 Description=Autonomy Daemon
 After=network.target
-Requires=h2.service
 
 [Service]
+# Note: %h is systemd user specifier for $HOME
 ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -jar %h/.local/autonomy/quarkus-run.jar -DrestartOn=%h/.local/autonomy/quarkus-run.jar -DrestartCommand="%h/bin/restartAutonomy.sh"
+# Graceful shutdown: Quarkus handles SIGTERM (via kill $MAINPID) for proper shutdown hooks, datasource close etc.
+# Do not depend on or post-stop h2 here (h2 is optional/separate; previous Requires+ExecStopPost could lead to abrupt kills and DB issues).
 ExecStop=/bin/kill $MAINPID
-ExecStopPost=systemctl --user stop h2
 KillMode=control-group
 Restart=always
 

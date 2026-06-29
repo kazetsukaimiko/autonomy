@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.jaxrs.endpoint.vedirect;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -10,11 +10,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 
 import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
@@ -23,6 +18,11 @@ import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.vedirect.VEDirectMessageService;
 import io.freedriver.victron.VEDirectColumn;
 import io.freedriver.victron.VictronDevice;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 
 @RequestScoped
 @Path(VEDirectApi.ROOT)

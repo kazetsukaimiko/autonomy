@@ -1,11 +1,10 @@
 package io.freedriver.autonomy.jaxrs;
 
-import javax.ws.rs.ext.ContextResolver;
-import javax.ws.rs.ext.Provider;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.freedriver.autonomy.vedirect.jackson.VEDirectModule;
 import io.freedriver.jsonlink.jackson.JsonLinkModule;
+import jakarta.ws.rs.ext.ContextResolver;
+import jakarta.ws.rs.ext.Provider;
 
 @Provider
 public class ObjectMapperContextResolver implements ContextResolver<ObjectMapper> {

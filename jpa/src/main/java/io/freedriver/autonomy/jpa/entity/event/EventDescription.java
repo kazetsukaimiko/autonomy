@@ -1,12 +1,12 @@
 package io.freedriver.autonomy.jpa.entity.event;
 
 import java.util.Objects;
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 
 import io.freedriver.autonomy.jpa.entity.EmbeddedEntityBase;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Embeddable
 public class EventDescription extends EmbeddedEntityBase {
