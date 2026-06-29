@@ -13,7 +13,6 @@
     <module>jpa</module>
     <module>api</module>
     <module>quarkus</module>
-    <module>environment</module>
   </modules>
   <properties>
     <failOnMissingWebXml>false</failOnMissingWebXml>
