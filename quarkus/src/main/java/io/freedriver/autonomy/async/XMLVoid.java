@@ -2,14 +2,13 @@ package io.freedriver.autonomy.async;
 
 import java.io.File;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 
+@Slf4j
 public class XMLVoid {
-    public static final Logger LOGGER = Logger.getLogger(XMLVoid.class.getName());
     public static void main(String[] args) {
         if (args.length >= 2) {
             openFile(new File(args[0]))
@@ -31,7 +30,7 @@ public class XMLVoid {
         try {
             return Optional.of(dbf.newDocumentBuilder().parse(xmlFile));
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, e, () -> "Couldn't open file");
+            log.error("Couldn't open file", e);
             return Optional.empty();
         }
     }

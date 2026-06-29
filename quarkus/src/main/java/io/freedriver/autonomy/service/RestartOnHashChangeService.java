@@ -12,18 +12,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import io.freedriver.base.util.crypt.CryptUtils;
 import io.freedriver.base.util.crypt.HashAlgorithms;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
+@Slf4j
 public class RestartOnHashChangeService {
-    private static final Logger LOGGER = Logger.getLogger(RestartOnHashChangeService.class.getName());
 
     public static final String HASH_CHANGE_PROPERTY = "restartOn";
     public static final String HASH_CHANGE_COMMAND = "restartCommand";
@@ -44,7 +43,7 @@ public class RestartOnHashChangeService {
         if (comparisonPath.isPresent() && restartCommand.isPresent()) {
             hashChangeLoop(comparisonPath.get(), restartCommand.get());
         } else {
-            LOGGER.warning(
+            log.warn(
                     (comparisonPath.isEmpty() ? "No " + HASH_CHANGE_PROPERTY + " property; " : "") +
                         (restartCommand.isEmpty() ? "No " + HASH_CHANGE_COMMAND + " property; " : "") +
                             " service disabled.");
@@ -53,17 +52,17 @@ public class RestartOnHashChangeService {
 
     private void hashChangeLoop(Path path, String command) {
         POOL.submit(() -> {
-            LOGGER.info("Service started.");
+            log.info("Service started.");
             while (continueTrying) {
                 try {
                     waitFor(INTERVAL);
                     boolean hashChanged = checkHashChange(path);
                     if (hashChanged) {
-                        LOGGER.info("Hash changed. Initializing restart.");
+                        log.info("Hash changed. Initializing restart.");
                         continueTrying = (runRestartCommand(command) == 0);
                     }
                 } catch (IOException | InterruptedException e) {
-                    LOGGER.log(Level.WARNING, "Looping error", e);
+                    log.warn("Looping error", e);
                 }
             }
             System.exit(0);
@@ -83,12 +82,12 @@ public class RestartOnHashChangeService {
         FileTime fileTime = Files.getLastModifiedTime(path);
         Instant modified = fileTime.toInstant();
         if (lastModified == null) {
-            LOGGER.info("Last modified: " + DateTimeFormatter.ISO_DATE_TIME.format(modified));
+            log.info("Last modified: " + DateTimeFormatter.ISO_DATE_TIME.format(modified));
             lastModified = modified;
             lastHash = hash(path);
         }
         if (modified.isAfter(lastModified)) {
-            LOGGER.info("Last modified changed: " + DateTimeFormatter.ISO_DATE_TIME.format(modified));
+            log.info("Last modified changed: " + DateTimeFormatter.ISO_DATE_TIME.format(modified));
             String currentHash = hash(path);
             return !Objects.equals(lastHash, currentHash);
         }
