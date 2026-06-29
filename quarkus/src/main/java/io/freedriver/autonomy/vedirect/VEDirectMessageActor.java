@@ -1,17 +1,5 @@
 package io.freedriver.autonomy.vedirect;
 
-import io.freedriver.autonomy.cdi.qualifier.VEProduct;
-import io.freedriver.autonomy.service.ReportingService;
-import io.freedriver.victron.VEDirectMessage;
-import io.freedriver.victron.VictronDevice;
-import io.freedriver.victron.VictronProduct;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +8,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.InjectionPoint;
+import javax.inject.Inject;
+
+import io.freedriver.autonomy.cdi.qualifier.VEProduct;
+import io.freedriver.autonomy.service.ReportingService;
+import io.freedriver.victron.VEDirectMessage;
+import io.freedriver.victron.VictronDevice;
+import io.freedriver.victron.VictronProduct;
 
 @ApplicationScoped
 public class VEDirectMessageActor {

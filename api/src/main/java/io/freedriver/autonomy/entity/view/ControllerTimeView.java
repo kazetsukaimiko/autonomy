@@ -1,14 +1,14 @@
 package io.freedriver.autonomy.entity.view;
 
-import io.freedriver.victron.StateOfOperation;
-import io.freedriver.victron.vedirect.OffReason;
-
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import io.freedriver.victron.StateOfOperation;
+import io.freedriver.victron.vedirect.OffReason;
 
 public class ControllerTimeView {
     private final Map<String, Long> data;

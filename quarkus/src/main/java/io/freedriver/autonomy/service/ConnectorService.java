@@ -1,35 +1,24 @@
 package io.freedriver.autonomy.service;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
+import javax.enterprise.context.ApplicationScoped;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.freedriver.jsonlink.Connector;
-import io.freedriver.jsonlink.Connectors;
 import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import io.freedriver.jsonlink.jackson.schema.v1.AnalogRead;
 import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.WebApplicationException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * The service by which we interact with connectors.

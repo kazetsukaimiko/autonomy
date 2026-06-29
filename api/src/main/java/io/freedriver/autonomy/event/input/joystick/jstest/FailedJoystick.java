@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.event.input.joystick.jstest;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
+
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
-
-import static java.time.temporal.ChronoUnit.MINUTES;
 
 /**
  * Convenience class to keep track of joystick devices that failed to spawn readers.

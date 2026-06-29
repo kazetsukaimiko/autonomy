@@ -1,5 +1,17 @@
 package io.freedriver.autonomy.service.crud;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+
 import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
 import io.freedriver.base.util.file.DirectoryProviders;
@@ -7,18 +19,6 @@ import io.freedriver.base.util.tedious.Loops;
 import io.freedriver.jsonlink.config.v2.Mappings;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * This service enforces TTLs on all Event data.

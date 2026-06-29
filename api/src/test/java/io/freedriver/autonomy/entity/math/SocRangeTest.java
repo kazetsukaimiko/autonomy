@@ -1,17 +1,17 @@
 package io.freedriver.autonomy.entity.math;
 
-import io.freedriver.autonomy.jpa.entity.math.SocRange;
-import io.freedriver.autonomy.jpa.entity.math.VoltageSoc;
-import io.freedriver.math.measurement.types.electrical.Potential;
-import io.freedriver.math.number.ScaledNumber;
-import org.junit.jupiter.api.Test;
+import static io.freedriver.math.UnitPrefix.ONE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.stream.IntStream;
 
-import static io.freedriver.math.UnitPrefix.ONE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import io.freedriver.autonomy.jpa.entity.math.SocRange;
+import io.freedriver.autonomy.jpa.entity.math.VoltageSoc;
+import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.math.number.ScaledNumber;
+import org.junit.jupiter.api.Test;
 
 public class SocRangeTest {
 

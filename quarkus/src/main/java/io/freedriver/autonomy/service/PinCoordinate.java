@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.service;
 
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-
 import java.util.Objects;
 import java.util.UUID;
+
+import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 
 public class PinCoordinate {
     private final UUID boardId;

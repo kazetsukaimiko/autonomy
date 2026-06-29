@@ -1,19 +1,5 @@
 package io.freedriver.autonomy.async;
 
-import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.autonomy.service.SimpleAliasService;
-import io.freedriver.electrodacus.sbms.SBMS0Finder;
-import io.freedriver.electrodacus.sbms.SBMSMessage;
-import io.freedriver.victron.VEDirectMessage;
-import io.freedriver.victron.VEDirectReader;
-import io.quarkus.runtime.StartupEvent;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -26,6 +12,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+
+import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.service.SimpleAliasService;
+import io.freedriver.electrodacus.sbms.SBMS0Finder;
+import io.freedriver.electrodacus.sbms.SBMSMessage;
+import io.freedriver.victron.VEDirectMessage;
+import io.freedriver.victron.VEDirectReader;
+import io.quarkus.runtime.StartupEvent;
 
 @ApplicationScoped
 public class EventInitializationService extends BaseService {

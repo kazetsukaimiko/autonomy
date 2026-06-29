@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.jpa.entity.event.sensor;
 
-import io.freedriver.autonomy.jpa.entity.event.Event;
-import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
-
-import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
+import javax.persistence.*;
+
+import io.freedriver.autonomy.jpa.entity.event.Event;
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 
 @Table
 @Entity

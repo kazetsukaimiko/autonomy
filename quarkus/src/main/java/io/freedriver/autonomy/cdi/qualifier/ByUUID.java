@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.cdi.qualifier;
 
-import javax.enterprise.util.AnnotationLiteral;
-import javax.enterprise.util.Nonbinding;
-import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.UUID;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.enterprise.util.Nonbinding;
+import javax.inject.Qualifier;
 
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)

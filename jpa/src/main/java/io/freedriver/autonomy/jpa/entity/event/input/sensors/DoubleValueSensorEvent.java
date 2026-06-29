@@ -1,15 +1,15 @@
 package io.freedriver.autonomy.jpa.entity.event.input.sensors;
 
 
-import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
-
+import java.util.Objects;
+import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.Table;
-import java.util.Objects;
-import java.util.UUID;
+
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 
 @Entity
 @Table

@@ -1,12 +1,12 @@
 package io.freedriver.autonomy.vedirect.jackson;
 
 
+import java.util.function.Function;
+
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.freedriver.math.measurement.types.Measurement;
 import io.freedriver.math.measurement.types.electrical.*;
 import io.freedriver.math.number.ScaledNumber;
-
-import java.util.function.Function;
 
 public class VEDirectModule extends SimpleModule {
     public VEDirectModule() {

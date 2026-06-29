@@ -1,9 +1,5 @@
 package io.freedriver.autonomy.async;
 
-import io.freedriver.electrodacus.sbms.SBMS0Finder;
-import io.freedriver.victron.VEDirectReader;
-
-import javax.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
@@ -12,6 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+import javax.enterprise.context.ApplicationScoped;
+
+import io.freedriver.electrodacus.sbms.SBMS0Finder;
+import io.freedriver.victron.VEDirectReader;
 
 @ApplicationScoped
 public class VEDirectDeviceService extends BaseService {

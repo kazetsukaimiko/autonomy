@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.service.crud;
 
-import io.freedriver.autonomy.jpa.entity.EntityBase;
-import io.freedriver.autonomy.jpa.entity.event.Event_;
-import io.freedriver.autonomy.util.Benchmark;
-
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -12,11 +12,10 @@ import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.ws.rs.core.MediaType;
-import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import io.freedriver.autonomy.jpa.entity.EntityBase;
+import io.freedriver.autonomy.jpa.entity.event.Event_;
+import io.freedriver.autonomy.util.Benchmark;
 
 public abstract class JPACrudService<E extends EntityBase> {
     @Inject

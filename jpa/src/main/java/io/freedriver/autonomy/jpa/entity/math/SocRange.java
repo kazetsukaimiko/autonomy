@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.jpa.entity.math;
 
-import io.freedriver.math.measurement.types.electrical.Potential;
-
 import java.math.BigDecimal;
 import java.util.List;
+
+import io.freedriver.math.measurement.types.electrical.Potential;
 
 public class SocRange {
     private final VoltageSoc bottom;

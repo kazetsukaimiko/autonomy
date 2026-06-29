@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.vedirect;
 
-import io.freedriver.victron.VEDirectMessage;
-
 import java.time.Duration;
 import java.util.stream.Stream;
+
+import io.freedriver.victron.VEDirectMessage;
 
 public enum VEDirectMessageLogging {
     PV_POWER {

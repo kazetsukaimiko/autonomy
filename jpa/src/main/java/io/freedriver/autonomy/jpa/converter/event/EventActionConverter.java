@@ -1,10 +1,10 @@
 package io.freedriver.autonomy.jpa.converter.event;
 
-import io.freedriver.autonomy.jpa.entity.event.EventAction;
-import io.freedriver.autonomy.jpa.util.Base64Serialization;
-
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
+
+import io.freedriver.autonomy.jpa.entity.event.EventAction;
+import io.freedriver.autonomy.jpa.util.Base64Serialization;
 
 @Converter(autoApply = true)
 public class EventActionConverter implements AttributeConverter<EventAction, String> {

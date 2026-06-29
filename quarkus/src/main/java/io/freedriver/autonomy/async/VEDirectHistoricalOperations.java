@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.async;
 
-import io.freedriver.victron.VEDirectMessage;
-import io.freedriver.victron.VictronProduct;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+
+import io.freedriver.victron.VEDirectMessage;
+import io.freedriver.victron.VictronProduct;
 
 public enum VEDirectHistoricalOperations {
     VOLTAGE_CHANGE(VEDirectHistoricalOperations::handleVoltageTrends);

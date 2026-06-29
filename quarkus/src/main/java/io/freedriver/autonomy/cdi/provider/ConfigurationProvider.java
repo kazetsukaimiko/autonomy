@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.cdi.provider;
 
-import io.freedriver.jsonlink.config.ConnectorConfig;
-
+import java.io.IOException;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
-import java.io.IOException;
+
+import io.freedriver.jsonlink.config.ConnectorConfig;
 
 @ApplicationScoped
 public class ConfigurationProvider {

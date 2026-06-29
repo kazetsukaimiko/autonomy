@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.jpa.entity.event.sensor;
 
+import static io.freedriver.autonomy.jpa.entity.event.sensor.TemperatureUnit.KELVIN;
+
 import java.math.BigDecimal;
 import java.util.Objects;
-
-import static io.freedriver.autonomy.jpa.entity.event.sensor.TemperatureUnit.KELVIN;
 
 public class TemperatureValue implements Comparable<TemperatureValue> {
     private static final BigDecimal EQUIVALENCE = new BigDecimal("0.000000000001");

@@ -1,8 +1,7 @@
 package io.freedriver.autonomy.cdi.qualifier;
 
-import javax.enterprise.util.Nonbinding;
-import javax.inject.Qualifier;
 import java.lang.annotation.*;
+import javax.inject.Qualifier;
 
 @Qualifier
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})

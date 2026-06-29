@@ -29,4 +29,3 @@ public class ControllerHistoryView {
         return recordYield;
     }
 }
-

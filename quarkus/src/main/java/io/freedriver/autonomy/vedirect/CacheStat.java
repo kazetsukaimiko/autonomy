@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.vedirect;
 
-import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
-
-import javax.persistence.metamodel.SingularAttribute;
 import java.util.function.Function;
+import javax.persistence.metamodel.SingularAttribute;
+
+import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 
 public interface CacheStat<T> {
     SingularAttribute<VEDirectMessage, T> getAttribute();

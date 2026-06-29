@@ -1,13 +1,13 @@
 package io.freedriver.autonomy.jpa.entity.event.sensor;
 
-import io.freedriver.autonomy.jpa.entity.event.Event;
-import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
-import io.freedriver.math.measurement.types.thermo.Temperature;
-
+import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.util.Objects;
+
+import io.freedriver.autonomy.jpa.entity.event.Event;
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
+import io.freedriver.math.measurement.types.thermo.Temperature;
 
 @Table
 @Entity
