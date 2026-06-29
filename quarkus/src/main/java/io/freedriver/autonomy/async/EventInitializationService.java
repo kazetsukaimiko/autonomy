@@ -10,8 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
@@ -26,11 +24,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
+@Slf4j
 public class EventInitializationService extends BaseService {
-
-    private static final Logger LOGGER = Logger.getLogger(EventInitializationService.class.getName());
 
     private final Map<VEDirectReader, Future<Boolean>> devicesInOperation = new ConcurrentHashMap<>();
     private final Map<Path, Future<Boolean>> sbmsUnits =  new ConcurrentHashMap<>();
@@ -63,14 +61,14 @@ public class EventInitializationService extends BaseService {
     }
 
     private void initSimpleAliasMonitor() {
-        LOGGER.info("Initializing SimpleAliasMonitor.");
+        log.info("Initializing SimpleAliasMonitor.");
         pool.submit(() -> {
             simpleAliasService.refreshAnalogPins();
         });
     }
 
     private void initSBMSMonitor() {
-        LOGGER.info("Initializing SBMSMonitor.");
+        log.info("Initializing SBMSMonitor.");
         pool.submit(() -> {
             while (true) {
                 try {
@@ -78,7 +76,7 @@ public class EventInitializationService extends BaseService {
                     SBMS0Finder.findSBMS0Units()
                             .forEach(this::addSBMS);
                 } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Couldn't init SBMS0 units", e);
+                    log.warn("Couldn't init SBMS0 units", e);
                 }
             }
         });
@@ -107,9 +105,9 @@ public class EventInitializationService extends BaseService {
                         SBMS0Finder.open(unit)
                                 .forEach(this::fireSBMS0Message);
                     } catch (Exception e) {
-                        LOGGER.log(Level.WARNING, "Failed to stream messages: ", e);
+                        log.warn("Failed to stream messages: ", e);
                         Duration waitingPeriod = Duration.ofMinutes(1);
-                        LOGGER.info("Blacklisting SBMS " + unit + " for " + waitingPeriod.toMillis() + "ms");
+                        log.info("Blacklisting SBMS " + unit + " for " + waitingPeriod.toMillis() + "ms");
                         sbmsUnitsDead.put(unit, Instant.now().plus(waitingPeriod));
                     }
                     sbmsUnits.remove(unit);
@@ -120,7 +118,7 @@ public class EventInitializationService extends BaseService {
     }
 
     private boolean initVEDirectMonitor() {
-        LOGGER.info("Initializing VEDirectMonitor.");
+        log.info("Initializing VEDirectMonitor.");
         while (true) {
             try {
                 deviceService.allDevices()
@@ -128,12 +126,12 @@ public class EventInitializationService extends BaseService {
                         .forEach(this::initVEDirectDevice);
                 break;
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Couldn't iterate over VEDirectDevices:", e);
+                log.error("Couldn't iterate over VEDirectDevices:", e);
                 wait(Duration.of(5, ChronoUnit.SECONDS));
             }
 
         }
-        LOGGER.info("VEDirectMonitor initialized.");
+        log.info("VEDirectMonitor initialized.");
         return true;
     }
 
@@ -147,7 +145,7 @@ public class EventInitializationService extends BaseService {
     }
 
     private synchronized void initVEDirectDevice(final VEDirectReader veDirectDevice) {
-        LOGGER.info("Initializing VEDirectDevice: " + veDirectDevice.toString());
+        log.info("Initializing VEDirectDevice: " + veDirectDevice.toString());
         devicesInOperation.put(veDirectDevice, pool.submit(() -> {
             veDirectDevice.readAsMessages()
                     .forEach(this::fireVEDirectMessage);
@@ -156,7 +154,7 @@ public class EventInitializationService extends BaseService {
     }
 
     public void initJoystickMonitor() {
-        LOGGER.info("Initializing JoystickMonitor.");
+        log.info("Initializing JoystickMonitor.");
         allJoysticks = new AllJoysticks(pool, this::fireJSTestEvent);
         pool.submit(() -> allJoysticks.poll());
     }
@@ -164,23 +162,23 @@ public class EventInitializationService extends BaseService {
     public void fireJSTestEvent(JSTestEvent jsTestEvent) {
         if (jsTestEvent.getMetadata().getTitle() != null) {
             try {
-                LOGGER.finest("Firing JSTestEvent " + jsTestEvent);
+                log.trace("Firing JSTestEvent " + jsTestEvent);
                 joystickEvents.fire(new JoystickEvent(Instant.now().toEpochMilli(), jsTestEvent));
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Failed to fire JoystickEvent: " + jsTestEvent, e);
+                log.warn("Failed to fire JoystickEvent: " + jsTestEvent, e);
             }
         } else {
             // TODO: This is a workaround for a bug. Fix the bug.
-            LOGGER.warning("JSTestEvent ignored as it contains no subject: " + jsTestEvent);
+            log.warn("JSTestEvent ignored as it contains no subject: " + jsTestEvent);
         }
     }
 
     private synchronized void fireSBMS0Message(SBMSMessage sbmsMessage) {
         try {
-            LOGGER.finest("Firing SBMSMessage " + sbmsMessage);
+            log.trace("Firing SBMSMessage " + sbmsMessage);
             sbmsEvents.fire(sbmsMessage);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to fire SBMSMessage: " + sbmsMessage, e);
+            log.warn("Failed to fire SBMSMessage: " + sbmsMessage, e);
         }
     }
 
@@ -188,12 +186,8 @@ public class EventInitializationService extends BaseService {
         try {
             veDirectEvents.fire(veDirectMessage);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to fire VEDirectMessage: " + veDirectMessage, e);
+            log.warn("Failed to fire VEDirectMessage: " + veDirectMessage, e);
         }
     }
 
-    @Override
-    protected Logger getLogger() {
-        return LOGGER;
-    }
 }

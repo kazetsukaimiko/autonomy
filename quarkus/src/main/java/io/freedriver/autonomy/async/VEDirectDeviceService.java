@@ -5,17 +5,16 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import io.freedriver.electrodacus.sbms.SBMS0Finder;
 import io.freedriver.victron.VEDirectReader;
 import jakarta.enterprise.context.ApplicationScoped;
+import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
+@Slf4j
 public class VEDirectDeviceService extends BaseService {
-    private static final Logger LOGGER = Logger.getLogger(VEDirectDeviceService.class.getName());
     private static final Set<VEDirectReader> ALL_DEVICES = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public synchronized Stream<VEDirectReader> allDevices() {
@@ -24,7 +23,7 @@ public class VEDirectDeviceService extends BaseService {
                     .filter(this::veDeviceInactive)
                     .forEach(ALL_DEVICES::add);
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Couldn't iterate over VEDirectDevices:", e);
+            log.error("Couldn't iterate over VEDirectDevices:", e);
         }
         return ALL_DEVICES.stream();
     }
@@ -35,8 +34,4 @@ public class VEDirectDeviceService extends BaseService {
                 .orElse(true);
     }
 
-    @Override
-    protected Logger getLogger() {
-        return LOGGER;
-    }
 }

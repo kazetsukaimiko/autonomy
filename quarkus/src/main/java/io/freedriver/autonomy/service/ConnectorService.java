@@ -6,8 +6,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,13 +17,14 @@ import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jakarta.enterprise.context.ApplicationScoped;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * The service by which we interact with connectors.
  */
 @ApplicationScoped
+@Slf4j
 public class ConnectorService extends ConnectorServiceCommon {
-    private static final Logger LOGGER = Logger.getLogger(ConnectorService.class.getName());
     //private static final List<Connector> ACTIVE_CONNECTORS = new ArrayList<>();
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
@@ -37,7 +36,7 @@ public class ConnectorService extends ConnectorServiceCommon {
         try {
             voidCompletableFuture.get();
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to wait for completion of connector", e);
+            log.warn("Failed to wait for completion of connector", e);
         }
     }
 

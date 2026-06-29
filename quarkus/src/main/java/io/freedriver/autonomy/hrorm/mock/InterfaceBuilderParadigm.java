@@ -8,10 +8,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.logging.Logger;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class InterfaceBuilderParadigm<ENTITY> {
-    private static final Logger LOGGER = Logger.getLogger(InterfaceBuilderParadigm.class.getName());
 
     private final Class<ENTITY> interfaceClass;
     private final List<ColumnConfiguration<ENTITY, ?>> columns = new ArrayList<>();
@@ -80,8 +81,8 @@ public class InterfaceBuilderParadigm<ENTITY> {
     }
 
     private void testGetter(ColumnConfiguration<ENTITY,?> columnDefinition, ENTITY entity) {
-        LOGGER.info("Fetching column value \""+columnDefinition.getColumnName()+"\" from " + columnDefinition.getInterfaceClass().getSimpleName());
-        LOGGER.info("Found " + String.valueOf(columnDefinition.getGetter().apply(entity)));
+        log.info("Fetching column value \""+columnDefinition.getColumnName()+"\" from " + columnDefinition.getInterfaceClass().getSimpleName());
+        log.info("Found " + String.valueOf(columnDefinition.getGetter().apply(entity)));
     }
 
     /*
@@ -93,7 +94,7 @@ public class InterfaceBuilderParadigm<ENTITY> {
 
         // Not needed here- just for logging.
         Method m = findMethodOfGetterFunction(interfaceClass, entityColumn.getGetter());
-        LOGGER.info("Entity column " + entityColumn.getColumnName() + " refers to field/getter " + m.getName() +
+        log.info("Entity column " + entityColumn.getColumnName() + " refers to field/getter " + m.getName() +
                 " which returns " + m.getReturnType().toString() + " (expected "+entityColumn.getFieldClass().toString()+")");
 
         /*

@@ -23,7 +23,7 @@ public enum Chemistries {
 
     Chemistries(VoltageSoc... VoltageSocs) {
         this(Stream.of(VoltageSocs)
-                .collect(Collectors.toMap(VoltageSoc::getVoltageBase, VoltageSoc::getState, (a, b) -> b)));
+                .collect(Collectors.toMap(VoltageSoc::getVoltageBase, VoltageSoc::state, (a, b) -> b)));
     }
 
     public Map<BigDecimal, BigDecimal> getVoltageMap() {

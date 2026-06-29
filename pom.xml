@@ -17,8 +17,9 @@
   <properties>
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <lombok.version>1.18.38</lombok.version>
+    <maven.compiler.source>23</maven.compiler.source>
+    <maven.compiler.target>23</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -38,6 +39,10 @@
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.14.0</version>
+        </plugin>
         <!-- Spotless: enforces import order and removes unused imports -->
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
@@ -56,6 +61,19 @@
     </pluginManagement>
 
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
       <!-- Enforce Spotless formatting (including imports) on build -->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>

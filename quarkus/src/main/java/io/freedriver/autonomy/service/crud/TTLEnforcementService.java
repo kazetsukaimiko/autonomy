@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
@@ -19,15 +17,16 @@ import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This service enforces TTLs on all Event data.
  * TODO: Ask each Event service what their oldest data is like and plan TTL updates instead of polling
  */
 @ApplicationScoped
+@Slf4j
 public class TTLEnforcementService {
     private static final Duration POLL_DURATION = Duration.ofSeconds(1);
-    private final Logger LOGGER = Logger.getLogger(getClass().getName());
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -62,11 +61,11 @@ public class TTLEnforcementService {
             });
             return continueTTLEnforcement;
         }, POLL_DURATION, this::logTTLException);
-        LOGGER.info("Shut down TTL Enforcement.");
+        log.info("Shut down TTL Enforcement.");
     }
 
     private boolean logTTLException(Throwable throwable) {
-        LOGGER.log(Level.WARNING, "Couldn't enforce TTL: ", throwable);
+        log.warn("Couldn't enforce TTL: ", throwable);
         return true;
     }
 
@@ -78,9 +77,9 @@ public class TTLEnforcementService {
     private void applyTTLToEventService(Duration ttl, EventCrudService<?> eventCrudService) {
         try {
             int culled = eventCrudService.applyTTL(ttl);
-            LOGGER.info("Culled " + culled + " from " + eventCrudService.getClass().getSimpleName());
+            log.info("Culled " + culled + " from " + eventCrudService.getClass().getSimpleName());
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Could not apply TTL to "+eventCrudService.getClass().getSimpleName()+": ", e);
+            log.warn("Could not apply TTL to "+eventCrudService.getClass().getSimpleName()+": ", e);
         }
     }
 
@@ -109,7 +108,7 @@ public class TTLEnforcementService {
             Mappings mappings = getMappings();
             return Duration.of(mappings.getEventTTL(), mappings.getEventTTLUnit());
         } catch (IOException ioe) {
-            LOGGER.log(Level.WARNING, "Cannot read TTL:", ioe);
+            log.warn("Cannot read TTL:", ioe);
             return Duration.ofDays(7);
         }
 

@@ -41,7 +41,7 @@ public class StateOfChargeConfig {
                 .stream()
                 .map(e -> VoltageSoc.of(new Potential(ScaledNumber.of(e.getKey(), ONE)), e.getValue()))
                 .map(voltageSoc -> voltageSoc.series(cells))
-                .sorted(Comparator.comparing(v -> v.getVoltage().subtract(voltage.getValue()).abs()))
+                .sorted(Comparator.comparing(v -> v.voltage().subtract(voltage.getValue()).abs()))
                 .limit(2)
                 .collect(Collectors.toList()))
                 .calculate(voltage);

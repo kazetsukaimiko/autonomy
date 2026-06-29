@@ -10,27 +10,11 @@ import java.util.Objects;
 /**
  * Convenience class to keep track of joystick devices that failed to spawn readers.
  */
-public class FailedJoystick {
+public record FailedJoystick(Path path, Instant instant) {
     private static final Duration DEFAULT_DURATION = Duration.of(5, MINUTES);
-
-    private final Path path;
-    private final Instant instant;
-
-    public FailedJoystick(Path path, Instant instant) {
-        this.path = path;
-        this.instant = instant;
-    }
 
     public FailedJoystick(Path path) {
         this(path, Instant.now().plus(DEFAULT_DURATION));
-    }
-
-    public Path getPath() {
-        return path;
-    }
-
-    public Instant getInstant() {
-        return instant;
     }
 
     public boolean failureExpired() {
@@ -51,7 +35,7 @@ public class FailedJoystick {
     }
 
     public Duration getDelay() {
-        return Duration.between(Instant.now(), getInstant())
+        return Duration.between(Instant.now(), instant)
                 .abs();
     }
 }

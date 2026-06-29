@@ -3,11 +3,11 @@ package io.freedriver.autonomy.jpa.util;
 import java.io.*;
 import java.util.Base64;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class Base64Serialization {
-    private static final Logger LOGGER = Logger.getLogger(Base64Serialization.class.getName());
 
     private Base64Serialization() {
 
@@ -17,7 +17,7 @@ public class Base64Serialization {
         try {
             return Optional.ofNullable(base64Encode(serializable));
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Failed serialization", e);
+            log.warn("Failed serialization", e);
             return Optional.empty();
         }
     }
@@ -26,7 +26,7 @@ public class Base64Serialization {
         try {
             return base64Decode(base64String, targetKlazz);
         } catch (IOException | ClassNotFoundException e) {
-            LOGGER.log(Level.WARNING, "Failed deserialiation:", e);
+            log.warn("Failed deserialiation:", e);
             return Optional.empty();
         }
     }
