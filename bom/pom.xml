@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <parent>
+    <groupId>io.freedriver.autonomy</groupId>
+    <artifactId>autonomy</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>autonomy-bom</artifactId>
+  <packaging>pom</packaging>
+
+  <name>Autonomy BOM</name>
+  <description>Bill of Materials for Autonomy artifacts (the service and its libraries). Import this to get consistent versions for autonomy-jpa, autonomy-api, etc. (and transitively Freedriver + JUnit5). Mirrors the freedriver-bom pattern for release/versioning the service.</description>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Freedriver BOM: so autonomy-bom consumers also get all io.freedriver versions without separate import. -->
+      <dependency>
+        <groupId>io.freedriver</groupId>
+        <artifactId>freedriver-bom</artifactId>
+        <version>${io.freedriver.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- JUnit BOM: centralized here (was in root) so one import gives JUnit5 too. -->
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>5.10.2</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Autonomy own artifacts. These reactor self-refs moved here from root pom (do not manage in root). -->
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>environment</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-jpa</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-quarkus</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+</project>

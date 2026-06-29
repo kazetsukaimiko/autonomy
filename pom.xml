@@ -8,6 +8,8 @@
   <packaging>pom</packaging>
   <name>Autonomy</name>
   <modules>
+    <!-- bom first: provides versions for autonomy artifacts + re-exports freedriver-bom + junit-bom. Root no longer manages its own reactor versions (similar to freedriver#9). -->
+    <module>bom</module>
     <module>jpa</module>
     <module>api</module>
     <module>quarkus</module>
@@ -23,47 +25,13 @@
   </properties>
   <dependencyManagement>
     <dependencies>
-      <!-- Use JUnit BOM for consistent JUnit 5 versions (replaces manual junit versions/props; mirrors freedriver junit5-migration) -->
-      <dependency>
-        <groupId>org.junit</groupId>
-        <artifactId>junit-bom</artifactId>
-        <version>5.10.2</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
+      <!-- Thorntail (legacy). Autonomy reactor versions (autonomy-*), freedriver, and JUnit now come from importing autonomy-bom in children (and for consumers). Root no longer contains self-references to its modules (see bom/pom.xml). -->
       <dependency>
         <groupId>io.thorntail</groupId>
         <artifactId>bom-all</artifactId>
         <version>${version.thorntail}</version>
         <type>pom</type>
         <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.freedriver</groupId>
-        <artifactId>freedriver-bom</artifactId>
-        <version>${io.freedriver.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.freedriver.autonomy</groupId>
-        <artifactId>autonomy-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.freedriver.autonomy</groupId>
-        <artifactId>environment</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.freedriver.autonomy</groupId>
-        <artifactId>autonomy-jpa</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.freedriver.autonomy</groupId>
-        <artifactId>autonomy-quarkus</artifactId>
-        <version>${project.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
