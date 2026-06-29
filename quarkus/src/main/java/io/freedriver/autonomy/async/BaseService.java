@@ -1,17 +1,17 @@
 package io.freedriver.autonomy.async;
 
 import java.time.Duration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public abstract class BaseService {
-    protected abstract Logger getLogger();
     protected void wait(Duration duration) {
-        getLogger().info("Waiting " + duration.toMillis() +"ms");
+        log.info("Waiting {}ms", duration.toMillis());
         try {
             Thread.sleep(duration.toMillis());
         } catch (InterruptedException e) {
-            getLogger().log(Level.SEVERE, "Failed wait: ", e);
+            log.error("Failed wait: ", e);
         }
     }
 }

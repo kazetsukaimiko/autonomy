@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEvent;
@@ -16,10 +15,11 @@ import io.freedriver.autonomy.service.crud.JPACrudService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
+@Slf4j
 public class SpeechService extends JPACrudService<SpeechEvent> {
-    private static final Logger LOGGER = Logger.getLogger(SpeechService.class.getName());
 
     private static final Duration LIMIT = Duration.ofDays(1);
 
@@ -76,7 +76,7 @@ public class SpeechService extends JPACrudService<SpeechEvent> {
     private synchronized void speak(SpeechEvent event) {
         if (shouldActOnEvent(event)) {
             // Festival.speak(event.getText());
-            LOGGER.info("SPEAK: " + event.getText());
+            log.info("SPEAK: " + event.getText());
             recentEvents.add(event);
             recentEvents = recentEvents.stream()
                     .filter(previousEvent -> Instant.ofEpochMilli(previousEvent.getTimestamp())

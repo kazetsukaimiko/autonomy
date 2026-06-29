@@ -18,8 +18,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,11 +50,12 @@ import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Default;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.infinispan.Cache;
 
 @ApplicationScoped
+@Slf4j
 public class SimpleAliasService  {
-    private static final Logger LOGGER = Logger.getLogger(SimpleAliasService.class.getName());
 
     private static Path HISTORY_FILE = DirectoryProviders.CONFIG
             .getProvider()
@@ -132,7 +131,7 @@ public class SimpleAliasService  {
                 }
                 waitFor(Duration.ofMillis(500));
             } catch (IOException | InterruptedException e) {
-                LOGGER.log(Level.WARNING, "Couldn't cache Analog Pin State. ", e);
+                log.warn("Couldn't cache Analog Pin State. ", e);
             }
         }
     }
@@ -147,7 +146,7 @@ public class SimpleAliasService  {
                 sendAnalogSensorEvents(mapping, response);
                 return true;
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Couldn't cache Analog Pin State. ", e);
+                log.warn("Couldn't cache Analog Pin State. ", e);
                 return false;
             }
         });
@@ -258,7 +257,7 @@ public class SimpleAliasService  {
                             speak(analogAlert, percentages);
                         }
                     } else {
-                        LOGGER.warning("Couldn't process AnalogAlert- missing mappings. " + analogAlert);
+                        log.warn("Couldn't process AnalogAlert- missing mappings. " + analogAlert);
                     }
                 });
 
@@ -268,8 +267,8 @@ public class SimpleAliasService  {
     }
 
     private void speak(AnalogAlert analogAlert, Map<String, Double> percentages) {
-        LOGGER.info("AnalogAlert qualified: " + analogAlert);
-        LOGGER.info("Percentages: \n" + percentages.entrySet()
+        log.info("AnalogAlert qualified: " + analogAlert);
+        log.info("Percentages: \n" + percentages.entrySet()
                 .stream()
                 .map(e -> e.getKey() + ": " + e.getValue())
                 .collect(Collectors.joining("\n")));
@@ -316,7 +315,7 @@ public class SimpleAliasService  {
                 );
             }
         } catch (IOException ioe) {
-            LOGGER.log(Level.WARNING, "Couldn't read sensor history file", ioe);
+            log.warn("Couldn't read sensor history file", ioe);
         }
         return sensorHistory;
     }
@@ -325,7 +324,7 @@ public class SimpleAliasService  {
         try {
             ObjectMapperContextResolver.getMapper().writeValue(HISTORY_FILE.toFile(), sensorHistory);
         } catch (IOException ioe) {
-            LOGGER.log(Level.WARNING, "Couldn't write sensor history file", ioe);
+            log.warn("Couldn't write sensor history file", ioe);
         }
     }
 
@@ -501,8 +500,8 @@ public class SimpleAliasService  {
     public Response setState(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
         Mapping mapping = getMapping(boardId);
         if (!desiredState.isEmpty()) {
-            LOGGER.info("Setting states:");
-            desiredState.forEach((k, v) -> LOGGER.info(k+": " + (v ? "true":"false")));
+            log.info("Setting states:");
+            desiredState.forEach((k, v) -> log.info(k+": " + (v ? "true":"false")));
 
             // TODO: Remove
             //return cacheBoardDigitalState(boardId, connectorService
@@ -549,7 +548,7 @@ public class SimpleAliasService  {
                         .getMappings()
                         .forEach(mapping -> handleJoystickEvent(joystickEvent, mapping));
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Failed to observe JoystickEvent: ", e);
+                log.warn("Failed to observe JoystickEvent: ", e);
             }
         }
     }
@@ -580,7 +579,7 @@ public class SimpleAliasService  {
         // Read Analog pins
         //request.analogRead(mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead));
 
-        LOGGER.finest(request.toString());
+        log.trace(request.toString());
 
         cacheBoardState(mapping, connectorService.send(mapping.getConnectorId(), request));
         //cacheBoardDigitalState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), request).getDigital());

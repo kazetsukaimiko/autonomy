@@ -10,18 +10,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
 import io.freedriver.autonomy.util.Delayable;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Single point to discover and monitor all joystick devices on a system.
  */
+@Slf4j
 public class AllJoysticks implements AutoCloseable {
-    private static final Logger LOGGER = Logger.getLogger(AllJoysticks.class.getName());
 
     private final Map<Path, Future<?>> activeJoysticks = new ConcurrentHashMap<>();
     private final Map<Path, FailedJoystick> failedJoystickMap = new ConcurrentHashMap<>();
@@ -76,7 +75,7 @@ public class AllJoysticks implements AutoCloseable {
         Set<FailedJoystick> toRemove = new HashSet<>(failedJoystickMap.values());
         toRemove.stream()
                 .filter(FailedJoystick::failureExpired)
-                .map(FailedJoystick::getPath)
+                .map(FailedJoystick::path)
                 .forEach(failedJoystickMap::remove);
         return failedJoystickMap;
     }
@@ -85,7 +84,7 @@ public class AllJoysticks implements AutoCloseable {
      * Continuously poll for new joysticks, and add them to the pool.
      */
     public void poll() {
-        LOGGER.info("Watching for Joysticks.");
+        log.info("Watching for Joysticks.");
         while (open) {
             populate();
             Delayable.wait(Duration.ofMillis(100));
@@ -107,10 +106,10 @@ public class AllJoysticks implements AutoCloseable {
     private boolean shouldCreateReader(Path path) {
         if (!getActiveJoysticks().containsKey(path)) {
             if (!getFailedJoystickMap().containsKey(path)) {
-                LOGGER.info("New joystick: " + path);
+                log.info("New joystick: {}", path);
                 return true;
             } else {
-                LOGGER.info("Failed joystick: "  + path);
+                log.info("Failed joystick: {}", path);
             }
         }
         return false;
@@ -120,7 +119,7 @@ public class AllJoysticks implements AutoCloseable {
      * Creates a thread for submitting joystick events to the pool.
      */
     private synchronized void constructFromPool(Path path) {
-        LOGGER.info("Joystick " + path.toString() + " joining pool");
+        log.info("Joystick {} joining pool", path);
         try {
             activeJoysticks.put(
                     path,
@@ -129,13 +128,15 @@ public class AllJoysticks implements AutoCloseable {
                                 .apply(JSTestReader
                                         .ofJoystick(path)
                                         .takeWhile(l -> open)).forEach(sink);
-                        LOGGER.info("Closed Stream for Joystick at " + path);
+                        log.info("Closed Stream for Joystick at {}", path);
                     }));
         } catch (Exception e) {
             FailedJoystick failedJoystick = new FailedJoystick(path);
-            LOGGER.log(Level.SEVERE, e, () -> "Failed to assemble Joystick at "
-                    + path.toString() + " into the pool. "
-                    + "Will retry in " + failedJoystick.getDelay().toMillis() + "ms");
+            log.error(
+                    "Failed to assemble Joystick at {} into the pool. Will retry in {}ms",
+                    path,
+                    failedJoystick.getDelay().toMillis(),
+                    e);
             getFailedJoystickMap()
                     .put(path, failedJoystick);
         }

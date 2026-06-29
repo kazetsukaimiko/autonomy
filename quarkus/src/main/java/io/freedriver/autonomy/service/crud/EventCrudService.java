@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
@@ -14,10 +12,10 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 public abstract class EventCrudService<E extends Event> extends JPACrudService<E> {
-    private final Logger LOGGER = Logger.getLogger(getClass().getName());
 
     public static Instant getStartOfDay() {
         LocalDateTime localDateTime = LocalDateTime.now().toLocalDate().atStartOfDay();
@@ -47,7 +45,7 @@ public abstract class EventCrudService<E extends Event> extends JPACrudService<E
 
     @Transactional
     public int applyTTL(Duration duration) {
-        LOGGER.log(Level.FINEST, "Applying TTL");
+        log.trace("Applying TTL");
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaDelete<E> delete = cb.createCriteriaDelete(getEntityClass());
         Root<E> root = delete.from(getEntityClass());

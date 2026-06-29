@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import io.freedriver.autonomy.cdi.qualifier.VEProduct;
@@ -20,10 +19,11 @@ import jakarta.enterprise.inject.Default;
 import jakarta.enterprise.inject.Produces;
 import jakarta.enterprise.inject.spi.InjectionPoint;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
+@Slf4j
 public class VEDirectMessageActor {
-    private static final Logger LOGGER = Logger.getLogger(VEDirectMessageActor.class.getName());
     private static final Map<VictronDevice, VEDirectMessage> lastMessage = new ConcurrentHashMap<>();
 
     @Inject
@@ -63,7 +63,7 @@ public class VEDirectMessageActor {
                 .forEach(field ->
                         reportingService.update(
                                 field.getFieldName(veDirectMessage),
-                                () -> LOGGER.info(field.getFieldName(veDirectMessage) + ": " + field.getMessage(veDirectMessage)),
+                                () -> log.info(field.getFieldName(veDirectMessage) + ": " + field.getMessage(veDirectMessage)),
                                 field.getInterval(veDirectMessage)));
     }
 
@@ -76,7 +76,7 @@ public class VEDirectMessageActor {
                                 lastMessage.get(product),
                                 veDirectMessage));
         } else {
-            LOGGER.info(product + " VE.Direct initial field values: \n" +
+            log.info(product + " VE.Direct initial field values: \n" +
                     VEDirectMessageChange.allValues(veDirectMessage));
         }
         lastMessage.put(product, veDirectMessage);
@@ -95,7 +95,7 @@ public class VEDirectMessageActor {
     }
 
     private void compareMessageField(VEDirectMessageChange field, VEDirectMessage oldMessage, VEDirectMessage newMessage) {
-        field.test(oldMessage, newMessage, LOGGER::info);
+        field.test(oldMessage, newMessage, log::info);
     }
 
 }

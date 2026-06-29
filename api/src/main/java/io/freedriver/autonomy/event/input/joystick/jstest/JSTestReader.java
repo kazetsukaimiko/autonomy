@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -15,9 +13,10 @@ import java.util.stream.Stream;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSMetadata;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
 import io.freedriver.base.util.ProcessUtil;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class JSTestReader {
-    private static final Logger LOGGER = Logger.getLogger(JSTestReader.class.getName());
 
     private static final String HW_TYPE = "hwtype";
     private static final String TITLE = "title";
@@ -55,7 +54,7 @@ public class JSTestReader {
     }
 
     public static void destroyProcess(Process p, Path joystickPath) {
-        LOGGER.info("Destroying Joystick " + joystickPath.toAbsolutePath().toString());
+        log.info("Destroying Joystick {}", joystickPath.toAbsolutePath());
         p.destroyForcibly();
     }
 
@@ -124,8 +123,8 @@ public class JSTestReader {
             } else if (driverMatcher.matches()) {
                 jsMetadata.setDriverVersion(driverMatcher.group(DRIVERVER));
             } else {
-                LOGGER.finest("Not details:");
-                LOGGER.log(Level.FINEST, event);
+                log.trace("Not details:");
+                log.trace("{}", event);
             }
 
             return true;

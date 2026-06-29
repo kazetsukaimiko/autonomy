@@ -15,7 +15,7 @@ public class SocRange {
     }
 
     public static SocRange of(VoltageSoc bottom, VoltageSoc top) {
-        if (bottom.getVoltage().lessThan(top.getVoltage())) {
+        if (bottom.voltage().lessThan(top.voltage())) {
             return new SocRange(bottom, top);
         }
         return new SocRange(top, bottom);
@@ -26,9 +26,9 @@ public class SocRange {
     }
 
     public BigDecimal calculate(Potential voltage) {
-        Potential range = top.getVoltage().subtract(bottom.getVoltage().getValue());
-        BigDecimal scale = voltage.subtract(bottom.getVoltage()).divide(range).getValue().getValue();
-        BigDecimal socRange = top.getState().subtract(bottom.getState());
+        Potential range = top.voltage().subtract(bottom.voltage().getValue());
+        BigDecimal scale = voltage.subtract(bottom.voltage()).divide(range).getValue().getValue();
+        BigDecimal socRange = top.state().subtract(bottom.state());
         BigDecimal result = scale.multiply(socRange);
         return result;
     }

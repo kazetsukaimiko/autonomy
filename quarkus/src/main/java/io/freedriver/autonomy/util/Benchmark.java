@@ -2,25 +2,21 @@ package io.freedriver.autonomy.util;
 
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class Benchmark {
-    private static final Logger LOGGER = Logger.getLogger(Benchmark.class.getName());
 
     public static final String TIME_PLACEHOLDER = "{execution_time}";
-    public static final Benchmark INFO = new Benchmark(Level.INFO);
-    public static final Benchmark DEBUG = new Benchmark(Level.FINEST);
+    public static final Benchmark INFO = new Benchmark((m, o) -> log.info(m, o));
+    public static final Benchmark DEBUG = new Benchmark((m, o) -> log.trace(m, o));
 
     private final BiConsumer<String, Object[]> logConsumer;
 
     public Benchmark(BiConsumer<String, Object[]> logConsumer) {
         this.logConsumer = logConsumer;
-    }
-
-    public Benchmark(Level level) {
-        this((m, o) -> LOGGER.log(level, m, o));
     }
 
     public void log(String message, long time, Object... args) {

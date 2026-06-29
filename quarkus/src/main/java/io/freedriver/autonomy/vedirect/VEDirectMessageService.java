@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,7 +36,6 @@ import org.infinispan.Cache;
 
 @ApplicationScoped // TODO EventService
 public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
-    private static final Logger LOGGER = Logger.getLogger(VEDirectMessageService.class.getSimpleName());
 
     @Inject
     AttributeCache maxCache;

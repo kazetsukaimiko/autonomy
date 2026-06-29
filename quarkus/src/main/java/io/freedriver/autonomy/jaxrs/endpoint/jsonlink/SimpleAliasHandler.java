@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import io.freedriver.autonomy.jaxrs.endpoint.SimpleAliasApi;
@@ -18,13 +17,14 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import lombok.extern.slf4j.Slf4j;
 
 @RequestScoped
 @Path(SimpleAliasApi.ROOT)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Slf4j
 public class SimpleAliasHandler implements SimpleAliasApi {
-    private static final Logger LOGGER = Logger.getLogger(SimpleAliasHandler.class.getName());
 
     @Inject
     ConnectorService connectorService;
@@ -34,13 +34,13 @@ public class SimpleAliasHandler implements SimpleAliasApi {
 
     @Override
     public List<UUID> getBoards() {
-        LOGGER.fine("Getting boards");
+        log.debug("Getting boards");
         return connectorService.getConnectedBoards();
     }
 
     @Override
     public AliasView getState(UUID boardId) throws IOException {
-        LOGGER.fine("Getting state of " + boardId);
+        log.debug("Getting state of " + boardId);
         return simpleAliasService.makeView(boardId);
     }
 

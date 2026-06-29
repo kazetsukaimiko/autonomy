@@ -2,12 +2,7 @@ package io.freedriver.autonomy.entity.view;
 
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 
-public class ControllerStateView {
-    private final VEDirectMessage lastMessage;
-
-    public ControllerStateView(VEDirectMessage lastMessage) {
-        this.lastMessage = lastMessage;
-    }
+public record ControllerStateView(VEDirectMessage lastMessage) {
 
     public Double getYield() {
         return lastMessage.getYieldToday().doubleValue();
