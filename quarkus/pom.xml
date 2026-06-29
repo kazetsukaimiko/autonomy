@@ -170,10 +170,10 @@
                                 </copy>
                                 <copy todir="${user.home}/.local/share/systemd/user/" overwrite="true"
                                       flatten="true">
-                                    <fileset dir="${basedir}/src/main/systemd/" includes="*.service"/>
+                                    <fileset dir="${basedir}/../../deploy/systemd/" includes="*.service"/>
                                 </copy>
                                 <copy todir="${user.home}/bin/" overwrite="true" flatten="true">
-                                    <fileset dir="${basedir}/src/main/systemd/" includes="*.sh"/>
+                                    <fileset dir="${basedir}/../../deploy/systemd/" includes="*.sh"/>
                                 </copy>
                                 <chmod file="${user.home}/bin/restartAutonomy.sh" perm="755"/>
                                 <chmod file="${user.home}/bin/startAutonomy.sh" perm="755"/>

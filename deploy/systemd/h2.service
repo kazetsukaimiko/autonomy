@@ -1,0 +1,16 @@
+[Unit]
+Description=H2 Database (optional TCP server for external access/console; autonomy can run without it using embedded H2)
+After=network.target
+
+[Service]
+ExecStartPre=mkdir -p %h/.config/h2
+# Avoid brittle old Maven pre-step (requires net + specific mvn version). Fetch jar via curl if missing.
+ExecStartPre=/bin/bash -c 'if [ ! -f %h/.config/h2/h2-1.4.200.jar ]; then curl -sL -o %h/.config/h2/h2-1.4.200.jar https://repo1.maven.org/maven2/com/h2database/h2/1.4.200/h2-1.4.200.jar; fi'
+ExecStart=/usr/bin/java -server -Xmx8g -Xms1g -cp %h/.config/h2/h2-1.4.200.jar org.h2.tools.Server -web -webAllowOthers -tcp -tcpPassword shutdownh2 -tcpAllowOthers -ifNotExists -baseDir %h/.config/h2
+# Graceful shutdown via H2's tcpShutdown (instead of abrupt PID kill).
+ExecStop=/usr/bin/java -cp %h/.config/h2/h2-1.4.200.jar org.h2.tools.Server -tcpShutdown tcp://localhost:9092 -tcpPassword shutdownh2
+
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
