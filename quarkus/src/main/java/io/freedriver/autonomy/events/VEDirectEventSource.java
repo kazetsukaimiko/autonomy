@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import io.freedriver.inotify.cdi.InotifyFilesystemEvent;
 import io.freedriver.serial.api.connection.SerialConnectionHandle;
 import io.freedriver.serial.api.connection.SerialConnectionManager;
 import io.freedriver.serial.api.connection.SerialDeviceIdentity;
@@ -17,6 +18,7 @@ import io.freedriver.victron.VEDirectMessage;
 import io.freedriver.victron.VEDirectMessageStream;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,6 +69,12 @@ public class VEDirectEventSource implements EventSource {
             }
         }
         readers.clear();
+    }
+
+    void onSerialHotplug(@Observes InotifyFilesystemEvent event) {
+        if (running) {
+            discoverNow();
+        }
     }
 
     private void discoverNow() {
