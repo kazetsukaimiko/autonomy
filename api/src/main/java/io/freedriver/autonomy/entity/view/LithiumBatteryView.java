@@ -1,17 +1,17 @@
 package io.freedriver.autonomy.entity.view;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import io.freedriver.autonomy.jpa.entity.event.sbms.SBMSMessage;
 import io.freedriver.math.UnitPrefix;
 import io.freedriver.math.measurement.types.electrical.Current;
 import io.freedriver.math.measurement.types.electrical.Potential;
 import io.freedriver.math.measurement.types.electrical.Power;
 import io.freedriver.math.number.ScaledNumber;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
 public class LithiumBatteryView {
     private List<String> sourceIds = new ArrayList<>();

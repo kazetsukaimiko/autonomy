@@ -1,10 +1,10 @@
 package io.freedriver.autonomy.jpa.entity;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
-import java.io.Serializable;
-import java.util.Objects;
 
 @MappedSuperclass
 public abstract class EntityBase implements Serializable {

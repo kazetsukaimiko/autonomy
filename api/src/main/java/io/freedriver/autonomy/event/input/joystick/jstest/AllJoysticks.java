@@ -1,8 +1,5 @@
 package io.freedriver.autonomy.event.input.joystick.jstest;
 
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.autonomy.util.Delayable;
-
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashSet;
@@ -16,6 +13,9 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.util.Delayable;
 
 /**
  * Single point to discover and monitor all joystick devices on a system.

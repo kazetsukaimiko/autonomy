@@ -1,12 +1,12 @@
 package io.freedriver.autonomy;
 
+import java.sql.SQLException;
+import java.util.function.BiConsumer;
+
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import org.h2.tools.Server;
-
-import java.sql.SQLException;
-import java.util.function.BiConsumer;
 
 @QuarkusMain
 public class Autonomy {

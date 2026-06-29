@@ -1,14 +1,14 @@
 package io.freedriver.autonomy.vedirect.jackson;
 
+import java.io.IOException;
+import java.util.function.Function;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import io.freedriver.math.measurement.types.Measurement;
 import io.freedriver.math.number.ScaledNumber;
-
-import java.io.IOException;
-import java.util.function.Function;
 
 public class MeasurementDeserializer<M extends Measurement<M>> extends JsonDeserializer<M> {
     private final Function<ScaledNumber, M> constructor;

@@ -1,14 +1,14 @@
 package io.freedriver.autonomy.jpa.entity.math;
 
-import io.freedriver.math.measurement.types.electrical.Potential;
-import io.freedriver.math.number.ScaledNumber;
+import static io.freedriver.math.UnitPrefix.ONE;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static io.freedriver.math.UnitPrefix.ONE;
+import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.math.number.ScaledNumber;
 
 // 3.2 -> 4.2
 // 19.2 -> 25.2

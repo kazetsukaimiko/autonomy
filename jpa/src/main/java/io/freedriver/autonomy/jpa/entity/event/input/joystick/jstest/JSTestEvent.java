@@ -1,12 +1,12 @@
 package io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest;
 
-import io.freedriver.autonomy.jpa.entity.event.StateType;
-
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.freedriver.autonomy.jpa.entity.event.StateType;
 
 /**
  * Container for Joystick Event Data.

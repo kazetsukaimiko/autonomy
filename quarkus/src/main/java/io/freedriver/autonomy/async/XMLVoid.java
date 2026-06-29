@@ -1,12 +1,12 @@
 package io.freedriver.autonomy.async;
 
-import org.w3c.dom.Document;
-
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
 
 public class XMLVoid {
     public static final Logger LOGGER = Logger.getLogger(XMLVoid.class.getName());

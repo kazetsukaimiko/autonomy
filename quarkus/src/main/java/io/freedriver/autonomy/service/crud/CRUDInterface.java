@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.service.crud;
 
 
-import io.freedriver.autonomy.jpa.iface.Positional;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import io.freedriver.autonomy.jpa.iface.Positional;
 
 public interface CRUDInterface<I, T extends Positional> {
     // CREATE

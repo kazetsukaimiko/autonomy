@@ -1,16 +1,5 @@
 package io.freedriver.autonomy.service;
 
-import io.freedriver.autonomy.cdi.qualifier.SpeechCache;
-import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEvent;
-import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEventType;
-import io.freedriver.autonomy.service.crud.JPACrudService;
-import io.freedriver.base.util.Festival;
-import org.infinispan.Cache;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -20,6 +9,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+import javax.transaction.Transactional;
+
+import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEvent;
+import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEventType;
+import io.freedriver.autonomy.service.crud.JPACrudService;
 
 @ApplicationScoped
 public class SpeechService extends JPACrudService<SpeechEvent> {

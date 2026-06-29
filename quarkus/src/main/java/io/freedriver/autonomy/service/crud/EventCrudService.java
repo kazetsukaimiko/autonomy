@@ -1,23 +1,19 @@
 package io.freedriver.autonomy.service.crud;
 
-import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
-import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
-import io.freedriver.autonomy.jpa.entity.event.Event;
-import io.freedriver.autonomy.jpa.entity.event.Event_;
-import io.freedriver.victron.VictronDevice;
-
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaDelete;
-import javax.persistence.criteria.Root;
-import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaDelete;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import io.freedriver.autonomy.jpa.entity.event.Event;
+import io.freedriver.autonomy.jpa.entity.event.Event_;
 
 
 public abstract class EventCrudService<E extends Event> extends JPACrudService<E> {

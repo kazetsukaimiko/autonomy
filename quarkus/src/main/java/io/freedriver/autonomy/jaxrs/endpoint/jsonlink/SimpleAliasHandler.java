@@ -1,23 +1,23 @@
 package io.freedriver.autonomy.jaxrs.endpoint.jsonlink;
 
-import io.freedriver.autonomy.jaxrs.endpoint.SimpleAliasApi;
-import io.freedriver.autonomy.jaxrs.view.AliasView;
-import io.freedriver.autonomy.service.ConnectorService;
-import io.freedriver.autonomy.service.SimpleAliasService;
-import io.freedriver.jsonlink.config.v2.Appliance;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import io.freedriver.autonomy.jaxrs.endpoint.SimpleAliasApi;
+import io.freedriver.autonomy.jaxrs.view.AliasView;
+import io.freedriver.autonomy.service.ConnectorService;
+import io.freedriver.autonomy.service.SimpleAliasService;
+import io.freedriver.jsonlink.config.v2.Appliance;
 
 @RequestScoped
 @Path(SimpleAliasApi.ROOT)

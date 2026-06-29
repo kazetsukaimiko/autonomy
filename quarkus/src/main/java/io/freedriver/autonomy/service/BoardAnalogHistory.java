@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.service;
 
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 
 public class BoardAnalogHistory {
     private Map<Identifier, Integer> minimums = new LinkedHashMap<>();

@@ -1,5 +1,14 @@
 package io.freedriver.autonomy.jpa.entity.event.sbms;
 
+import java.util.Objects;
+import java.util.stream.Stream;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.Index;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.Table;
+
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import io.freedriver.electrodacus.sbms.ErrorCode;
@@ -12,15 +21,6 @@ import io.freedriver.math.measurement.types.electrical.Power;
 import io.freedriver.math.measurement.types.thermo.Temperature;
 import io.freedriver.math.number.NumberOperations;
 import io.freedriver.math.number.ScaledNumber;
-
-import javax.persistence.Convert;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.Table;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 @Table(
         indexes = {

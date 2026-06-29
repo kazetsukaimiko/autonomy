@@ -1,5 +1,22 @@
 package io.freedriver.autonomy.vedirect;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.Set;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.persistence.Tuple;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
+import javax.transaction.Transactional;
+
 import io.freedriver.autonomy.cache.CacheKey;
 import io.freedriver.autonomy.cdi.AttributeCache;
 import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
@@ -17,25 +34,6 @@ import io.freedriver.math.measurement.types.electrical.Potential;
 import io.freedriver.math.measurement.types.electrical.Power;
 import io.freedriver.victron.VictronDevice;
 import org.infinispan.Cache;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Initialized;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.persistence.Tuple;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-import javax.persistence.criteria.Subquery;
-import javax.transaction.Transactional;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ApplicationScoped // TODO EventService
 public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {

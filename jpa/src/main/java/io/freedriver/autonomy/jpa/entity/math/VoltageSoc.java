@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.jpa.entity.math;
 
+import java.math.BigDecimal;
+
 import io.freedriver.math.UnitPrefix;
 import io.freedriver.math.measurement.types.electrical.Potential;
-
-import java.math.BigDecimal;
 
 public final class VoltageSoc {
     private final Potential voltage;

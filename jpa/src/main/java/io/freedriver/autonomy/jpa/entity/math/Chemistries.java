@@ -1,14 +1,14 @@
 package io.freedriver.autonomy.jpa.entity.math;
 
-import io.freedriver.math.measurement.types.electrical.Potential;
-import io.freedriver.math.number.ScaledNumber;
+import static io.freedriver.math.UnitPrefix.ONE;
 
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.freedriver.math.UnitPrefix.ONE;
+import io.freedriver.math.measurement.types.electrical.Potential;
+import io.freedriver.math.number.ScaledNumber;
 
 public enum Chemistries {
     CHEM_18650(VoltageSoc.of(new Potential(ScaledNumber.of(3.2, ONE)), 0),

@@ -1,12 +1,12 @@
 package io.freedriver.autonomy.jpa.entity.event.input.sensors;
 
-import io.freedriver.autonomy.jpa.entity.event.Event;
-import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
-
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
 import java.util.Objects;
 import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.MappedSuperclass;
+
+import io.freedriver.autonomy.jpa.entity.event.Event;
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 
 @MappedSuperclass
 public abstract class SensorEvent extends Event {

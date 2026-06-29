@@ -1,9 +1,5 @@
 package io.freedriver.autonomy.event.input.joystick.jstest;
 
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSMetadata;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.base.util.ProcessUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -15,6 +11,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSMetadata;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.base.util.ProcessUtil;
 
 public class JSTestReader {
     private static final Logger LOGGER = Logger.getLogger(JSTestReader.class.getName());

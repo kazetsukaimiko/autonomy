@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.cdi;
 
-import org.infinispan.Cache;
-
+import java.util.function.Function;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.metamodel.SingularAttribute;
-import java.util.function.Function;
+
+import org.infinispan.Cache;
 
 @ApplicationScoped
 public class AttributeCache {

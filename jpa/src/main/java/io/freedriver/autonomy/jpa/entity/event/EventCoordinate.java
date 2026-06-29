@@ -1,12 +1,12 @@
 package io.freedriver.autonomy.jpa.entity.event;
 
-import io.freedriver.autonomy.jpa.entity.EmbeddedEntityBase;
-
+import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import java.util.Objects;
+
+import io.freedriver.autonomy.jpa.entity.EmbeddedEntityBase;
 
 /**
  * This class seeks to describe where an event came from, both uniquely and nonuniquely.

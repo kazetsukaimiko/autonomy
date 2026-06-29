@@ -1,10 +1,10 @@
 package io.freedriver.autonomy.jpa.entity.event.input.joystick;
 
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEventType;
-
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEventType;
 
 public enum JoystickEventType {
     BUTTON_DOWN(1L, true),

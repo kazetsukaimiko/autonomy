@@ -1,10 +1,6 @@
 package io.freedriver.autonomy.entity.event.input.joystick.jstest;
 
-import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
-import io.freedriver.autonomy.event.input.joystick.jstest.JSTestReader;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEventType;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +12,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
+import io.freedriver.autonomy.event.input.joystick.jstest.JSTestReader;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEventType;
+import org.junit.jupiter.api.Test;
 
 public class AllJoysticksTest {
 
