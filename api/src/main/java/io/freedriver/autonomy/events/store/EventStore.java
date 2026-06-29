@@ -10,7 +10,7 @@ import java.util.stream.Stream;
  * <p>Register providers via {@code META-INF/services/} and discover them with {@link #load()}.
  */
 public interface EventStore {
-    <T> String append(String eventType, T payload, EventMetadata metadata);
+    <T> EventRecord<T> append(String eventType, T payload, EventMetadata metadata);
 
     Stream<StoredEvent> query(EventQuery query);
 

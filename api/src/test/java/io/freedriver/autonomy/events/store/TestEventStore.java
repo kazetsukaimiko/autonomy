@@ -5,8 +5,8 @@ import java.util.stream.Stream;
 
 public final class TestEventStore implements EventStore {
     @Override
-    public <T> String append(String eventType, T payload, EventMetadata metadata) {
-        return "test-id";
+    public <T> EventRecord<T> append(String eventType, T payload, EventMetadata metadata) {
+        return EventRecord.of(eventType, payload, metadata);
     }
 
     @Override
