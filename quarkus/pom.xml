@@ -112,6 +112,11 @@
         </dependency>
 
         <dependency>
+            <groupId>io.freedriver</groupId>
+            <artifactId>inotify-cdi</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>io.freedriver.autonomy</groupId>
             <artifactId>autonomy-api</artifactId>
         </dependency>
