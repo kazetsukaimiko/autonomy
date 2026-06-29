@@ -9,13 +9,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.transaction.Transactional;
 
 import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEvent;
 import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEventType;
 import io.freedriver.autonomy.service.crud.JPACrudService;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class SpeechService extends JPACrudService<SpeechEvent> {

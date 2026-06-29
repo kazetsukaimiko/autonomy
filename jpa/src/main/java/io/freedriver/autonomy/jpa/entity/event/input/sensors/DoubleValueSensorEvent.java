@@ -3,13 +3,13 @@ package io.freedriver.autonomy.jpa.entity.event.input.sensors;
 
 import java.util.Objects;
 import java.util.UUID;
+
+import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Table;
-
-import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 
 @Entity
 @Table

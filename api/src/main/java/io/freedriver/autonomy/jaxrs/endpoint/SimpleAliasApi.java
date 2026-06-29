@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import io.freedriver.autonomy.jaxrs.view.AliasView;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -11,8 +13,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-
-import io.freedriver.autonomy.jaxrs.view.AliasView;
 
 @Path(SimpleAliasApi.ROOT)
 @Produces(MediaType.APPLICATION_JSON)

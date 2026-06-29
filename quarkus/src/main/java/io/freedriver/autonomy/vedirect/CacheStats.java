@@ -1,10 +1,10 @@
 package io.freedriver.autonomy.vedirect;
 
 import java.util.function.Function;
-import jakarta.persistence.metamodel.SingularAttribute;
 
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
+import jakarta.persistence.metamodel.SingularAttribute;
 
 public enum CacheStats implements CacheStat {
     PANEL_VOLTAGE(VEDirectMessage_.panelVoltage, VEDirectMessage::getPanelVoltage),

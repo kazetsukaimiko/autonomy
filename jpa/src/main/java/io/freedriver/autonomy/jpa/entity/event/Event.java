@@ -1,12 +1,12 @@
 package io.freedriver.autonomy.jpa.entity.event;
 
 import java.util.Objects;
+
+import io.freedriver.autonomy.jpa.entity.EntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.MappedSuperclass;
-
-import io.freedriver.autonomy.jpa.entity.EntityBase;
 
 /**
  * An entity that represents either the initial state of some thing or a change

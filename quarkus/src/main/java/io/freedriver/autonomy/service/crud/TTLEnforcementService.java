@@ -6,11 +6,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.inject.Any;
-import jakarta.enterprise.inject.Instance;
-import jakarta.inject.Inject;
 
 import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
@@ -19,6 +14,11 @@ import io.freedriver.base.util.tedious.Loops;
 import io.freedriver.jsonlink.config.v2.Mappings;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Any;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
 
 /**
  * This service enforces TTLs on all Event data.

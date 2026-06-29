@@ -1,10 +1,9 @@
 package io.freedriver.autonomy.jpa.converter.event;
 
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
-
 import io.freedriver.autonomy.jpa.entity.event.EventAction;
 import io.freedriver.autonomy.jpa.util.Base64Serialization;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 @Converter(autoApply = true)
 public class EventActionConverter implements AttributeConverter<EventAction, String> {

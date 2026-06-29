@@ -2,6 +2,7 @@ package io.freedriver.autonomy.websocket;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;

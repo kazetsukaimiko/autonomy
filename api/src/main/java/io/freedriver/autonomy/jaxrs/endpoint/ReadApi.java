@@ -1,6 +1,7 @@
 package io.freedriver.autonomy.jaxrs.endpoint;
 
 import java.util.stream.Stream;
+
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 

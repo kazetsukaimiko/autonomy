@@ -3,13 +3,13 @@ package io.freedriver.autonomy.service;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.service.crud.EventCrudService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Default;
 import jakarta.transaction.Transactional;
-
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
-import io.freedriver.autonomy.service.crud.EventCrudService;
 
 @ApplicationScoped
 public class JoystickEventCrudService extends EventCrudService<JoystickEvent> {

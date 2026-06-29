@@ -8,10 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-import jakarta.enterprise.context.ApplicationScoped;
 
 import io.freedriver.electrodacus.sbms.SBMS0Finder;
 import io.freedriver.victron.VEDirectReader;
+import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class VEDirectDeviceService extends BaseService {

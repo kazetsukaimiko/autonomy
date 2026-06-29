@@ -1,13 +1,13 @@
 package io.freedriver.autonomy.jaxrs.endpoint.event;
 
 import java.util.stream.Stream;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 
 import io.freedriver.autonomy.jaxrs.endpoint.EventApi;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.service.JoystickEventCrudService;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 
 @RequestScoped
 public class JoystickEventEndpoint implements EventApi<JoystickEvent> {

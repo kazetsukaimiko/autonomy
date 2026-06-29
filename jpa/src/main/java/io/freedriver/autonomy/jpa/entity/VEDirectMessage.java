@@ -2,15 +2,6 @@ package io.freedriver.autonomy.jpa.entity;
 
 import java.time.Instant;
 import java.util.Objects;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Index;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
@@ -31,6 +22,15 @@ import io.freedriver.victron.TrackerOperation;
 import io.freedriver.victron.VictronProduct;
 import io.freedriver.victron.jpa.FirmwareVersionConverter;
 import io.freedriver.victron.vedirect.OffReason;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Table(
         indexes = {

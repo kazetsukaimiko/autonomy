@@ -4,6 +4,10 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.freedriver.autonomy.jpa.entity.EntityBase;
+import io.freedriver.autonomy.jpa.entity.event.Event_;
+import io.freedriver.autonomy.util.Benchmark;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -12,10 +16,6 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-
-import io.freedriver.autonomy.jpa.entity.EntityBase;
-import io.freedriver.autonomy.jpa.entity.event.Event_;
-import io.freedriver.autonomy.util.Benchmark;
 
 public abstract class JPACrudService<E extends EntityBase> {
     @Inject
