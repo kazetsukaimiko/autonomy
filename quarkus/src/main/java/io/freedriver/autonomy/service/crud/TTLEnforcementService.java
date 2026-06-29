@@ -8,7 +8,6 @@ import java.util.concurrent.Executors;
 import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
 import io.freedriver.base.util.file.DirectoryProviders;
-import io.freedriver.base.util.tedious.Loops;
 import io.freedriver.jsonlink.config.v2.Mappings;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -54,19 +53,26 @@ public class TTLEnforcementService {
      * Endless-Loop through all eventCrudServices and apply TTL to them.
      */
     public void applyTTL() {
-        Loops.takeUntil(() -> {
-            Duration ttl = getTTL();
-            eventCrudServices.forEach(eventCrudService -> {
-                applyTTLToEventService(ttl, eventCrudService);
-            });
-            return continueTTLEnforcement;
-        }, POLL_DURATION, this::logTTLException);
+        while (continueTTLEnforcement) {
+            try {
+                Duration ttl = getTTL();
+                eventCrudServices.forEach(eventCrudService -> applyTTLToEventService(ttl, eventCrudService));
+                sleep(POLL_DURATION);
+            } catch (Throwable throwable) {
+                log.warn("Couldn't enforce TTL: ", throwable);
+                sleep(POLL_DURATION);
+            }
+        }
         log.info("Shut down TTL Enforcement.");
     }
 
-    private boolean logTTLException(Throwable throwable) {
-        log.warn("Couldn't enforce TTL: ", throwable);
-        return true;
+    private void sleep(Duration duration) {
+        try {
+            Thread.sleep(duration.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            continueTTLEnforcement = false;
+        }
     }
 
     /**

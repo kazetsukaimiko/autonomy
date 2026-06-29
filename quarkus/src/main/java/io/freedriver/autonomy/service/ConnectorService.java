@@ -32,7 +32,8 @@ public class ConnectorService extends ConnectorServiceCommon {
             .enable(SerializationFeature.INDENT_OUTPUT);
 
 
-    private void waitForCompletion(CompletableFuture<Void> voidCompletableFuture) {
+    @Override
+    protected void waitForCompletion(CompletableFuture<Void> voidCompletableFuture) {
         try {
             voidCompletableFuture.get();
         } catch (Exception e) {
