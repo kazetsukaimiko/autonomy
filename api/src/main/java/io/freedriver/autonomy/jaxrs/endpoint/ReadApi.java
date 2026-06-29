@@ -1,8 +1,8 @@
 package io.freedriver.autonomy.jaxrs.endpoint;
 
 import java.util.stream.Stream;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
 
 public interface ReadApi<ENTITY, ID> {
     String ID_PARAMETER = "id";

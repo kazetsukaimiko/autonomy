@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.cdi.provider;
 
-import javax.enterprise.context.Dependent;
+import jakarta.enterprise.context.Dependent;
 
 // TODO: implement Liquibase integration
 @Dependent

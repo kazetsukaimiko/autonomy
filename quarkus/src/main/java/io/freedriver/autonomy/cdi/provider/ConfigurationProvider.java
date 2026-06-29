@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.cdi.provider;
 
 import java.io.IOException;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Default;
+import jakarta.enterprise.inject.Produces;
 
 import io.freedriver.jsonlink.config.ConnectorConfig;
 

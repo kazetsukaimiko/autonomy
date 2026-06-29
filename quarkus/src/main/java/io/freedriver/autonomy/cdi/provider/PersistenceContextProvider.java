@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.cdi.provider;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class PersistenceContextProvider {
@@ -29,7 +29,7 @@ public class PersistenceContextProvider {
         Stream.of(properties)
                 .forEach(property -> map.put(property.name(), property.value()));
 
-        map.put("javax.persistence.provider", HibernatePersistenceProvider.class.getName());
+        map.put("jakarta.persistence.provider", HibernatePersistenceProvider.class.getName());
 
 
         return Persistence.createEntityManagerFactory(unitName, map);

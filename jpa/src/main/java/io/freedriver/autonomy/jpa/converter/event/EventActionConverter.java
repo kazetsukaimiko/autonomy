@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.jpa.converter.event;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 import io.freedriver.autonomy.jpa.entity.event.EventAction;
 import io.freedriver.autonomy.jpa.util.Base64Serialization;

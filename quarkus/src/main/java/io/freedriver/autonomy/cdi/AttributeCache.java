@@ -1,9 +1,9 @@
 package io.freedriver.autonomy.cdi;
 
 import java.util.function.Function;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.persistence.metamodel.SingularAttribute;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.metamodel.SingularAttribute;
 
 import org.infinispan.Cache;
 

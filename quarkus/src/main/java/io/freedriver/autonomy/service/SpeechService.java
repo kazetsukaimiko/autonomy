@@ -9,9 +9,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.transaction.Transactional;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.transaction.Transactional;
 
 import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEvent;
 import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEventType;

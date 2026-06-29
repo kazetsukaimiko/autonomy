@@ -1,10 +1,10 @@
 package io.freedriver.autonomy.jpa.entity.event;
 
 import java.util.Objects;
-import javax.persistence.Column;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.MappedSuperclass;
 
 import io.freedriver.autonomy.jpa.entity.EntityBase;
 

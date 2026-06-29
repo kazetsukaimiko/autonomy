@@ -1,11 +1,11 @@
 package io.freedriver.autonomy.jaxrs.endpoint.sbms;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 
 import io.freedriver.autonomy.entity.view.LithiumBatteryView;
 import io.freedriver.autonomy.jaxrs.endpoint.SBMSApi;

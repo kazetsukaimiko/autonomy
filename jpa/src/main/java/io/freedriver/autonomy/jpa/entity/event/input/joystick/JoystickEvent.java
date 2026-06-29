@@ -1,7 +1,7 @@
 package io.freedriver.autonomy.jpa.entity.event.input.joystick;
 
 import java.util.Objects;
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;

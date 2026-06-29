@@ -18,23 +18,11 @@
   <properties>
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <version.thorntail>2.6.0.Final</version.thorntail>
   </properties>
-  <dependencyManagement>
-    <dependencies>
-      <!-- Thorntail (legacy). Autonomy reactor versions (autonomy-*), freedriver, and JUnit now come from importing autonomy-bom in children (and for consumers). Root no longer contains self-references to its modules (see bom/pom.xml). -->
-      <dependency>
-        <groupId>io.thorntail</groupId>
-        <artifactId>bom-all</artifactId>
-        <version>${version.thorntail}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+
   <repositories>
     <repository>
       <releases>
@@ -44,7 +32,7 @@
         <enabled>true</enabled>
       </snapshots>
       <id>oss.sonatype.org-snapshot</id>
-      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
   </repositories>
 
