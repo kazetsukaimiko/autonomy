@@ -17,7 +17,7 @@ public class JoystickEvent extends Event {
     private Long number;
 
     @Column(name = "event_value")
-    private Long value;
+    private Long eventValue;
 
     @Column
     private boolean initial;
@@ -29,11 +29,11 @@ public class JoystickEvent extends Event {
     }
 
     public JoystickEvent(long timestamp, GenerationOrigin generationOrigin, String sourceClass,
-                         String sourceId, String eventId, Long number, Long value, boolean initial,
+                         String sourceId, String eventId, Long number, Long eventValue, boolean initial,
                          JoystickEventType joystickEventType) {
         super(timestamp, generationOrigin, sourceClass, sourceId, eventId);
         this.number = number;
-        this.value = value;
+        this.eventValue = eventValue;
         this.initial = initial;
         this.joystickEventType = joystickEventType;
     }
@@ -60,12 +60,12 @@ public class JoystickEvent extends Event {
         this.number = number;
     }
 
-    public Long getValue() {
-        return value;
+    public Long getEventValue() {
+        return eventValue;
     }
 
-    public void setValue(Long value) {
-        this.value = value;
+    public void setEventValue(Long eventValue) {
+        this.eventValue = eventValue;
     }
 
     public boolean isInitial() {
@@ -96,12 +96,12 @@ public class JoystickEvent extends Event {
         JoystickEvent that = (JoystickEvent) o;
         return initial == that.initial &&
                 Objects.equals(number, that.number) &&
-                Objects.equals(value, that.value) &&
+                Objects.equals(eventValue, that.eventValue) &&
                 joystickEventType == that.joystickEventType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), number, value, initial, joystickEventType);
+        return Objects.hash(super.hashCode(), number, eventValue, initial, joystickEventType);
     }
 }

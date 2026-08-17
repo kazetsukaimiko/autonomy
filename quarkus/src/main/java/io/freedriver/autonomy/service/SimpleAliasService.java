@@ -292,7 +292,7 @@ public class SimpleAliasService  {
                         event.setSourceClass(getClass().getName());
                         event.setSourceId(mapping.getConnectorId().toString());
                         event.setEventId("analog/"+analogSensor.getPin().getPin());
-                        event.setValue(analogResponse.getRaw());
+                        event.setEventValue(analogResponse.getRaw());
                         floatValueSensorService.save(event);
                 }));
     }
@@ -553,7 +553,7 @@ public class SimpleAliasService  {
     }
 
     public void handleJoystickEvent(JoystickEvent joystickEvent, Mapping mapping) {
-        String eventId = joystickEvent.getNumber() + ":" + joystickEvent.getValue();
+        String eventId = joystickEvent.getNumber() + ":" + joystickEvent.getEventValue();
         Optional.of(eventId)
                 .map(mapping.getControlMap()::get)
                 .ifPresent(appliances -> toggleAppliances(mapping, appliances));
