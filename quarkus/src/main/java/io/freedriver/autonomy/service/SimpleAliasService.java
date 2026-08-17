@@ -51,7 +51,6 @@ import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Default;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.infinispan.Cache;
 
 @ApplicationScoped
 @Slf4j
@@ -76,11 +75,11 @@ public class SimpleAliasService  {
 
     @Inject
     @ConnectorCache
-    Cache<PinCoordinate, Boolean> digitalPinCache;
+    Map<PinCoordinate, Boolean> digitalPinCache;
 
     @Inject
     @SensorCache
-    Cache<PinCoordinate, SensorValues> sensorCache;
+    Map<PinCoordinate, SensorValues> sensorCache;
 
     @Inject
     Event<SpeechEvent> speech;
@@ -293,7 +292,7 @@ public class SimpleAliasService  {
                         event.setSourceClass(getClass().getName());
                         event.setSourceId(mapping.getConnectorId().toString());
                         event.setEventId("analog/"+analogSensor.getPin().getPin());
-                        event.setValue(analogResponse.getRaw());
+                        event.setEventValue(analogResponse.getRaw());
                         floatValueSensorService.save(event);
                 }));
     }
@@ -554,7 +553,7 @@ public class SimpleAliasService  {
     }
 
     public void handleJoystickEvent(JoystickEvent joystickEvent, Mapping mapping) {
-        String eventId = joystickEvent.getNumber() + ":" + joystickEvent.getValue();
+        String eventId = joystickEvent.getNumber() + ":" + joystickEvent.getEventValue();
         Optional.of(eventId)
                 .map(mapping.getControlMap()::get)
                 .ifPresent(appliances -> toggleAppliances(mapping, appliances));

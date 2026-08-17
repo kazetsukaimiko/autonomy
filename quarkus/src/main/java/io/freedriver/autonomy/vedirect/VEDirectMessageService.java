@@ -3,6 +3,7 @@ package io.freedriver.autonomy.vedirect;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,7 +33,6 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import jakarta.transaction.Transactional;
-import org.infinispan.Cache;
 
 @ApplicationScoped // TODO EventService
 public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
@@ -42,19 +42,19 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
 
     @Inject
     @AutonomyCache
-    Cache<CacheKey<VictronDevice, ControllerTimeView>, ControllerTimeView> timeViewCache;
+    Map<CacheKey<VictronDevice, ControllerTimeView>, ControllerTimeView> timeViewCache;
 
     @Inject
     @AutonomyCache
-    Cache<CacheKey<VictronDevice, ControllerHistoryView>, ControllerHistoryView> historyViewCache;
+    Map<CacheKey<VictronDevice, ControllerHistoryView>, ControllerHistoryView> historyViewCache;
 
     @Inject
     @AutonomyCache
-    Cache<LocalDate, Set<VictronDevice>> victronDeviceCache;
+    Map<LocalDate, Set<VictronDevice>> victronDeviceCache;
 
     @Inject
     @OneSecondCache
-    Cache<CacheKey<VictronDevice, VEDirectMessage>, VEDirectMessage> lastMessageCache;
+    Map<CacheKey<VictronDevice, VEDirectMessage>, VEDirectMessage> lastMessageCache;
 
     /* TODO Remove, no support in Quarkus for persistence providers at init
     public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {

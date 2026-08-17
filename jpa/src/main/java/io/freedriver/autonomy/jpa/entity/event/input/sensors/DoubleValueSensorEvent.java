@@ -15,34 +15,34 @@ import jakarta.persistence.Table;
 @Table
 @Inheritance(strategy = InheritanceType.JOINED)
 public class DoubleValueSensorEvent extends SensorEvent {
-    @Column
-    private double value;
+    @Column(name = "event_value")
+    private double eventValue;
 
     public DoubleValueSensorEvent() {
     }
 
-    public DoubleValueSensorEvent(UUID boardId, String sensorName, double value) {
+    public DoubleValueSensorEvent(UUID boardId, String sensorName, double eventValue) {
         super(boardId, sensorName);
-        this.value = value;
+        this.eventValue = eventValue;
     }
 
-    public DoubleValueSensorEvent(long timestamp, GenerationOrigin generationOrigin, String sourceClass, String sourceId, String eventId, UUID boardId, String sensorName, double value) {
+    public DoubleValueSensorEvent(long timestamp, GenerationOrigin generationOrigin, String sourceClass, String sourceId, String eventId, UUID boardId, String sensorName, double eventValue) {
         super(timestamp, generationOrigin, sourceClass, sourceId, eventId, boardId, sensorName);
-        this.value = value;
+        this.eventValue = eventValue;
     }
 
-    public double getValue() {
-        return value;
+    public double getEventValue() {
+        return eventValue;
     }
 
-    public void setValue(double value) {
-        this.value = value;
+    public void setEventValue(double eventValue) {
+        this.eventValue = eventValue;
     }
 
     @Override
     public String toString() {
         return "FloatValueSensorEvent{" +
-                "value=" + value +
+                "eventValue=" + eventValue +
                 '}';
     }
 
@@ -52,11 +52,11 @@ public class DoubleValueSensorEvent extends SensorEvent {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         DoubleValueSensorEvent that = (DoubleValueSensorEvent) o;
-        return Double.compare(that.value, value) == 0;
+        return Double.compare(that.eventValue, eventValue) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), value);
+        return Objects.hash(super.hashCode(), eventValue);
     }
 }
