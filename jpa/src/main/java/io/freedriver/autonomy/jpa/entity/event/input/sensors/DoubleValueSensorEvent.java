@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
 @Table
 @Inheritance(strategy = InheritanceType.JOINED)
 public class DoubleValueSensorEvent extends SensorEvent {
-    @Column
+    @Column(name = "event_value")
     private double value;
 
     public DoubleValueSensorEvent() {

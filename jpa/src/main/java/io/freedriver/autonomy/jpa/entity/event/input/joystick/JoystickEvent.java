@@ -16,7 +16,7 @@ public class JoystickEvent extends Event {
     @Column
     private Long number;
 
-    @Column
+    @Column(name = "event_value")
     private Long value;
 
     @Column
