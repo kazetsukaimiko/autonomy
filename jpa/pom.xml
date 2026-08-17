@@ -97,7 +97,7 @@
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <!--<compilerArguments>-Aeclipselink.persistencexml=${project.basedir}/eclipselink-persistence.xml</compilerArguments>-->
+                            <compilerArguments>-Aeclipselink.persistencexml=${project.basedir}/src/main/resources/META-INF/persistence.xml</compilerArguments>
                             <processors>
                                 <processor>org.eclipse.persistence.internal.jpa.modelgen.CanonicalModelProcessor</processor>
                             </processors>
@@ -113,6 +113,29 @@
                         <scope>compile</scope>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <!-- Add the generated metamodel sources (from eclipselink processor) so they get compiled into the jpa artifact.
+                 This is required for full reactor builds that compile quarkus (which uses the static metamodel _ classes
+                 for Criteria queries in VEDirectMessageService, EventCrudService etc.). Without this, quarkus compile fails
+                 with "cannot find symbol" for Event_ / VEDirectMessage_ . -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-metamodel-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/meta-model</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <!-- We want quarkus to find entities on its own, not use persistence.xml -->
             <!-- Yet we also want eclipselink to generate the static metamodel. -->
