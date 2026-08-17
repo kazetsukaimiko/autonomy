@@ -85,7 +85,7 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
      */
     public Stream<VEDirectMessage> last(VictronDevice device, Duration duration) {
         return select((root, cb) -> Stream.of(
-                cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()),
+                cb.equal(root.get(VEDirectMessage_.serialNumber), device.serialNumber()),
                 cb.ge(root.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())
                 ), "for device " + device + " last " + duration.toMillis() + "ms");
     }
@@ -102,7 +102,7 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
         CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
         Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
         cq.select(root);
-        cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()));
+        cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.serialNumber()));
         return queryStream(cq, "byDevice " + device);
     }
 
@@ -117,7 +117,7 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
         CriteriaQuery<Long> cq = cb.createQuery(Long.class);
         Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
         cq.select(cb.count(root));
-        cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.getSerialNumber()));
+        cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.serialNumber()));
         return Benchmark.bench(() -> entityManager.createQuery(cq).getSingleResult(),
                 "countByDevice {}", device);
     }
@@ -133,7 +133,7 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
                     cb.max(root.get(VEDirectMessage_.mainVoltage)),
                     cb.max(root.get(VEDirectMessage_.yieldToday)))
                 .where(cb.and(cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
-                        cb.equal(root.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber())));
+                        cb.equal(root.get(VEDirectMessage_.serialNumber), k.base().serialNumber())));
             Tuple t = entityManager.createQuery(cq)
                     .getSingleResult();
             return new ControllerHistoryView(
@@ -163,7 +163,7 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
                     root.get(VEDirectMessage_.offReason),
                     cb.count(root))
                     .where(cb.and(cb.ge(root.get(VEDirectMessage_.timestamp), startOfDay.toEpochMilli()),
-                            cb.equal(root.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber())))
+                            cb.equal(root.get(VEDirectMessage_.serialNumber), k.base().serialNumber())))
                     .groupBy(root.get(VEDirectMessage_.stateOfOperation),
                             root.get(VEDirectMessage_.offReason));
             return entityManager.createQuery(cq)
@@ -235,7 +235,7 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
             cq.select(veDirectMessageRoot);
             cq.where(cb.and(
                     cb.equal(veDirectMessageRoot.get(VEDirectMessage_.timestamp), lastTimestampQuery),
-                    cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), k.getBase().getSerialNumber())));
+                    cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), k.base().serialNumber())));
                 return entityManager.createQuery(cq)
                         .setFirstResult(0)
                         .setMaxResults(1)

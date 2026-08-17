@@ -5,38 +5,28 @@ import static io.freedriver.autonomy.jpa.entity.event.sensor.TemperatureUnit.KEL
 import java.math.BigDecimal;
 import java.util.Objects;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class TemperatureValue implements Comparable<TemperatureValue> {
     private static final BigDecimal EQUIVALENCE = new BigDecimal("0.000000000001");
 
     private BigDecimal value;
     private TemperatureUnit unit;
 
-    public TemperatureValue(BigDecimal value, TemperatureUnit unit) {
-        this.value = value;
-        this.unit = unit;
-    }
-
     public TemperatureValue to(TemperatureUnit newUnit) {
         return new TemperatureValue(
                 newUnit.convert(value, unit),
                 newUnit
         );
-    }
-
-    public BigDecimal getValue() {
-        return value;
-    }
-
-    public void setValue(BigDecimal value) {
-        this.value = value;
-    }
-
-    public TemperatureUnit getUnit() {
-        return unit;
-    }
-
-    public void setUnit(TemperatureUnit unit) {
-        this.unit = unit;
     }
 
     public TemperatureValue convert(TemperatureUnit unit) {

@@ -9,14 +9,22 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class TimeFrame {
     private Instant start;
     private Instant finish;
-
-    public TimeFrame(Instant start, Instant finish) {
-        this.start = start;
-        this.finish = finish;
-    }
 
     public static <T, F> List<MarkedTimeFrame<F>> blocks(Stream<T> stream, Function<T, Instant> whenFunction, Function<T, F> fieldFunction) {
         List<MarkedTimeFrame<F>> timeFrames = new ArrayList<>();
@@ -54,26 +62,10 @@ public class TimeFrame {
         return false;
     }
 
-    public Instant getStart() {
-        return start;
-    }
-
-    public void setStart(Instant start) {
-        this.start = start;
-    }
-
-    public Instant getFinish() {
-        return finish;
-    }
-
-    public void setFinish(Instant finish) {
-        this.finish = finish;
-    }
-    
     public Duration size() {
         return Duration.between(start, finish);
-    } 
-    
+    }
+
     public boolean greaterThan(Duration compare) {
         return size().compareTo(compare) > 0;
     }
@@ -85,5 +77,5 @@ public class TimeFrame {
     public boolean contains(Instant instant) {
         return (getStart().isAfter(instant) && getFinish().isBefore(instant));
     }
-    
+
 }

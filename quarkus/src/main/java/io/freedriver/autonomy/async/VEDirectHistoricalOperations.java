@@ -19,7 +19,7 @@ public enum VEDirectHistoricalOperations {
     // Find the beginning of the day.
     /*
     public static Instant beginningOfDay(List<VEDirectMessage> history, OffReason example) {
-        Optional<MarkedTimeFrame<OffReason>> thisMorning = TimeFrame.blocks(history.stream(), VEDirectMessage::getTimestamp, VEDirectMessage::getOffReason)
+        Optional<MarkedTimeFrame<OffReason>> thisMorning = TimeFrame.blocks(history.stream(), VEDirectMessage::timestamp, VEDirectMessage::offReason)
                 .stream()
                 // Between 12AM and 12PM
                 .filter(block -> block.getStart().isAfter(LocalDate.now().atStartOfDay(UTC).toInstant()))
@@ -33,9 +33,9 @@ public enum VEDirectHistoricalOperations {
 
 
         Optional<Instant> lastTimeOff = history.stream()
-                .filter(message -> message.getOffReason() == OffReason.NO_INPUT_POWER)
-                .max(Comparator.comparing(VEDirectMessage::getTimestamp))
-                .map(VEDirectMessage::getTimestamp);
+                .filter(message -> message.offReason() == OffReason.NO_INPUT_POWER)
+                .max(Comparator.comparing(VEDirectMessage::timestamp))
+                .map(VEDirectMessage::timestamp);
 
 
 

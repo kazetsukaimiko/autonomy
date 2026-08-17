@@ -4,14 +4,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class SensorHistory {
-    private Map<UUID, BoardAnalogHistory> history = new LinkedHashMap<>();
+import lombok.Builder;
 
-    public Map<UUID, BoardAnalogHistory> getHistory() {
-        return history;
+@Builder(toBuilder = true)
+public record SensorHistory(Map<UUID, BoardAnalogHistory> history) {
+    public SensorHistory {
+        history = history == null ? new LinkedHashMap<>() : history;
     }
 
-    public void setHistory(Map<UUID, BoardAnalogHistory> history) {
-        this.history = history;
+    public SensorHistory() {
+        this(new LinkedHashMap<>());
     }
 }

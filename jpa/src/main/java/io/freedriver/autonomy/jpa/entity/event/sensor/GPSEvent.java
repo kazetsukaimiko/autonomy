@@ -5,11 +5,25 @@ import java.time.Instant;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Table
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@NoArgsConstructor
 public class GPSEvent extends Event {
     private static final String GPS_SOURCE = "GPS_LOCATION";
 
@@ -18,10 +32,6 @@ public class GPSEvent extends Event {
 
     @Column
     private BigDecimal longitude;
-
-    public GPSEvent() {
-    }
-
 
     public GPSEvent(long timestamp, GenerationOrigin generationOrigin, String sourceClass, String sourceId, String eventId, BigDecimal latitude, BigDecimal longitude) {
         super(timestamp, generationOrigin, sourceClass, sourceId, eventId);
@@ -38,21 +48,5 @@ public class GPSEvent extends Event {
                 null,
                 latitude, longitude
         );
-    }
-
-    public BigDecimal getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(BigDecimal latitude) {
-        this.latitude = latitude;
-    }
-
-    public BigDecimal getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(BigDecimal longitude) {
-        this.longitude = longitude;
     }
 }

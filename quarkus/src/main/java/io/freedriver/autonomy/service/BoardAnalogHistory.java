@@ -4,33 +4,21 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
+import lombok.Builder;
 
-public class BoardAnalogHistory {
-    private Map<Identifier, Integer> minimums = new LinkedHashMap<>();
-    private Map<Identifier, Integer> maximums = new LinkedHashMap<>();
-    private Map<Identifier, Integer> lastKnowns = new LinkedHashMap<>();
+@Builder(toBuilder = true)
+public record BoardAnalogHistory(
+        Map<Identifier, Integer> minimums,
+        Map<Identifier, Integer> maximums,
+        Map<Identifier, Integer> lastKnowns) {
 
-    public Map<Identifier, Integer> getMinimums() {
-        return minimums;
+    public BoardAnalogHistory {
+        minimums = minimums == null ? new LinkedHashMap<>() : minimums;
+        maximums = maximums == null ? new LinkedHashMap<>() : maximums;
+        lastKnowns = lastKnowns == null ? new LinkedHashMap<>() : lastKnowns;
     }
 
-    public void setMinimums(Map<Identifier, Integer> minimums) {
-        this.minimums = minimums;
-    }
-
-    public Map<Identifier, Integer> getMaximums() {
-        return maximums;
-    }
-
-    public void setMaximums(Map<Identifier, Integer> maximums) {
-        this.maximums = maximums;
-    }
-
-    public Map<Identifier, Integer> getLastKnowns() {
-        return lastKnowns;
-    }
-
-    public void setLastKnowns(Map<Identifier, Integer> lastKnowns) {
-        this.lastKnowns = lastKnowns;
+    public BoardAnalogHistory() {
+        this(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>());
     }
 }

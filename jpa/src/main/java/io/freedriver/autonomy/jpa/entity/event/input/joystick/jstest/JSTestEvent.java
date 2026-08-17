@@ -7,10 +7,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.freedriver.autonomy.jpa.entity.event.StateType;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Container for Joystick Event Data.
  */
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
+@NoArgsConstructor
 public class JSTestEvent {
     private JSMetadata metadata;
     private Instant now;
@@ -18,9 +28,6 @@ public class JSTestEvent {
     private Long time;
     private Long number;
     private Long value;
-
-    public JSTestEvent() {
-    }
 
     public JSTestEvent(JSMetadata metadata, JSTestEventType jsTestEventType, Long time, Long number, Long value) {
         this.metadata = metadata;
@@ -71,54 +78,6 @@ public class JSTestEvent {
                         kvpair -> Long.parseLong(kvpair[1])));
     }
 
-    public JSMetadata getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(JSMetadata metadata) {
-        this.metadata = metadata;
-    }
-
-    public Instant getNow() {
-        return now;
-    }
-
-    public void setNow(Instant now) {
-        this.now = now;
-    }
-
-    public JSTestEventType getJsTestEventType() {
-        return jsTestEventType;
-    }
-
-    public void setJsTestEventType(JSTestEventType jsTestEventType) {
-        this.jsTestEventType = jsTestEventType;
-    }
-
-    public Long getTime() {
-        return time;
-    }
-
-    public void setTime(Long time) {
-        this.time = time;
-    }
-
-    public Long getNumber() {
-        return number;
-    }
-
-    public void setNumber(Long number) {
-        this.number = number;
-    }
-
-    public Long getValue() {
-        return value;
-    }
-
-    public void setValue(Long value) {
-        this.value = value;
-    }
-
     public boolean isButton() {
         return Optional.ofNullable(jsTestEventType)
                 .map(JSTestEventType::isButton)
@@ -127,18 +86,6 @@ public class JSTestEvent {
 
     public boolean isAxis() {
         return !isButton();
-    }
-
-    @Override
-    public String toString() {
-        return "JSTestEvent{" +
-                "metadata=" + metadata +
-                ", now=" + now +
-                ", type=" + jsTestEventType +
-                ", time=" + time +
-                ", number=" + number +
-                ", value=" + value +
-                '}';
     }
 
     public String locateSourceId() {

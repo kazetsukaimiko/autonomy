@@ -90,12 +90,12 @@ public class SimpleAliasService  {
 
     public void populateSensorCacheFromHistory() {
         SensorHistory sensorHistory = readSensorHistory();
-        sensorHistory.getHistory()
+        sensorHistory.history()
                 .forEach(this::populateBoardHistory);
     }
 
     public void populateBoardHistory(UUID boardId, BoardAnalogHistory boardAnalogHistory) {
-        Stream.concat(boardAnalogHistory.getMaximums().keySet().stream(), boardAnalogHistory.getMinimums().keySet().stream())
+        Stream.concat(boardAnalogHistory.maximums().keySet().stream(), boardAnalogHistory.minimums().keySet().stream())
                 .collect(Collectors.toSet())
                 .stream()
                 .map(identifier -> new PinCoordinate(boardId, identifier))
@@ -104,14 +104,14 @@ public class SimpleAliasService  {
 
     private void populatePinHistory(PinCoordinate coordinate, BoardAnalogHistory boardAnalogHistory) {
         SensorValues sensorValues = new SensorValues();
-        if (boardAnalogHistory.getMinimums().containsKey(coordinate.getIdentifier())) {
-            sensorValues.setMin(boardAnalogHistory.getMinimums().get(coordinate.getIdentifier()));
+        if (boardAnalogHistory.minimums().containsKey(coordinate.identifier())) {
+            sensorValues = sensorValues.toBuilder().min(boardAnalogHistory.minimums().get(coordinate.identifier())).build();
         }
-        if (boardAnalogHistory.getMaximums().containsKey(coordinate.getIdentifier())) {
-            sensorValues.setMax(boardAnalogHistory.getMaximums().get(coordinate.getIdentifier()));
+        if (boardAnalogHistory.maximums().containsKey(coordinate.identifier())) {
+            sensorValues = sensorValues.toBuilder().max(boardAnalogHistory.maximums().get(coordinate.identifier())).build();
         }
-        if (boardAnalogHistory.getLastKnowns().containsKey(coordinate.getIdentifier())) {
-            sensorValues.setRaw(boardAnalogHistory.getLastKnowns().get(coordinate.getIdentifier()));
+        if (boardAnalogHistory.lastKnowns().containsKey(coordinate.identifier())) {
+            sensorValues = sensorValues.toBuilder().raw(boardAnalogHistory.lastKnowns().get(coordinate.identifier())).build();
         }
         sensorCache.put(coordinate, sensorValues);
     }
@@ -138,9 +138,9 @@ public class SimpleAliasService  {
     public Future<Boolean> cacheAnalogPins(Mapping mapping) {
         return pool.submit(() -> {
             try {
-                Request readAnalogPinsAnyway = new Request()
-                        .analogRead(mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead));
-                Response response = connectorService.send(mapping.getConnectorId(), readAnalogPinsAnyway);
+                Request readAnalogPinsAnyway = Request.empty()
+                        .analogRead(mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead));
+                Response response = connectorService.send(mapping.connectorId(), readAnalogPinsAnyway);
                 cacheBoardState(mapping, response);
                 sendAnalogSensorEvents(mapping, response);
                 return true;
@@ -156,11 +156,11 @@ public class SimpleAliasService  {
      */
     public Map<Identifier, Boolean> identifiers(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
         Map<String, Identifier> namedPins = getMapping(boardId)
-                .getAppliances()
+                .appliances()
                 .stream()
                 .collect(Collectors.toMap(
-                        Appliance::getName,
-                        Appliance::getIdentifier,
+                        Appliance::name,
+                        Appliance::identifier,
                         (a, b) -> b
                 ));
 
@@ -177,7 +177,7 @@ public class SimpleAliasService  {
         return getMappings()
                 .getMappings()
                 .stream()
-                .filter(mapping -> Objects.equals(boardId, mapping.getConnectorId()))
+                .filter(mapping -> Objects.equals(boardId, mapping.connectorId()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find mapping for board " + boardId));
     }
@@ -194,24 +194,24 @@ public class SimpleAliasService  {
     }
 
     public Map<Identifier, Boolean> currentState(UUID boardId, Mapping mapping) {
-        Map<Identifier, Boolean> digitalStateFromCache = mapping.getAppliances().stream()
-                .map(appliance -> new PinCoordinate(boardId, appliance.getIdentifier()))
+        Map<Identifier, Boolean> digitalStateFromCache = mapping.appliances().stream()
+                .map(appliance -> new PinCoordinate(boardId, appliance.identifier()))
                 .filter(pinCoordinate -> digitalPinCache.containsKey(pinCoordinate))
                 .collect(Collectors.toMap(
-                        PinCoordinate::getIdentifier,
+                        PinCoordinate::identifier,
                         digitalPinCache::get,
                         (a, b) -> b
                 ));
-        if (digitalStateFromCache.keySet().containsAll(mapping.getAppliances().stream().map(Appliance::getIdentifier)
+        if (digitalStateFromCache.keySet().containsAll(mapping.appliances().stream().map(Appliance::identifier)
                 .collect(Collectors.toSet()))) {
             return digitalStateFromCache;
         }
         return cacheBoardState(mapping, connectorService
                 .readDigitalAndAnalog(
                         boardId,
-                        mapping.getAppliances().stream().map(Appliance::getIdentifier).collect(Collectors.toSet()),
-                        mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead))
-        ).getDigital();
+                        mapping.appliances().stream().map(Appliance::identifier).collect(Collectors.toSet()),
+                        mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead))
+        ).digital();
     }
 
     public Map<Identifier, Boolean> cacheBoardDigitalState(UUID boardId, Map<Identifier, Boolean> digitalState) {
@@ -221,36 +221,36 @@ public class SimpleAliasService  {
 
     public Response cacheBoardState(Mapping mapping, Response currentState) {
         // Cache Digital Pins
-        currentState.getDigital().forEach((k, v) ->
-                digitalPinCache.put(new PinCoordinate(mapping.getConnectorId(), k), v));
+        currentState.digital().forEach((k, v) ->
+                digitalPinCache.put(new PinCoordinate(mapping.connectorId(), k), v));
 
         /*
         // Cache Analog Pins
-        currentState.getAnalog()
-                .forEach(analogResponse -> applyAnalogCache(mapping.getConnectorId(), analogResponse));
+        currentState.analog()
+                .forEach(analogResponse -> applyAnalogCache(mapping.connectorId(), analogResponse));
 
         persistAnalogCache();
 
-        Map<String, Double> percentages = mapping.getAnalogSensors()
+        Map<String, Double> percentages = mapping.analogSensors()
             .stream()
             .filter(analogSensor -> sensorCache.keySet()
                 .stream()
-                .anyMatch(coordinate -> Objects.equals(coordinate, new PinCoordinate(mapping.getConnectorId(), analogSensor.getPin()))))
+                .anyMatch(coordinate -> Objects.equals(coordinate, new PinCoordinate(mapping.connectorId(), analogSensor.pin()))))
             .collect(Collectors.toMap(
-                    AnalogSensor::getName,
-                    as -> averageSensorMetrics(as, sensorCache.get(new PinCoordinate(mapping.getConnectorId(), as.getPin()))).getPercentage(),
+                    AnalogSensor::name,
+                    as -> averageSensorMetrics(as, sensorCache.get(new PinCoordinate(mapping.connectorId(), as.pin()))).percentage(),
                     (a, b) -> b
             ));
 
         // Fire Alert events as needed
-        mapping.getAnalogAlerts()
+        mapping.analogAlerts()
                 .forEach(analogAlert -> {
-                    if (percentages.keySet().containsAll(analogAlert.getSensors())) {
-                        if (analogAlert.getMatching().test(
-                                analogAlert.getValue(),
-                                analogAlert.getCondition(),
+                    if (percentages.keySet().containsAll(analogAlert.sensors())) {
+                        if (analogAlert.matching().test(
+                                analogAlert.value(),
+                                analogAlert.condition(),
                                 percentages.entrySet().stream()
-                                    .filter(e -> analogAlert.getSensors().stream()
+                                    .filter(e -> analogAlert.sensors().stream()
                                         .anyMatch(name -> Objects.equals(name, e.getKey())))
                                         .map(Map.Entry::getValue))) {
                             speak(analogAlert, percentages);
@@ -272,35 +272,35 @@ public class SimpleAliasService  {
                 .map(e -> e.getKey() + ": " + e.getValue())
                 .collect(Collectors.joining("\n")));
         SpeechEvent speechEvent = new SpeechEvent();
-        speechEvent.setSourceId("sensors://"+String.join(",", analogAlert.getSensors()));
+        speechEvent.setSourceId("sensors://"+String.join(",", analogAlert.sensors()));
         speechEvent.setSourceClass(getClass().getName());
-        speechEvent.setSubject(String.join("/", analogAlert.getSensors()));
+        speechEvent.setSubject(String.join("/", analogAlert.sensors()));
         speechEvent.setSpeechEventType(SpeechEventType.INFO);
-        speechEvent.setText(analogAlert.getContent());
+        speechEvent.setText(analogAlert.content());
         speech.fire(speechEvent);
     }
 
     private void sendAnalogSensorEvents(Mapping mapping, Response currentState) {
-        currentState.getAnalog()
+        currentState.analog()
                 .forEach(analogResponse -> getAnalogSensorByMapping(mapping, analogResponse)
                     .ifPresent(analogSensor -> {
                         DoubleValueSensorEvent event = new DoubleValueSensorEvent();
-                        event.setBoardId(mapping.getConnectorId());
-                        event.setSensorName(mapping.getConnectorId() + "/" +analogSensor.getName()+"/live");
+                        event.setBoardId(mapping.connectorId());
+                        event.setSensorName(mapping.connectorId() + "/" +analogSensor.name()+"/live");
                         event.setGenerationOrigin(GenerationOrigin.NON_HUMAN);
-                        event.setSourceId(mapping.getConnectorId().toString());
+                        event.setSourceId(mapping.connectorId().toString());
                         event.setSourceClass(getClass().getName());
-                        event.setSourceId(mapping.getConnectorId().toString());
-                        event.setEventId("analog/"+analogSensor.getPin().getPin());
-                        event.setEventValue(analogResponse.getRaw());
+                        event.setSourceId(mapping.connectorId().toString());
+                        event.setEventId("analog/"+analogSensor.pin().pin());
+                        event.setEventValue(analogResponse.raw());
                         floatValueSensorService.save(event);
                 }));
     }
 
     private Optional<AnalogSensor> getAnalogSensorByMapping(Mapping mapping, AnalogResponse analogResponse) {
-        return mapping.getAnalogSensors()
+        return mapping.analogSensors()
                 .stream()
-                .filter(analogSensor -> Objects.equals(analogSensor.getPin(), analogResponse.getPin()))
+                .filter(analogSensor -> Objects.equals(analogSensor.pin(), analogResponse.pin()))
                 .findFirst();
     }
 
@@ -331,71 +331,70 @@ public class SimpleAliasService  {
         SensorHistory sensorHistory = readSensorHistory();
         sensorCache
                 .forEach((key, value) -> {
-                    if (!sensorHistory.getHistory().containsKey(key.getBoardId())) {
-                        sensorHistory.getHistory().put(key.getBoardId(), new BoardAnalogHistory());
+                    if (!sensorHistory.history().containsKey(key.boardId())) {
+                        sensorHistory.history().put(key.boardId(), new BoardAnalogHistory());
                     }
-                    BoardAnalogHistory boardHistory = sensorHistory.getHistory().get(key.getBoardId());
-                    boardHistory.getMinimums()
-                            .put(key.getIdentifier(), value.getMin());
-                    boardHistory.getMaximums()
-                            .put(key.getIdentifier(), value.getMax());
-                    boardHistory.getLastKnowns()
-                            .put(key.getIdentifier(), value.getRaw());
+                    BoardAnalogHistory boardHistory = sensorHistory.history().get(key.boardId());
+                    boardHistory.minimums()
+                            .put(key.identifier(), value.min());
+                    boardHistory.maximums()
+                            .put(key.identifier(), value.max());
+                    boardHistory.lastKnowns()
+                            .put(key.identifier(), value.raw());
                 });
 
         writeSensorHistory(sensorHistory);
     }
 
     private void applyAnalogCache(UUID boardId, AnalogResponse analogResponse) {
-        PinCoordinate coordinate = new PinCoordinate(boardId, analogResponse.getPin());
+        PinCoordinate coordinate = new PinCoordinate(boardId, analogResponse.pin());
         SensorValues values = new SensorValues();
         if (sensorCache.containsKey(coordinate)) {
             values = sensorCache.get(coordinate);
         }
-        values.apply(analogResponse.getRaw());
+        values = values.apply(analogResponse.raw());
         sensorCache.remove(coordinate);
         sensorCache.put(coordinate, values);
     }
 
     public AliasView makeView(UUID boardId) throws IOException {
         Mapping mapping = getMapping(boardId);
-        AliasView aliasView = new AliasView();
 
         Map<Identifier, Boolean> digitalState = currentState(boardId, mapping);
-        aliasView.setApplianceStates(mapping.getAppliances()
+        Map<String, Boolean> applianceStates = mapping.appliances()
                 .stream()
-                .filter(appliance -> digitalState.containsKey(appliance.getIdentifier()))
+                .filter(appliance -> digitalState.containsKey(appliance.identifier()))
                 .collect(Collectors.toMap(
-                        Appliance::getName,
-                        appliance -> digitalState.get(appliance.getIdentifier()),
+                        Appliance::name,
+                        appliance -> digitalState.get(appliance.identifier()),
                         (a, b) -> a
-                )));
+                ));
 
-        Map<String, Set<Boolean>> grouped = mapping.getAppliances()
+        Map<String, Set<Boolean>> grouped = mapping.appliances()
                 .stream()
                 .reduce(new HashMap<>(),
                         (hm, app) -> {
-                            app.getGroups()
+                            app.groups()
                                     .forEach(group -> {
                                         if (!hm.containsKey(group)) {
                                             hm.put(group, new HashSet<>());
                                         }
-                                        hm.get(group).add(digitalState.get(app.getIdentifier()));
+                                        hm.get(group).add(digitalState.get(app.identifier()));
                                     });
                             return hm;
                         },
                         (a, b) -> a);
 
-        aliasView.setGroupStates(grouped.entrySet()
+        Map<String, Boolean> groupStates = grouped.entrySet()
                 .stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> !e.getValue().contains(false)
-                )));
+                ));
 
         /*
         sensorCache.entrySet().stream()
-                .filter(e -> Objects.equals(boardId, e.getKey().getBoardId()))
+                .filter(e -> Objects.equals(boardId, e.getKey().boardId()))
                 .forEach(e -> getAnalogSensorByPin(mapping, e.getKey())
                         .ifPresent(analogSensor -> {
                             applySensorMetrics(aliasView, analogSensor, averageSensorMetrics(analogSensor, e.getValue()));
@@ -403,63 +402,65 @@ public class SimpleAliasService  {
 
          */
 
-        return aliasView;
+        return AliasView.builder()
+                .applianceStates(applianceStates)
+                .groupStates(groupStates)
+                .build();
     }
 
 
     private synchronized SensorValues averageSensorMetrics(AnalogSensor analogSensor, SensorValues sensorValues) {
-        if (analogSensor.getAverageOver() < 0) {
+        if (analogSensor.averageOver() < 0) {
             return sensorValues;
         }
         if (!sensorAverages.containsKey(analogSensor)) {
             sensorAverages.put(analogSensor, new ArrayList<>());
         } else {
-            Instant expiresOn = Instant.now().plus(Duration.ofMillis(analogSensor.getAverageOver()));
+            Instant expiresOn = Instant.now().plus(Duration.ofMillis(analogSensor.averageOver()));
             sensorAverages.get(analogSensor)
-                    .removeIf(historical -> historical.getRecordedOn().isAfter(expiresOn));
+                    .removeIf(historical -> historical.recordedOn().isAfter(expiresOn));
         }
         sensorAverages.get(analogSensor)
                 .add(sensorValues);
 
-        SensorValues averagedForTime = new SensorValues();
-
-        averagedForTime.setRecordedOn(sensorValues.getRecordedOn());
         SensorValues latest = sensorAverages.get(analogSensor)
                 .stream()
-                .max(Comparator.comparing(SensorValues::getRecordedOn))
+                .max(Comparator.comparing(SensorValues::recordedOn))
                 .orElse(sensorValues);
 
         int average = Double.valueOf(sensorAverages.get(analogSensor)
                 .stream()
-                .mapToInt(SensorValues::getRaw)
+                .mapToInt(SensorValues::raw)
                 .average()
-                .orElse(latest.getRaw()))
+                .orElse(latest.raw()))
                 .intValue();
 
-        averagedForTime.setMin(latest.getMin());
-        averagedForTime.setMax(latest.getMax());
-        averagedForTime.setRaw(average);
-        averagedForTime.apply(average);
-
-        return averagedForTime;
+        return new SensorValues()
+                .toBuilder()
+                .recordedOn(sensorValues.recordedOn())
+                .min(latest.min())
+                .max(latest.max())
+                .raw(average)
+                .build()
+                .apply(average);
     }
 
 
 
     /*
     private void applySensorMetrics(AliasView view, AnalogSensor analogSensor, SensorValues averagePacket) {
-        view.getSensors()
-                .put(analogSensor.getName(), Integer.valueOf(averagePacket.getRaw()).doubleValue());
-        view.getSensorMins()
-                .put(analogSensor.getName(), Integer.valueOf(averagePacket.getMin()).doubleValue());
-        view.getSensorMaxes()
-                .put(analogSensor.getName(), Integer.valueOf(averagePacket.getMax()).doubleValue());
-        view.getSensorPercentages()
-                .put(analogSensor.getName(),
+        view.sensors()
+                .put(analogSensor.name(), Integer.valueOf(averagePacket.raw()).doubleValue());
+        view.sensorMins()
+                .put(analogSensor.name(), Integer.valueOf(averagePacket.min()).doubleValue());
+        view.sensorMaxes()
+                .put(analogSensor.name(), Integer.valueOf(averagePacket.max()).doubleValue());
+        view.sensorPercentages()
+                .put(analogSensor.name(),
                             getSensorPercentage(
-                                    averagePacket.getMin(),
-                                averagePacket.getMax(),
-                                averagePacket.getRaw(),
+                                    averagePacket.min(),
+                                averagePacket.max(),
+                                averagePacket.raw(),
                                 analogSensor));
     }
 
@@ -470,11 +471,11 @@ public class SimpleAliasService  {
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
 
-        double base = (analogSensor.getFactor() != null && analogSensor.getMode() != null)
-                ? analogSensor.getMode().realPercent(percentage, analogSensor.getFactor())
+        double base = (analogSensor.factor() != null && analogSensor.mode() != null)
+                ? analogSensor.mode().realPercent(percentage, analogSensor.factor())
                 : percentage;
 
-        return analogSensor.isInverted()
+        return analogSensor.inverted()
                 ? 100F - base
                 : base;
     }
@@ -482,15 +483,15 @@ public class SimpleAliasService  {
     public double scaleSensor(AnalogSensor analogSensor, int sensorValue) {
         return sensorValue;
 
-        //double v1 = sensorValue * (analogSensor.getVoltage() / 1023f);
-        //return (analogSensor.getVoltage() - v1) * (analogSensor.getResistance() / v1);
+        //double v1 = sensorValue * (analogSensor.voltage() / 1023f);
+        //return (analogSensor.voltage() - v1) * (analogSensor.resistance() / v1);
     }
 
 
     public Optional<AnalogSensor> getAnalogSensorByPin(Mapping mapping, PinCoordinate coordinate) {
-        return mapping.getAnalogSensors()
+        return mapping.analogSensors()
                 .stream()
-                .filter(analogSensor -> Objects.equals(coordinate.getIdentifier(), analogSensor.getPin()))
+                .filter(analogSensor -> Objects.equals(coordinate.identifier(), analogSensor.pin()))
                 .findFirst();
     }
 
@@ -502,35 +503,28 @@ public class SimpleAliasService  {
             log.info("Setting states:");
             desiredState.forEach((k, v) -> log.info(k+": " + (v ? "true":"false")));
 
-            // TODO: Remove
-            //return cacheBoardDigitalState(boardId, connectorService
-            //        .writeDigital(boardId, identifiers(boardId, desiredState)));
-
-            // NEW
-            Request r = new Request();
-            identifiers(boardId, desiredState)
+            Request r = identifiers(boardId, desiredState)
                     .entrySet()
                     .stream()
                     .map(e -> new DigitalWrite(e.getKey(), e.getValue()))
-                    .forEach(r::digitalWrite);
-            mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead)
-                    .forEach(r::analogRead);
+                    .reduce(Request.empty(), Request::digitalWrite, (a, b) -> a);
+            r = mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead)
+                    .reduce(r, Request::analogRead, (a, b) -> a);
 
             Response response = connectorService.send(boardId, r);
             sendAnalogSensorEvents(mapping, response);
             return cacheBoardState(mapping, response);
         }
-        return new Response();
+        return Response.builder().build();
     }
 
     public Response setupBoard(UUID boardId) throws IOException {
-        Request request = new Request();
-        getMapping(boardId)
-                .getAppliances()
+        Request request = getMapping(boardId)
+                .appliances()
                 .stream()
-                .map(Appliance::getIdentifier)
+                .map(Appliance::identifier)
                 .map(id -> new ModeSet(id, Mode.OUTPUT))
-                .forEach(request::modeSet);
+                .reduce(Request.empty(), Request::modeSet, (a, b) -> a);
         return connectorService.send(boardId, request);
     }
 
@@ -555,33 +549,30 @@ public class SimpleAliasService  {
     public void handleJoystickEvent(JoystickEvent joystickEvent, Mapping mapping) {
         String eventId = joystickEvent.getNumber() + ":" + joystickEvent.getEventValue();
         Optional.of(eventId)
-                .map(mapping.getControlMap()::get)
+                .map(mapping.controlMap()::get)
                 .ifPresent(appliances -> toggleAppliances(mapping, appliances));
     }
 
     private void toggleAppliances(Mapping mapping, List<String> appliances) {
-        Map<Identifier, Boolean> digitalState = currentState(mapping.getConnectorId(), mapping);
+        Map<Identifier, Boolean> digitalState = currentState(mapping.connectorId(), mapping);
         // Whether they should be turned on or not.
-        boolean setStateAs = mapping.getAppliances()
+        boolean setStateAs = mapping.appliances()
                 .stream()
-                .filter(appliance -> appliances.contains(appliance.getName()))
-                .noneMatch(appliance -> digitalState.get(appliance.getIdentifier()));
+                .filter(appliance -> appliances.contains(appliance.name()))
+                .noneMatch(appliance -> digitalState.get(appliance.identifier()));
 
         // Read appliances
-        Request request = mapping.getAppliances()
+        Request request = mapping.appliances()
                 .stream()
-                .filter(appliance -> appliances.contains(appliance.getName()))
+                .filter(appliance -> appliances.contains(appliance.name()))
                 .reduce(
-                        new Request(),
-                        (req, app) -> req.digitalWrite(new DigitalWrite(app.getIdentifier(),
+                        Request.empty(),
+                        (req, app) -> req.digitalWrite(new DigitalWrite(app.identifier(),
                                 DigitalState.fromBoolean(setStateAs))), (a, b) -> a);
-        // Read Analog pins
-        //request.analogRead(mapping.getAnalogSensors().stream().map(AnalogSensor::asAnalogRead));
 
         log.trace(request.toString());
 
-        cacheBoardState(mapping, connectorService.send(mapping.getConnectorId(), request));
-        //cacheBoardDigitalState(mapping.getConnectorId(), connectorService.send(mapping.getConnectorId(), request).getDigital());
+        cacheBoardState(mapping, connectorService.send(mapping.connectorId(), request));
     }
 
 }

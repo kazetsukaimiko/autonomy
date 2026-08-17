@@ -1,22 +1,27 @@
 package io.freedriver.autonomy.jpa.entity.event;
 
-import java.util.Objects;
-
 import io.freedriver.autonomy.jpa.entity.EmbeddedEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Embeddable
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@NoArgsConstructor
 public class EventDescription extends EmbeddedEntityBase {
     @Enumerated(EnumType.STRING)
     private StateType type;
     @Column
     private String state;
-
-    public EventDescription() {
-    }
 
     public EventDescription(StateType type, String state) {
         this.type = type;
@@ -26,43 +31,5 @@ public class EventDescription extends EmbeddedEntityBase {
     public <E extends Enum<E>> EventDescription(StateType type, E enumState) {
         this.type = type;
         this.state = enumState.name();
-    }
-
-    public StateType getType() {
-        return type;
-    }
-
-    public void setType(StateType type) {
-        this.type = type;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        EventDescription that = (EventDescription) o;
-        return type == that.type &&
-                Objects.equals(state, that.state);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, state);
-    }
-
-    @Override
-    public String toString() {
-        return "EventDescription{" +
-                "type=" + type +
-                ", state='" + state + '\'' +
-                '}';
     }
 }

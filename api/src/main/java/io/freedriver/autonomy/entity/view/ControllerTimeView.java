@@ -9,22 +9,29 @@ import java.util.Set;
 
 import io.freedriver.victron.StateOfOperation;
 import io.freedriver.victron.vedirect.OffReason;
+import lombok.Builder;
 
-public class ControllerTimeView {
-    private final Map<String, Long> data;
-    private final ChronoUnit unit;
-    private final long secondsPerUnit;
+@Builder(toBuilder = true)
+public record ControllerTimeView(
+        Map<String, Long> data,
+        ChronoUnit unit,
+        long secondsPerUnit) {
+
+    public ControllerTimeView {
+        data = data == null ? new LinkedHashMap<>() : data;
+    }
 
     public ControllerTimeView(Duration duration) {
+        this(new LinkedHashMap<>(), unitFor(duration), unitFor(duration).getDuration().toSeconds());
+    }
+
+    private static ChronoUnit unitFor(Duration duration) {
         if (duration.toSeconds() > 3600) {
-            this.unit = ChronoUnit.HOURS;
+            return ChronoUnit.HOURS;
         } else if (duration.toSeconds() > 60) {
-            this.unit = ChronoUnit.MINUTES;
-        } else {
-            this.unit = ChronoUnit.SECONDS;
+            return ChronoUnit.MINUTES;
         }
-        this.secondsPerUnit = unit.getDuration().toSeconds();
-        this.data = new LinkedHashMap<>();
+        return ChronoUnit.SECONDS;
     }
 
     public ControllerTimeView addMissingMapKeys(Set<StateOfOperation> historicalStates,
@@ -67,17 +74,5 @@ public class ControllerTimeView {
             }
         }
         return this;
-    }
-
-    public Map<String, Long> getData() {
-        return data;
-    }
-
-    public ChronoUnit getUnit() {
-        return unit;
-    }
-
-    public long getSecondsPerUnit() {
-        return secondsPerUnit;
     }
 }

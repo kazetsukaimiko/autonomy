@@ -1,23 +1,29 @@
 package io.freedriver.autonomy.jpa.entity.event.input.sensors;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @MappedSuperclass
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@NoArgsConstructor
 public abstract class SensorEvent extends Event {
     @Column
     private UUID boardId;
 
     @Column
     private String sensorName;
-
-    public SensorEvent() {
-    }
 
     public SensorEvent(UUID boardId, String sensorName) {
         this.boardId = boardId;
@@ -28,35 +34,5 @@ public abstract class SensorEvent extends Event {
         super(timestamp, generationOrigin, sourceClass, sourceId, eventId);
         this.boardId = boardId;
         this.sensorName = sensorName;
-    }
-
-    public UUID getBoardId() {
-        return boardId;
-    }
-
-    public void setBoardId(UUID boardId) {
-        this.boardId = boardId;
-    }
-
-    public String getSensorName() {
-        return sensorName;
-    }
-
-    public void setSensorName(String sensorName) {
-        this.sensorName = sensorName;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        SensorEvent that = (SensorEvent) o;
-        return Objects.equals(boardId, that.boardId) && Objects.equals(sensorName, that.sensorName);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), boardId, sensorName);
     }
 }

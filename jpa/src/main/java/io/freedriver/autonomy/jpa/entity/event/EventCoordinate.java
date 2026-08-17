@@ -1,17 +1,25 @@
 package io.freedriver.autonomy.jpa.entity.event;
 
-import java.util.Objects;
-
 import io.freedriver.autonomy.jpa.entity.EmbeddedEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * This class seeks to describe where an event came from, both uniquely and nonuniquely.
  */
 @Embeddable
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@NoArgsConstructor
 public class EventCoordinate extends EmbeddedEntityBase {
 
     // What initiated this event
@@ -31,56 +39,5 @@ public class EventCoordinate extends EmbeddedEntityBase {
         this.generationOrigin = generationOrigin;
         this.sourceClass = sourceClass;
         this.sourceId = sourceId;
-    }
-
-    public EventCoordinate() {
-    }
-
-    public GenerationOrigin getGenerationOrigin() {
-        return generationOrigin;
-    }
-
-    public void setGenerationOrigin(GenerationOrigin generationOrigin) {
-        this.generationOrigin = generationOrigin;
-    }
-
-    public String getSourceClass() {
-        return sourceClass;
-    }
-
-    public void setSourceClass(String sourceClass) {
-        this.sourceClass = sourceClass;
-    }
-
-    public String getSourceId() {
-        return sourceId;
-    }
-
-    public void setSourceId(String sourceId) {
-        this.sourceId = sourceId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        EventCoordinate that = (EventCoordinate) o;
-        return generationOrigin == that.generationOrigin &&
-                Objects.equals(sourceClass, that.sourceClass) &&
-                Objects.equals(sourceId, that.sourceId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(generationOrigin, sourceClass, sourceId);
-    }
-
-    @Override
-    public String toString() {
-        return "EventCoordinate{" +
-                "generationOrigin=" + generationOrigin +
-                ", sourceClass='" + sourceClass + '\'' +
-                ", sourceId='" + sourceId + '\'' +
-                '}';
     }
 }

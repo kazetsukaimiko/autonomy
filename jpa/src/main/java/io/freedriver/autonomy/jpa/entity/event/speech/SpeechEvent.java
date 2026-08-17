@@ -1,17 +1,25 @@
 package io.freedriver.autonomy.jpa.entity.event.speech;
 
-import java.util.Objects;
-
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Table;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table
 @Inheritance(strategy = InheritanceType.JOINED)
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@NoArgsConstructor
 public class SpeechEvent extends Event {
 
     @Column
@@ -22,45 +30,4 @@ public class SpeechEvent extends Event {
 
     @Column
     private String text;
-
-    public SpeechEvent() {
-    }
-
-    public SpeechEventType getSpeechEventType() {
-        return speechEventType;
-    }
-
-    public void setSpeechEventType(SpeechEventType speechEventType) {
-        this.speechEventType = speechEventType;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        // if (!super.equals(o)) return false;
-        SpeechEvent that = (SpeechEvent) o;
-        return Objects.equals(text, that.text);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(text);
-    }
 }

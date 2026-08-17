@@ -103,21 +103,23 @@ public class ConnectorServiceCommon {
     @Deprecated
     public synchronized Map<Identifier, Boolean> readDigital(UUID boardId, Collection<Identifier> pins) {
         return send(boardId, pins.stream()
-                .reduce(new Request(), Request::digitalRead, (a, b) -> a))
-                .getDigital();
+                .reduce(Request.empty(), Request::digitalRead, (a, b) -> a))
+                .digital();
     }
 
     public synchronized Response readDigitalAndAnalog(UUID boardId, Collection<Identifier> pins, Stream<AnalogRead> analogReads) {
         return send(boardId, pins.stream()
-                .reduce(new Request(), Request::digitalRead, (a, b) -> a)
+                .reduce(Request.empty(), Request::digitalRead, (a, b) -> a)
                 .analogRead(analogReads));
     }
 
     public synchronized Map<Identifier, Boolean> writeDigital(UUID boardId, Map<Identifier, Boolean> state) {
-        Request request = new Request();
-        state.forEach((pin, pinState) -> request.digitalWrite(new DigitalWrite(pin, pinState)));
+        Request request = state.entrySet().stream()
+                .reduce(Request.empty(),
+                        (req, e) -> req.digitalWrite(new DigitalWrite(e.getKey(), e.getValue())),
+                        (a, b) -> a);
         return send(boardId, request)
-                .getDigital();
+                .digital();
     }
 
      */

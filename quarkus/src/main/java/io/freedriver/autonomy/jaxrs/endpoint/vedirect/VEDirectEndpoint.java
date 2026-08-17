@@ -78,6 +78,6 @@ public class VEDirectEndpoint implements VEDirectApi {
 
     private Stream<VictronDevice> bySerial(String serial) {
         return getDevices().stream()
-                .filter(device -> Objects.equals(serial, device.getSerialNumber()));
+                .filter(device -> Objects.equals(serial, device.serialNumber()));
     }
 }
