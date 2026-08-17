@@ -1,15 +1,29 @@
 package io.freedriver.autonomy.jpa.entity.event.input.joystick;
 
-import java.util.Objects;
-
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
 import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table
 @Inheritance(strategy = InheritanceType.JOINED)
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@NoArgsConstructor
 public class JoystickEvent extends Event {
     public static final long serialVersionUID = -1L;
 
@@ -24,9 +38,6 @@ public class JoystickEvent extends Event {
 
     @Enumerated(EnumType.STRING)
     private JoystickEventType joystickEventType;
-
-    public JoystickEvent() {
-    }
 
     public JoystickEvent(long timestamp, GenerationOrigin generationOrigin, String sourceClass,
                          String sourceId, String eventId, Long number, Long eventValue, boolean initial,
@@ -52,56 +63,7 @@ public class JoystickEvent extends Event {
         );
     }
 
-    public Long getNumber() {
-        return number;
-    }
-
-    public void setNumber(Long number) {
-        this.number = number;
-    }
-
-    public Long getEventValue() {
-        return eventValue;
-    }
-
-    public void setEventValue(Long eventValue) {
-        this.eventValue = eventValue;
-    }
-
-    public boolean isInitial() {
-        return initial;
-    }
-
-    public void setInitial(boolean initial) {
-        this.initial = initial;
-    }
-
-    public JoystickEventType getJoystickEventType() {
-        return joystickEventType;
-    }
-
-    public void setJoystickEventType(JoystickEventType joystickEventType) {
-        this.joystickEventType = joystickEventType;
-    }
-
     public boolean isButton() {
         return joystickEventType.isButton();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        JoystickEvent that = (JoystickEvent) o;
-        return initial == that.initial &&
-                Objects.equals(number, that.number) &&
-                Objects.equals(eventValue, that.eventValue) &&
-                joystickEventType == that.joystickEventType;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), number, eventValue, initial, joystickEventType);
     }
 }

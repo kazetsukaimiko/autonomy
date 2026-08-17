@@ -9,32 +9,23 @@ import java.util.stream.Collectors;
 
 import io.freedriver.math.measurement.types.electrical.Potential;
 import io.freedriver.math.number.ScaledNumber;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 // 3.2 -> 4.2
 // 19.2 -> 25.2
 
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
+@NoArgsConstructor
 public class StateOfChargeConfig {
     private int cells = 12;
     private Map<BigDecimal, BigDecimal> voltages = Chemistries.CHEM_18650.getVoltageMap();
-
-    public StateOfChargeConfig() {
-    }
-
-    public int getCells() {
-        return cells;
-    }
-
-    public void setCells(int cells) {
-        this.cells = cells;
-    }
-
-    public Map<BigDecimal, BigDecimal> getVoltages() {
-        return voltages;
-    }
-
-    public void setVoltages(Map<BigDecimal, BigDecimal> voltages) {
-        this.voltages = voltages;
-    }
 
     public BigDecimal calculate(Potential voltage) {
         return SocRange.of(voltages.entrySet()

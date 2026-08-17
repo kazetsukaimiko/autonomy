@@ -4,73 +4,41 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 
-public class SensorValues {
-    private Instant recordedOn = Instant.now();
-    private int min = -1;
-    private int raw = -1;
-    private int max = -1;
-    private double percentage = -1;
+import lombok.Builder;
+
+@Builder(toBuilder = true)
+public record SensorValues(
+        Instant recordedOn,
+        int min,
+        int raw,
+        int max,
+        double percentage) {
+
+    public SensorValues {
+        if (recordedOn == null) {
+            recordedOn = Instant.now();
+        }
+    }
 
     public SensorValues() {
+        this(Instant.now(), -1, -1, -1, -1);
     }
-
-    public Instant getRecordedOn() {
-        return recordedOn;
-    }
-
-    public void setRecordedOn(Instant recordedOn) {
-        this.recordedOn = recordedOn;
-    }
-
-    public int getMin() {
-        return min;
-    }
-
-    public void setMin(int min) {
-        this.min = min;
-    }
-
-    public int getRaw() {
-        return raw;
-    }
-
-    public void setRaw(int raw) {
-        this.raw = raw;
-    }
-
-    public int getMax() {
-        return max;
-    }
-
-    public void setMax(int max) {
-        this.max = max;
-    }
-
-    public double getPercentage() {
-        return percentage;
-    }
-
-    public void setPercentage(double percentage) {
-        this.percentage = percentage;
-    }
-    // 267 : 260, 1000
-    // 267 : 0, 267
-    // 267 :
 
     public SensorValues apply(int value) {
-        if (value > max || max == -1) {
-            max = value;
-        }
-        if (value < min || min == -1) {
-            min = value;
-        }
-        raw = value;
-        if (min != -1 && max != -1 && value != -1 && (max - min) > 0) {
-            percentage = BigDecimal.valueOf(((double)value - (double)min) / ((double)max - (double)min))
+        int nextMax = (value > max || max == -1) ? value : max;
+        int nextMin = (value < min || min == -1) ? value : min;
+        double nextPercentage = percentage;
+        if (nextMin != -1 && nextMax != -1 && value != -1 && (nextMax - nextMin) > 0) {
+            nextPercentage = BigDecimal.valueOf(((double) value - (double) nextMin) / ((double) nextMax - (double) nextMin))
                     .multiply(BigDecimal.valueOf(100))
                     .setScale(2, RoundingMode.HALF_UP)
                     .doubleValue();
         }
-        return this;
+        return toBuilder()
+                .min(nextMin)
+                .raw(value)
+                .max(nextMax)
+                .percentage(nextPercentage)
+                .build();
     }
 }

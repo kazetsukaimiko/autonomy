@@ -1,7 +1,6 @@
 package io.freedriver.autonomy.jpa.entity;
 
 import java.time.Instant;
-import java.util.Objects;
 
 import io.freedriver.autonomy.jpa.entity.event.Event;
 import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
@@ -31,6 +30,11 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Table(
         indexes = {
@@ -42,6 +46,11 @@ import jakarta.persistence.Transient;
 )
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@NoArgsConstructor
 public class VEDirectMessage extends Event {
 
     @Enumerated(EnumType.STRING)
@@ -97,9 +106,6 @@ public class VEDirectMessage extends Event {
     @Enumerated(EnumType.STRING)
     private OffReason offReason;
 
-    public VEDirectMessage() {
-    }
-
     public VEDirectMessage(long timestamp, GenerationOrigin generationOrigin, String sourceClass, String sourceId, String eventId, VictronProduct productType, RelayState relayState, FirmwareVersion firmwareVersion, String serialNumber, Potential mainVoltage, Current mainCurrent, Potential panelVoltage, Power panelPower, Energy resettableYield, Energy yieldToday, Power maxPowerToday, Energy yieldYesterday, Power maxPowerYesterday, StateOfOperation stateOfOperation, TrackerOperation trackerOperation, LoadOutputState loadOutputState, ErrorCode errorCode, OffReason offReason) {
         super(timestamp, generationOrigin, sourceClass, sourceId, eventId);
         this.productType = productType;
@@ -124,246 +130,55 @@ public class VEDirectMessage extends Event {
 
     public VEDirectMessage(io.freedriver.victron.VEDirectMessage veDirectMessage) {
         this(
-                veDirectMessage.getTimestamp().toEpochMilli(),
+                veDirectMessage.timestamp().toEpochMilli(),
                 GenerationOrigin.NON_HUMAN,
                 io.freedriver.victron.VEDirectMessage.class.getSimpleName(),
-                veDirectMessage.getSerialNumber(),
+                veDirectMessage.serialNumber(),
                 null,
-                veDirectMessage.getProductType(),
-                veDirectMessage.getRelayState(),
-                veDirectMessage.getFirmwareVersion(),
-                veDirectMessage.getSerialNumber(),
-                veDirectMessage.getMainVoltage(),
-                veDirectMessage.getMainCurrent(),
-                veDirectMessage.getPanelVoltage(),
-                veDirectMessage.getPanelPower(),
-                veDirectMessage.getResettableYield(),
-                veDirectMessage.getYieldToday(),
-                veDirectMessage.getMaxPowerToday(),
-                veDirectMessage.getYieldYesterday(),
-                veDirectMessage.getMaxPowerYesterday(),
-                veDirectMessage.getStateOfOperation(),
-                veDirectMessage.getTrackerOperation(),
-                veDirectMessage.getLoadOutputState(),
-                veDirectMessage.getErrorCode(),
-                veDirectMessage.getOffReason()
+                veDirectMessage.productType(),
+                veDirectMessage.relayState(),
+                veDirectMessage.firmwareVersion(),
+                veDirectMessage.serialNumber(),
+                veDirectMessage.mainVoltage(),
+                veDirectMessage.mainCurrent(),
+                veDirectMessage.panelVoltage(),
+                veDirectMessage.panelPower(),
+                veDirectMessage.resettableYield(),
+                veDirectMessage.yieldToday(),
+                veDirectMessage.maxPowerToday(),
+                veDirectMessage.yieldYesterday(),
+                veDirectMessage.maxPowerYesterday(),
+                veDirectMessage.stateOfOperation(),
+                veDirectMessage.trackerOperation(),
+                veDirectMessage.loadOutputState(),
+                veDirectMessage.errorCode(),
+                veDirectMessage.offReason()
         );
-    }
-
-    public VictronProduct getProductType() {
-        return productType;
-    }
-
-    public void setProductType(VictronProduct productType) {
-        this.productType = productType;
-    }
-
-    public RelayState getRelayState() {
-        return relayState;
-    }
-
-    public void setRelayState(RelayState relayState) {
-        this.relayState = relayState;
-    }
-
-    public FirmwareVersion getFirmwareVersion() {
-        return firmwareVersion;
-    }
-
-    public void setFirmwareVersion(FirmwareVersion firmwareVersion) {
-        this.firmwareVersion = firmwareVersion;
-    }
-
-    public String getSerialNumber() {
-        return serialNumber;
-    }
-
-    public void setSerialNumber(String serialNumber) {
-        this.serialNumber = serialNumber;
-    }
-
-    public Potential getMainVoltage() {
-        return mainVoltage;
-    }
-
-    public void setMainVoltage(Potential mainVoltage) {
-        this.mainVoltage = mainVoltage;
-    }
-
-    public Current getMainCurrent() {
-        return mainCurrent;
-    }
-
-    public void setMainCurrent(Current mainCurrent) {
-        this.mainCurrent = mainCurrent;
-    }
-
-    public Potential getPanelVoltage() {
-        return panelVoltage;
-    }
-
-    public void setPanelVoltage(Potential panelVoltage) {
-        this.panelVoltage = panelVoltage;
-    }
-
-    public Power getPanelPower() {
-        return panelPower;
-    }
-
-    public void setPanelPower(Power panelPower) {
-        this.panelPower = panelPower;
-    }
-
-
-    public Energy getResettableYield() {
-        return resettableYield;
-    }
-
-    public void setResettableYield(Energy resettableYield) {
-        this.resettableYield = resettableYield;
-    }
-
-    public Energy getYieldToday() {
-        return yieldToday;
-    }
-
-    public void setYieldToday(Energy yieldToday) {
-        this.yieldToday = yieldToday;
-    }
-
-    public Power getMaxPowerToday() {
-        return maxPowerToday;
-    }
-
-    public void setMaxPowerToday(Power maxPowerToday) {
-        this.maxPowerToday = maxPowerToday;
-    }
-
-    public Energy getYieldYesterday() {
-        return yieldYesterday;
-    }
-
-    public void setYieldYesterday(Energy yieldYesterday) {
-        this.yieldYesterday = yieldYesterday;
-    }
-
-    public Power getMaxPowerYesterday() {
-        return maxPowerYesterday;
-    }
-
-    public void setMaxPowerYesterday(Power maxPowerYesterday) {
-        this.maxPowerYesterday = maxPowerYesterday;
-    }
-
-    public StateOfOperation getStateOfOperation() {
-        return stateOfOperation;
-    }
-
-    public void setStateOfOperation(StateOfOperation stateOfOperation) {
-        this.stateOfOperation = stateOfOperation;
-    }
-
-    public TrackerOperation getTrackerOperation() {
-        return trackerOperation;
-    }
-
-    public void setTrackerOperation(TrackerOperation trackerOperation) {
-        this.trackerOperation = trackerOperation;
-    }
-
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
-
-    public void setErrorCode(ErrorCode errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    public LoadOutputState getLoadOutputState() {
-        return loadOutputState;
-    }
-
-    public void setLoadOutputState(LoadOutputState loadOutputState) {
-        this.loadOutputState = loadOutputState;
-    }
-
-    public OffReason getOffReason() {
-        return offReason;
-    }
-
-    public void setOffReason(OffReason offReason) {
-        this.offReason = offReason;
     }
 
     @Transient
     public io.freedriver.victron.VEDirectMessage toNative() {
-        io.freedriver.victron.VEDirectMessage nativeMessage = new io.freedriver.victron.VEDirectMessage();
-        nativeMessage.setTimestamp(Instant.ofEpochMilli(getTimestamp()));
-        nativeMessage.setProductType(getProductType());
-        nativeMessage.setRelayState(getRelayState());
-        nativeMessage.setFirmwareVersion(getFirmwareVersion());
-        nativeMessage.setSerialNumber(getSerialNumber());
-        nativeMessage.setMainVoltage(getMainVoltage());
-        nativeMessage.setMainCurrent(getMainCurrent());
-        nativeMessage.setPanelVoltage(getPanelVoltage());
-        nativeMessage.setPanelPower(getPanelPower());
-        nativeMessage.setStateOfOperation(getStateOfOperation());
-        nativeMessage.setTrackerOperation(getTrackerOperation());
-        nativeMessage.setLoadOutputState(getLoadOutputState());
-        nativeMessage.setErrorCode(getErrorCode());
-        nativeMessage.setOffReason(getOffReason());
-        nativeMessage.setResettableYield(getResettableYield());
-        nativeMessage.setYieldToday(getYieldToday());
-        nativeMessage.setMaxPowerToday(getMaxPowerToday());
-        nativeMessage.setYieldYesterday(getYieldYesterday());
-        nativeMessage.setMaxPowerYesterday(getMaxPowerYesterday());
-        return nativeMessage;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        VEDirectMessage that = (VEDirectMessage) o;
-        return  productType == that.productType &&
-                relayState == that.relayState &&
-                Objects.equals(firmwareVersion, that.firmwareVersion) &&
-                Objects.equals(serialNumber, that.serialNumber) &&
-                Objects.equals(mainVoltage, that.mainVoltage) &&
-                Objects.equals(mainCurrent, that.mainCurrent) &&
-                Objects.equals(panelVoltage, that.panelVoltage) &&
-                Objects.equals(panelPower, that.panelPower) &&
-                Objects.equals(resettableYield, that.resettableYield) &&
-                Objects.equals(yieldToday, that.yieldToday) &&
-                Objects.equals(maxPowerToday, that.maxPowerToday) &&
-                Objects.equals(yieldYesterday, that.yieldYesterday) &&
-                Objects.equals(maxPowerYesterday, that.maxPowerYesterday) &&
-                stateOfOperation == that.stateOfOperation &&
-                trackerOperation == that.trackerOperation &&
-                loadOutputState == that.loadOutputState &&
-                errorCode == that.errorCode &&
-                offReason == that.offReason;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), productType, relayState, firmwareVersion, serialNumber, mainVoltage, mainCurrent, panelVoltage, panelPower, resettableYield, yieldToday, maxPowerToday, yieldYesterday, maxPowerYesterday, stateOfOperation, trackerOperation, loadOutputState, errorCode, offReason);
-    }
-
-    @Override
-    public String toString() {
-        return "VEDirectMessage{" +
-                ", productType=" + productType +
-                ", relayState=" + relayState +
-                ", firmwareVersion=" + firmwareVersion +
-                ", serialNumber='" + serialNumber + '\'' +
-                ", stateOfOperation=" + stateOfOperation +
-                ", trackerOperation=" + trackerOperation +
-                ", loadOutputState=" + loadOutputState +
-                ", errorCode=" + errorCode +
-                ", offReason=" + offReason +
-                '}';
+        return io.freedriver.victron.VEDirectMessage.builder()
+                .timestamp(Instant.ofEpochMilli(getTimestamp()))
+                .productType(getProductType())
+                .relayState(getRelayState())
+                .firmwareVersion(getFirmwareVersion())
+                .serialNumber(getSerialNumber())
+                .mainVoltage(getMainVoltage())
+                .mainCurrent(getMainCurrent())
+                .panelVoltage(getPanelVoltage())
+                .panelPower(getPanelPower())
+                .stateOfOperation(getStateOfOperation())
+                .trackerOperation(getTrackerOperation())
+                .loadOutputState(getLoadOutputState())
+                .errorCode(getErrorCode())
+                .offReason(getOffReason())
+                .resettableYield(getResettableYield())
+                .yieldToday(getYieldToday())
+                .maxPowerToday(getMaxPowerToday())
+                .yieldYesterday(getYieldYesterday())
+                .maxPowerYesterday(getMaxPowerYesterday())
+                .build();
     }
 
     public static int orderByTimestamp(VEDirectMessage veDirectMessage, VEDirectMessage veDirectMessage1) {

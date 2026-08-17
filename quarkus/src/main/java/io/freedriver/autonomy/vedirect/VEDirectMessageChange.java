@@ -13,12 +13,12 @@ import io.freedriver.math.measurement.types.electrical.Potential;
 import io.freedriver.victron.VEDirectMessage;
 
 public enum VEDirectMessageChange {
-    RELAY_STATE("Relay state", VEDirectMessage::getRelayState),
-    STATE_OF_OPERATION("State of operation", VEDirectMessage::getStateOfOperation),
-    TRACKER_OPERATION("Tracker operation", VEDirectMessage::getTrackerOperation),
-    ERROR_CODE("Error code", VEDirectMessage::getErrorCode),
-    OFF_REASON("Off reason", VEDirectMessage::getOffReason),
-    YIELD_YESTERDAY("Yesterday's yield", VEDirectMessage::getYieldYesterday),
+    RELAY_STATE("Relay state", VEDirectMessage::relayState),
+    STATE_OF_OPERATION("State of operation", VEDirectMessage::stateOfOperation),
+    TRACKER_OPERATION("Tracker operation", VEDirectMessage::trackerOperation),
+    ERROR_CODE("Error code", VEDirectMessage::errorCode),
+    OFF_REASON("Off reason", VEDirectMessage::offReason),
+    YIELD_YESTERDAY("Yesterday's yield", VEDirectMessage::yieldYesterday),
     ;
 
     private final String fieldName;

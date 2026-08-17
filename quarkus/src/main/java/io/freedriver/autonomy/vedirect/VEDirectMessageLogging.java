@@ -9,12 +9,12 @@ public enum VEDirectMessageLogging {
     PV_POWER {
         @Override
         public String getFieldName(VEDirectMessage vdm) {
-            return "Panel power for "+vdm.getProductType().getProductName() +" ("+vdm.getSerialNumber()+")";
+            return "Panel power for "+vdm.productType().getProductName() +" ("+vdm.serialNumber()+")";
         }
 
         @Override
         public String getMessage(VEDirectMessage vdm) {
-            return vdm.getPanelPower().toString();
+            return vdm.panelPower().toString();
         }
 
         @Override
@@ -22,16 +22,16 @@ public enum VEDirectMessageLogging {
             return Duration.ofSeconds(
                     Math.max(2, Math.min(
                             300,
-                            480-vdm.getPanelPower().divide(2.5).intValue()
+                            480-vdm.panelPower().divide(2.5).intValue()
                     )));
         }
 
         @Override
         public boolean validate(VEDirectMessage vdm) {
             return vdm != null
-                    && vdm.getProductType() != null
-                    && vdm.getProductType().getProductName() != null
-                    && vdm.getSerialNumber() != null;
+                    && vdm.productType() != null
+                    && vdm.productType().getProductName() != null
+                    && vdm.serialNumber() != null;
         }
     },
     ;

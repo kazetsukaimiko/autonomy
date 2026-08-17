@@ -1,7 +1,9 @@
 package io.freedriver.autonomy.entity.view;
 
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
+import lombok.Builder;
 
+@Builder(toBuilder = true)
 public record ControllerStateView(VEDirectMessage lastMessage) {
 
     public Double getYield() {

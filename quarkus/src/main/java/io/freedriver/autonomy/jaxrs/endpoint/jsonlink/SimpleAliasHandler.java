@@ -59,11 +59,11 @@ public class SimpleAliasHandler implements SimpleAliasApi {
     @Override
     public AliasView setGroup(UUID boardId, String group, boolean desiredState) throws IOException {
         connectorService.writeDigital(boardId, simpleAliasService.getMapping(boardId)
-                .getAppliances()
+                .appliances()
                 .stream()
-                .filter(appliance -> appliance.getGroups().contains(group))
+                .filter(appliance -> appliance.groups().contains(group))
                 .collect(Collectors.toMap(
-                        Appliance::getIdentifier,
+                        Appliance::identifier,
                         app -> desiredState,
                         (a, b) -> b
                 )));

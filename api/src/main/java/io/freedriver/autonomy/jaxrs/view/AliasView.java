@@ -4,71 +4,29 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class AliasView {
-    Map<String, Boolean> applianceStates = new LinkedHashMap<>();
-    Map<String, Boolean> groupStates = new LinkedHashMap<>();
-    Map<String, Set<String>> groups = new LinkedHashMap<>();
-    Map<String, Double> sensors = new LinkedHashMap<>();
-    Map<String, Double> sensorMins = new LinkedHashMap<>();
-    Map<String, Double> sensorMaxes = new LinkedHashMap<>();
-    Map<String, Double> sensorPercentages = new LinkedHashMap<>();
+import lombok.Builder;
+
+@Builder(toBuilder = true)
+public record AliasView(
+        Map<String, Boolean> applianceStates,
+        Map<String, Boolean> groupStates,
+        Map<String, Set<String>> groups,
+        Map<String, Double> sensors,
+        Map<String, Double> sensorMins,
+        Map<String, Double> sensorMaxes,
+        Map<String, Double> sensorPercentages) {
+
+    public AliasView {
+        applianceStates = applianceStates == null ? new LinkedHashMap<>() : applianceStates;
+        groupStates = groupStates == null ? new LinkedHashMap<>() : groupStates;
+        groups = groups == null ? new LinkedHashMap<>() : groups;
+        sensors = sensors == null ? new LinkedHashMap<>() : sensors;
+        sensorMins = sensorMins == null ? new LinkedHashMap<>() : sensorMins;
+        sensorMaxes = sensorMaxes == null ? new LinkedHashMap<>() : sensorMaxes;
+        sensorPercentages = sensorPercentages == null ? new LinkedHashMap<>() : sensorPercentages;
+    }
 
     public AliasView() {
-    }
-
-    public Map<String, Boolean> getApplianceStates() {
-        return applianceStates;
-    }
-
-    public void setApplianceStates(Map<String, Boolean> applianceStates) {
-        this.applianceStates = applianceStates;
-    }
-
-    public Map<String, Boolean> getGroupStates() {
-        return groupStates;
-    }
-
-    public void setGroupStates(Map<String, Boolean> groupStates) {
-        this.groupStates = groupStates;
-    }
-
-    public Map<String, Set<String>> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(Map<String, Set<String>> groups) {
-        this.groups = groups;
-    }
-
-    public Map<String, Double> getSensors() {
-        return sensors;
-    }
-
-    public void setSensors(Map<String, Double> sensors) {
-        this.sensors = sensors;
-    }
-
-    public Map<String, Double> getSensorMins() {
-        return sensorMins;
-    }
-
-    public void setSensorMins(Map<String, Double> sensorMins) {
-        this.sensorMins = sensorMins;
-    }
-
-    public Map<String, Double> getSensorMaxes() {
-        return sensorMaxes;
-    }
-
-    public void setSensorMaxes(Map<String, Double> sensorMaxes) {
-        this.sensorMaxes = sensorMaxes;
-    }
-
-    public Map<String, Double> getSensorPercentages() {
-        return sensorPercentages;
-    }
-
-    public void setSensorPercentages(Map<String, Double> sensorPercentages) {
-        this.sensorPercentages = sensorPercentages;
+        this(null, null, null, null, null, null, null);
     }
 }
