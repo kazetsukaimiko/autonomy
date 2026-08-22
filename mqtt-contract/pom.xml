@@ -8,8 +8,10 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>autonomy-api</artifactId>
-    <name>Autonomy API</name>
+    <artifactId>autonomy-mqtt-contract</artifactId>
+
+    <name>Autonomy MQTT Contract</name>
+    <description>Shared MQTT appliance JSON contract (schema + Java records). Lean DTO artifact: no JPA, no jsonlink, no Quarkus.</description>
     <packaging>jar</packaging>
 
     <dependencyManagement>
@@ -26,40 +28,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.freedriver.autonomy</groupId>
-            <artifactId>autonomy-model</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.freedriver.autonomy</groupId>
-            <artifactId>autonomy-jpa</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.freedriver</groupId>
-            <artifactId>jsonlink</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.freedriver</groupId>
-            <artifactId>victron</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>jakarta.ws.rs</groupId>
-            <artifactId>jakarta.ws.rs-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>provided</scope>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -81,7 +52,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <!-- Classpath mode so test META-INF/services providers are visible to ServiceLoader -->
                     <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>

@@ -10,6 +10,8 @@
   <modules>
     <!-- bom first: provides versions for autonomy artifacts + re-exports freedriver-bom + junit-bom. Root no longer manages its own reactor versions (similar to freedriver#9). -->
     <module>bom</module>
+    <module>model</module>
+    <module>mqtt-contract</module>
     <module>jpa</module>
     <module>api</module>
     <module>quarkus</module>

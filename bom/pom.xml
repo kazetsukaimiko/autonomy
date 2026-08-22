@@ -53,6 +53,18 @@
         <version>${project.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-mqtt-contract</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.freedriver.autonomy</groupId>
+        <artifactId>autonomy-model</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
       <!-- Common Jakarta EE APIs for use across modules (persistence for entities, ws.rs for JAX-RS contracts in api). Versions chosen to match Quarkus 3 / Jakarta EE 10 and freedriver. -->
       <dependency>
         <groupId>jakarta.persistence</groupId>
