@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freedriver.io/schema/v1/appliances.json",
+  "title": "ApplianceStateMessage",
+  "description": "Topic A: freedriver/v1/home/appliances (retain=false, QoS 1). lastUpdated is not in MQTT. name is the alias key.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "appliances"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "appliedCommandId": {
+      "type": ["string", "null"]
+    },
+    "appliances": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "on"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "on": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

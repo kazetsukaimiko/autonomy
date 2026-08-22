@@ -20,7 +20,14 @@
         <dependencies>
             <dependency>
                 <groupId>io.freedriver.autonomy</groupId>
-                <artifactId>autonomy-bom</artifactId>
+                <artifactId>autonomy-jakarta-bom</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.freedriver.autonomy</groupId>
+                <artifactId>autonomy-3p-bom</artifactId>
                 <version>${project.version}</version>
                 <type>pom</type>
                 <scope>import</scope>

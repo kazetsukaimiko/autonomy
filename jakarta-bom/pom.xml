@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <parent>
+    <groupId>io.freedriver.autonomy</groupId>
+    <artifactId>autonomy</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>autonomy-jakarta-bom</artifactId>
+  <packaging>pom</packaging>
+
+  <name>Autonomy Jakarta BOM</name>
+  <description>Jakarta API artifacts only, aligned with Quarkus 3 / Jakarta EE 10. No implementations (Hibernate Validator lives in autonomy-3p-bom).</description>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Listed rather than importing quarkus-bom so this BOM stays Jakarta APIs only. -->
+      <dependency>
+        <groupId>jakarta.validation</groupId>
+        <artifactId>jakarta.validation-api</artifactId>
+        <version>3.1.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jakarta.persistence</groupId>
+        <artifactId>jakarta.persistence-api</artifactId>
+        <version>3.2.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jakarta.ws.rs</groupId>
+        <artifactId>jakarta.ws.rs-api</artifactId>
+        <version>3.1.0</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+</project>
