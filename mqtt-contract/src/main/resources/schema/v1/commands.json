@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://freedriver.io/schema/v1/commands.json",
   "title": "ApplianceCommandMessage",
-  "description": "Topic B: freedriver/v1/home/commands (retain=false, QoS 1).",
+  "description": "Topic B: freedriver/v1/home/commands (retain=false, QoS 1). name is the alias key.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "commandId", "applianceId", "on"],
+  "required": ["schemaVersion", "commandId", "name", "on"],
   "properties": {
     "schemaVersion": {
       "type": "integer",
@@ -15,9 +15,10 @@
       "type": "string",
       "minLength": 1
     },
-    "applianceId": {
+    "name": {
       "type": "string",
-      "pattern": "^[a-z0-9-]{1,64}$"
+      "minLength": 1,
+      "maxLength": 64
     },
     "on": {
       "type": "boolean"

@@ -1,7 +1,5 @@
 package io.freedriver.autonomy.mqtt.contract;
 
-import java.util.regex.Pattern;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -9,11 +7,13 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 /**
  * Shared MQTT appliance JSON contract. The STRICT mapper is local to this
  * module so consumers keep their own ObjectMapper settings.
+ *
+ * {@code name} is the existing alias key (same string as AliasView.applianceStates).
+ * It is not a slug: underscores and mixed case are allowed.
  */
 public final class ApplianceSchemas {
 
     public static final int SCHEMA_VERSION = 1;
-    public static final Pattern APPLIANCE_ID = Pattern.compile("[a-z0-9-]{1,64}");
     public static final int NAME_MAX = 64;
 
     public static final String STATE_TOPIC = "freedriver/v1/home/appliances";
@@ -33,11 +33,8 @@ public final class ApplianceSchemas {
     private ApplianceSchemas() {
     }
 
-    public static boolean validId(String id) {
-        return id != null && APPLIANCE_ID.matcher(id).matches();
-    }
-
     public static boolean validName(String name) {
         return name != null && !name.isBlank() && name.length() <= NAME_MAX;
     }
 }
+

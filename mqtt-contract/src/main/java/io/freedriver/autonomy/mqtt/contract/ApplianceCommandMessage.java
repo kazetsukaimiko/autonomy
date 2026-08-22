@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** Topic B: {@code freedriver/v1/home/commands} (retain=false, QoS 1). */
-public record ApplianceCommandMessage(int schemaVersion, String commandId, String applianceId, boolean on) {
+public record ApplianceCommandMessage(int schemaVersion, String commandId, String name, boolean on) {
 
     @JsonCreator
     public ApplianceCommandMessage(
             @JsonProperty(value = "schemaVersion", required = true) int schemaVersion,
             @JsonProperty(value = "commandId", required = true) String commandId,
-            @JsonProperty(value = "applianceId", required = true) String applianceId,
+            @JsonProperty(value = "name", required = true) String name,
             @JsonProperty(value = "on", required = true) boolean on) {
         if (schemaVersion != ApplianceSchemas.SCHEMA_VERSION) {
             throw new IllegalArgumentException("schemaVersion must be 1");
@@ -18,12 +18,12 @@ public record ApplianceCommandMessage(int schemaVersion, String commandId, Strin
         if (commandId == null || commandId.isBlank()) {
             throw new IllegalArgumentException("commandId required");
         }
-        if (!ApplianceSchemas.validId(applianceId)) {
-            throw new IllegalArgumentException("invalid applianceId");
+        if (!ApplianceSchemas.validName(name)) {
+            throw new IllegalArgumentException("invalid appliance name");
         }
         this.schemaVersion = schemaVersion;
         this.commandId = commandId;
-        this.applianceId = applianceId;
+        this.name = name;
         this.on = on;
     }
 
@@ -43,3 +43,4 @@ public record ApplianceCommandMessage(int schemaVersion, String commandId, Strin
         }
     }
 }
+

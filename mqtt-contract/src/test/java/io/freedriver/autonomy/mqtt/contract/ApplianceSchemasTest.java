@@ -21,15 +21,14 @@ class ApplianceSchemasTest {
                   "schemaVersion": 1,
                   "appliedCommandId": "550e8400-e29b-41d4-a716-446655440000",
                   "appliances": [
-                    {"id": "living-room-lamp", "name": "Living room lamp", "on": true}
+                    {"name": "Living_room_lamp", "on": true}
                   ]
                 }
                 """);
         assertEquals(1, message.schemaVersion());
         assertEquals("550e8400-e29b-41d4-a716-446655440000", message.appliedCommandId());
         assertEquals(1, message.appliances().size());
-        assertEquals("living-room-lamp", message.appliances().get(0).id());
-        assertEquals("Living room lamp", message.appliances().get(0).name());
+        assertEquals("Living_room_lamp", message.appliances().get(0).name());
         assertTrue(message.appliances().get(0).on());
 
         ApplianceStateMessage roundTrip = ApplianceStateMessage.parse(message.toJson());
@@ -45,17 +44,17 @@ class ApplianceSchemasTest {
                 {
                   "schemaVersion": 1,
                   "commandId": "550e8400-e29b-41d4-a716-446655440000",
-                  "applianceId": "living-room-lamp",
+                  "name": "Living_room_lamp",
                   "on": false
                 }
                 """);
         assertEquals(1, command.schemaVersion());
         assertEquals("550e8400-e29b-41d4-a716-446655440000", command.commandId());
-        assertEquals("living-room-lamp", command.applianceId());
+        assertEquals("Living_room_lamp", command.name());
         assertFalse(command.on());
 
         ApplianceCommandMessage constructed =
-                new ApplianceCommandMessage(1, "550e8400-e29b-41d4-a716-446655440000", "living-room-lamp", false);
+                new ApplianceCommandMessage(1, "550e8400-e29b-41d4-a716-446655440000", "Living_room_lamp", false);
         assertEquals(constructed, ApplianceCommandMessage.parse(constructed.toJson()));
         assertEquals(ApplianceSchemas.COMMAND_TOPIC, "freedriver/v1/home/commands");
     }
@@ -70,7 +69,28 @@ class ApplianceSchemasTest {
     @Test
     void topicB_rejectsExtraFields() {
         assertThrows(IllegalArgumentException.class, () -> ApplianceCommandMessage.parse("""
-                {"schemaVersion":1,"commandId":"cmd-1","applianceId":"living-room-lamp","on":false,"retain":true}
+                {"schemaVersion":1,"commandId":"cmd-1","name":"Living_room_lamp","on":false,"retain":true}
+                """));
+    }
+
+    @Test
+    void topicA_rejectsLastUpdated() {
+        assertThrows(IllegalArgumentException.class, () -> ApplianceStateMessage.parse("""
+                {"schemaVersion":1,"appliedCommandId":null,"appliances":[{"name":"Living_room_lamp","on":true,"lastUpdated":1}]}
+                """));
+    }
+
+    @Test
+    void topicA_rejectsDroppedIdField() {
+        assertThrows(IllegalArgumentException.class, () -> ApplianceStateMessage.parse("""
+                {"schemaVersion":1,"appliedCommandId":null,"appliances":[{"id":"living-room-lamp","name":"Living_room_lamp","on":true}]}
+                """));
+    }
+
+    @Test
+    void topicB_rejectsDroppedApplianceIdField() {
+        assertThrows(IllegalArgumentException.class, () -> ApplianceCommandMessage.parse("""
+                {"schemaVersion":1,"commandId":"cmd-1","applianceId":"living-room-lamp","name":"Living_room_lamp","on":false}
                 """));
     }
 
@@ -91,29 +111,37 @@ class ApplianceSchemasTest {
     @Test
     void topicB_rejectsWrongSchemaVersion() {
         assertThrows(IllegalArgumentException.class, () -> ApplianceCommandMessage.parse("""
-                {"schemaVersion":2,"commandId":"cmd-1","applianceId":"living-room-lamp","on":false}
+                {"schemaVersion":2,"commandId":"cmd-1","name":"Living_room_lamp","on":false}
                 """));
     }
 
     @Test
     void topicB_rejectsMissingSchemaVersion() {
         assertThrows(IllegalArgumentException.class, () -> ApplianceCommandMessage.parse("""
-                {"commandId":"cmd-1","applianceId":"living-room-lamp","on":false}
+                {"commandId":"cmd-1","name":"Living_room_lamp","on":false}
                 """));
     }
 
     @Test
-    void topicA_rejectsInvalidApplianceId() {
+    void topicA_rejectsBlankName() {
         assertThrows(IllegalArgumentException.class, () -> ApplianceStateMessage.parse("""
-                {"schemaVersion":1,"appliedCommandId":null,"appliances":[{"id":"Living_Room","name":"Lamp","on":true}]}
+                {"schemaVersion":1,"appliedCommandId":null,"appliances":[{"name":"   ","on":true}]}
                 """));
     }
 
     @Test
-    void topicB_rejectsInvalidApplianceId() {
+    void topicB_rejectsBlankName() {
         assertThrows(IllegalArgumentException.class, () -> ApplianceCommandMessage.parse("""
-                {"schemaVersion":1,"commandId":"cmd-1","applianceId":"Living_Room","on":false}
+                {"schemaVersion":1,"commandId":"cmd-1","name":"","on":false}
                 """));
+    }
+
+    @Test
+    void topicA_rejectsNameLongerThan64() {
+        String tooLong = "n".repeat(65);
+        assertThrows(IllegalArgumentException.class, () -> ApplianceStateMessage.parse("""
+                {"schemaVersion":1,"appliedCommandId":null,"appliances":[{"name":"%s","on":true}]}
+                """.formatted(tooLong)));
     }
 
     @Test
@@ -123,12 +151,12 @@ class ApplianceSchemasTest {
                   "schemaVersion": 1,
                   "appliedCommandId": null,
                   "appliances": [
-                    {"id": "living-room-lamp", "name": "Living room lamp", "on": true}
+                    {"name": "Living_room_lamp", "on": true}
                   ]
                 }
                 """);
         assertNull(message.appliedCommandId());
-        assertEquals(List.of(new Appliance("living-room-lamp", "Living room lamp", true)), message.appliances());
+        assertEquals(List.of(new Appliance("Living_room_lamp", true)), message.appliances());
     }
 
     @Test
