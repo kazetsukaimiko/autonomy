@@ -12,7 +12,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
 import io.freedriver.autonomy.util.Delayable;
 import lombok.extern.slf4j.Slf4j;
 

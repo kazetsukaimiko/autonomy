@@ -1,11 +1,12 @@
 package io.freedriver.autonomy.events.store;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public record EventRecord<T>(
         String id,
         String eventType,
-        long timestamp,
+        Instant timestamp,
         String sourceClass,
         String sourceId,
         String eventId,

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import io.freedriver.autonomy.jpa.iface.Positional;
+import io.freedriver.autonomy.entity.Positional;
 
 public interface CRUDInterface<I, T extends Positional> {
     // CREATE

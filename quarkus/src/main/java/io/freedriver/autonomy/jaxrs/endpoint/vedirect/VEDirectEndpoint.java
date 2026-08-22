@@ -15,6 +15,7 @@ import io.freedriver.autonomy.entity.view.ControllerView;
 import io.freedriver.autonomy.exception.VEDirectApiException;
 import io.freedriver.autonomy.jaxrs.endpoint.VEDirectApi;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
+import io.freedriver.autonomy.jpa.entity.VEDirectMessageConverter;
 import io.freedriver.autonomy.vedirect.VEDirectMessageService;
 import io.freedriver.victron.VEDirectColumn;
 import io.freedriver.victron.VictronDevice;
@@ -63,7 +64,7 @@ public class VEDirectEndpoint implements VEDirectApi {
     public Map<String, Integer> getColumnData(String serial, Integer number, ChronoUnit chronoUnit, VEDirectColumn column) {
         return getDevicesFrom(serial, number, chronoUnit)
                 .stream()
-                .map(VEDirectMessage::toNative)
+                .map(VEDirectMessageConverter.INSTANCE::toNative)
                 .collect(Collectors.toMap(
                         message -> keyOf(message, column),
                         message -> 1,

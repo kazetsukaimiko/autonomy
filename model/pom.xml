@@ -11,7 +11,7 @@
     <artifactId>autonomy-model</artifactId>
 
     <name>Autonomy Model</name>
-    <description>Lean shared autonomy DTOs/views that are not MQTT-specific. No JPA, no jsonlink, no Quarkus, no victron.</description>
+    <description>Lean shared autonomy DTOs: Event, views, event-store records. No JPA, no jsonlink, no Quarkus, no victron.</description>
     <packaging>jar</packaging>
 
     <dependencies>

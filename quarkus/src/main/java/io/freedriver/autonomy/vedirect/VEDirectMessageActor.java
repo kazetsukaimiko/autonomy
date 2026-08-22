@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import io.freedriver.autonomy.cdi.qualifier.VEProduct;
+import io.freedriver.autonomy.jpa.entity.VEDirectMessageConverter;
 import io.freedriver.autonomy.service.ReportingService;
 import io.freedriver.victron.VEDirectMessage;
 import io.freedriver.victron.VictronDevice;
@@ -80,7 +81,7 @@ public class VEDirectMessageActor {
                     VEDirectMessageChange.allValues(veDirectMessage));
         }
         lastMessage.put(product, veDirectMessage);
-        messageService.save(new io.freedriver.autonomy.jpa.entity.VEDirectMessage(veDirectMessage));
+        messageService.save(VEDirectMessageConverter.INSTANCE.apply(veDirectMessage));
     }
 
     @Produces @VEProduct(value = VictronProduct.UNKNOWN, serial = "")

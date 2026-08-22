@@ -5,9 +5,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import io.freedriver.autonomy.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEventConverter;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -62,13 +63,13 @@ public class JoystickEventSource implements EventSource {
     }
 
     private void handleJSTestEvent(JSTestEvent jsTestEvent) {
-        if (jsTestEvent.getMetadata().getTitle() == null) {
+        if (jsTestEvent.metadata().title() == null) {
             log.warn("JSTestEvent ignored as it contains no subject: {}", jsTestEvent);
             return;
         }
         try {
             log.trace("Firing JSTestEvent {}", jsTestEvent);
-            joystickEvents.fire(new JoystickEvent(Instant.now().toEpochMilli(), jsTestEvent));
+            joystickEvents.fire(JoystickEventConverter.INSTANCE.apply(Instant.now(), jsTestEvent));
         } catch (Exception e) {
             log.warn("Failed to fire JoystickEvent: {}", jsTestEvent, e);
         }

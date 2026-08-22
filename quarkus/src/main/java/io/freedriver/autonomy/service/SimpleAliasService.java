@@ -24,13 +24,13 @@ import java.util.stream.Stream;
 import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.cdi.qualifier.ConnectorCache;
 import io.freedriver.autonomy.cdi.qualifier.SensorCache;
+import io.freedriver.autonomy.event.GenerationOrigin;
+import io.freedriver.autonomy.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.event.input.sensors.DoubleValueSensorEvent;
+import io.freedriver.autonomy.event.speech.SpeechEvent;
+import io.freedriver.autonomy.event.speech.SpeechEventType;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
 import io.freedriver.autonomy.jaxrs.view.AliasView;
-import io.freedriver.autonomy.jpa.entity.event.GenerationOrigin;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
-import io.freedriver.autonomy.jpa.entity.event.input.sensors.DoubleValueSensorEvent;
-import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEvent;
-import io.freedriver.autonomy.jpa.entity.event.speech.SpeechEventType;
 import io.freedriver.base.util.file.DirectoryProviders;
 import io.freedriver.jsonlink.config.v2.AnalogAlert;
 import io.freedriver.jsonlink.config.v2.AnalogSensor;
@@ -271,29 +271,32 @@ public class SimpleAliasService  {
                 .stream()
                 .map(e -> e.getKey() + ": " + e.getValue())
                 .collect(Collectors.joining("\n")));
-        SpeechEvent speechEvent = new SpeechEvent();
-        speechEvent.setSourceId("sensors://"+String.join(",", analogAlert.sensors()));
-        speechEvent.setSourceClass(getClass().getName());
-        speechEvent.setSubject(String.join("/", analogAlert.sensors()));
-        speechEvent.setSpeechEventType(SpeechEventType.INFO);
-        speechEvent.setText(analogAlert.content());
-        speech.fire(speechEvent);
+        speech.fire(new SpeechEvent(
+                java.util.UUID.randomUUID().toString(),
+                Instant.now(),
+                GenerationOrigin.NON_HUMAN,
+                getClass().getName(),
+                "sensors://" + String.join(",", analogAlert.sensors()),
+                null,
+                SpeechEventType.INFO,
+                String.join("/", analogAlert.sensors()),
+                analogAlert.content()));
     }
 
     private void sendAnalogSensorEvents(Mapping mapping, Response currentState) {
         currentState.analog()
                 .forEach(analogResponse -> getAnalogSensorByMapping(mapping, analogResponse)
                     .ifPresent(analogSensor -> {
-                        DoubleValueSensorEvent event = new DoubleValueSensorEvent();
-                        event.setBoardId(mapping.connectorId());
-                        event.setSensorName(mapping.connectorId() + "/" +analogSensor.name()+"/live");
-                        event.setGenerationOrigin(GenerationOrigin.NON_HUMAN);
-                        event.setSourceId(mapping.connectorId().toString());
-                        event.setSourceClass(getClass().getName());
-                        event.setSourceId(mapping.connectorId().toString());
-                        event.setEventId("analog/"+analogSensor.pin().pin());
-                        event.setEventValue(analogResponse.raw());
-                        floatValueSensorService.save(event);
+                        floatValueSensorService.save(new DoubleValueSensorEvent(
+                                java.util.UUID.randomUUID().toString(),
+                                Instant.now(),
+                                GenerationOrigin.NON_HUMAN,
+                                getClass().getName(),
+                                mapping.connectorId().toString(),
+                                "analog/" + analogSensor.pin().pin(),
+                                mapping.connectorId(),
+                                mapping.connectorId() + "/" + analogSensor.name() + "/live",
+                                analogResponse.raw()));
                 }));
     }
 
@@ -535,7 +538,9 @@ public class SimpleAliasService  {
      * @throws IOException
      */
     public void handleJoystickEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
-        if (!joystickEvent.isInitial() && joystickEvent.isButton()) {
+        if (!joystickEvent.initial()
+                && joystickEvent.joystickEventType() != null
+                && joystickEvent.joystickEventType().isButton()) {
             try {
                 getMappings()
                         .getMappings()
@@ -547,7 +552,7 @@ public class SimpleAliasService  {
     }
 
     public void handleJoystickEvent(JoystickEvent joystickEvent, Mapping mapping) {
-        String eventId = joystickEvent.getNumber() + ":" + joystickEvent.getEventValue();
+        String eventId = joystickEvent.number() + ":" + joystickEvent.eventValue();
         Optional.of(eventId)
                 .map(mapping.controlMap()::get)
                 .ifPresent(appliances -> toggleAppliances(mapping, appliances));
