@@ -167,4 +167,40 @@ class ApplianceSchemasTest {
             assertNotNull(commands);
         }
     }
+
+    @Test
+    void topicA_rejectsMissingName() {
+        assertThrows(IllegalArgumentException.class, () -> ApplianceStateMessage.parse("""
+                {"schemaVersion":1,"appliedCommandId":null,"appliances":[{"on":true}]}
+                """));
+    }
+
+    @Test
+    void topicB_rejectsMissingName() {
+        assertThrows(IllegalArgumentException.class, () -> ApplianceCommandMessage.parse("""
+                {"schemaVersion":1,"commandId":"cmd-1","on":false}
+                """));
+    }
+
+    @Test
+    void topicB_rejectsMissingCommandId() {
+        assertThrows(IllegalArgumentException.class, () -> ApplianceCommandMessage.parse("""
+                {"schemaVersion":1,"name":"Living_room_lamp","on":false}
+                """));
+    }
+
+    @Test
+    void topicA_rejectsMissingAppliances() {
+        assertThrows(IllegalArgumentException.class, () -> ApplianceStateMessage.parse("""
+                {"schemaVersion":1,"appliedCommandId":null}
+                """));
+    }
+
+    @Test
+    void topicB_rejectsMissingOn() {
+        assertThrows(IllegalArgumentException.class, () -> ApplianceCommandMessage.parse("""
+                {"schemaVersion":1,"commandId":"cmd-1","name":"Living_room_lamp"}
+                """));
+    }
+
 }

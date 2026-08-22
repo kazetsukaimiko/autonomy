@@ -1,5 +1,12 @@
 package io.freedriver.autonomy.mqtt.contract;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -10,6 +17,9 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
  *
  * {@code name} is the existing alias key (same string as AliasView.applianceStates).
  * It is not a slug: underscores and mixed case are allowed.
+ *
+ * Required / missing / size / version checks are Jakarta Validation.
+ * Jackson FAIL_ON_UNKNOWN_PROPERTIES only rejects extra fields.
  */
 public final class ApplianceSchemas {
 
@@ -26,15 +36,25 @@ public final class ApplianceSchemas {
 
     public static final ObjectMapper STRICT = JsonMapper.builder()
             .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
             .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .build();
 
-    private ApplianceSchemas() {
-    }
+    private static final Validator VALIDATOR = Validation.buildDefaultValidatorFactory().getValidator();
+
+    private ApplianceSchemas() {}
 
     public static boolean validName(String name) {
         return name != null && !name.isBlank() && name.length() <= NAME_MAX;
     }
-}
 
+    public static <T> T validate(T value) {
+        Set<ConstraintViolation<T>> violations = VALIDATOR.validate(value);
+        if (!violations.isEmpty()) {
+            String detail = violations.stream()
+                    .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                    .collect(Collectors.joining("; "));
+            throw new IllegalArgumentException("Rejected MQTT contract: " + detail);
+        }
+        return value;
+    }
+}

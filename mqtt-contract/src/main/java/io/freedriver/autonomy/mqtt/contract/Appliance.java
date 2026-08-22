@@ -1,19 +1,8 @@
 package io.freedriver.autonomy.mqtt.contract;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-public record Appliance(String name, boolean on) {
-
-    @JsonCreator
-    public Appliance(
-            @JsonProperty(value = "name", required = true) String name,
-            @JsonProperty(value = "on", required = true) boolean on) {
-        if (!ApplianceSchemas.validName(name)) {
-            throw new IllegalArgumentException("invalid appliance name");
-        }
-        this.name = name;
-        this.on = on;
-    }
-}
-
+public record Appliance(
+        @NotBlank @Size(max = ApplianceSchemas.NAME_MAX) String name, @NotNull Boolean on) {}
