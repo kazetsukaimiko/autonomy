@@ -14,18 +14,6 @@
     <description>Lean shared autonomy DTOs/views that are not MQTT-specific. No JPA, no jsonlink, no Quarkus, no victron.</description>
     <packaging>jar</packaging>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.freedriver.autonomy</groupId>
-                <artifactId>autonomy-bom</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>

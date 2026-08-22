@@ -18,7 +18,14 @@
         <dependencies>
             <dependency>
                 <groupId>io.freedriver.autonomy</groupId>
-                <artifactId>autonomy-bom</artifactId>
+                <artifactId>autonomy-jakarta-bom</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.freedriver.autonomy</groupId>
+                <artifactId>autonomy-3p-bom</artifactId>
                 <version>${project.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -41,14 +48,12 @@
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
-            <version>8.0.2.Final</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.glassfish.expressly</groupId>
             <artifactId>expressly</artifactId>
-            <version>5.0.0</version>
             <scope>test</scope>
         </dependency>
 

@@ -8,8 +8,10 @@
   <packaging>pom</packaging>
   <name>Autonomy</name>
   <modules>
-    <!-- bom first: provides versions for autonomy artifacts + re-exports freedriver-bom + junit-bom. Root no longer manages its own reactor versions (similar to freedriver#9). -->
+    <!-- BOMs first: autonomy artifacts, Jakarta APIs, third-party. Root no longer manages reactor versions. -->
     <module>bom</module>
+    <module>jakarta-bom</module>
+    <module>3p-bom</module>
     <module>model</module>
     <module>mqtt-contract</module>
     <module>jpa</module>

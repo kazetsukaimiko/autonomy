@@ -29,6 +29,13 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
+                <groupId>io.freedriver.autonomy</groupId>
+                <artifactId>autonomy-3p-bom</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>${quarkus.platform.artifact-id}</artifactId>
                 <version>${quarkus.platform.version}</version>
