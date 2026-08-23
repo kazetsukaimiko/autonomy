@@ -3,42 +3,33 @@ package io.freedriver.autonomy.vedirect;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.freedriver.autonomy.cache.CacheKey;
-import io.freedriver.autonomy.cdi.AttributeCache;
 import io.freedriver.autonomy.cdi.qualifier.AutonomyCache;
 import io.freedriver.autonomy.cdi.qualifier.OneSecondCache;
 import io.freedriver.autonomy.entity.view.ControllerHistoryView;
 import io.freedriver.autonomy.entity.view.ControllerStateView;
 import io.freedriver.autonomy.entity.view.ControllerTimeView;
 import io.freedriver.autonomy.entity.view.ControllerView;
+import io.freedriver.autonomy.events.store.EventQuery;
+import io.freedriver.autonomy.events.store.EventTypes;
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
-import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
 import io.freedriver.autonomy.service.crud.EventCrudService;
 import io.freedriver.autonomy.util.Benchmark;
-import io.freedriver.math.measurement.types.electrical.Energy;
-import io.freedriver.math.measurement.types.electrical.Potential;
-import io.freedriver.math.measurement.types.electrical.Power;
 import io.freedriver.victron.VictronDevice;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.persistence.Tuple;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
-import jakarta.transaction.Transactional;
 
-@ApplicationScoped // TODO EventService
+@ApplicationScoped
 public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
-
-    @Inject
-    AttributeCache maxCache;
 
     @Inject
     @AutonomyCache
@@ -56,207 +47,111 @@ public class VEDirectMessageService extends EventCrudService<VEDirectMessage> {
     @OneSecondCache
     Map<CacheKey<VictronDevice, VEDirectMessage>, VEDirectMessage> lastMessageCache;
 
-    /* TODO Remove, no support in Quarkus for persistence providers at init
-    public void init(@Observes @Initialized(ApplicationScoped.class) Object init) {
-        devices();
-    }
-
-     */
-
-
-    /**
-     * Saves a VEDirectMessage.
-     *
-     * @param veDirectMessage
-     * @return
-     */
-    @Transactional
     public VEDirectMessage save(VEDirectMessage veDirectMessage) {
         return persist(veDirectMessage);
     }
 
-
-    /**
-     * Get last Duration of messages for the given device.
-     *
-     * @param device
-     * @param duration
-     * @return
-     */
     public Stream<VEDirectMessage> last(VictronDevice device, Duration duration) {
-        return select((root, cb) -> Stream.of(
-                cb.equal(root.get(VEDirectMessage_.serialNumber), device.serialNumber()),
-                cb.ge(root.get(VEDirectMessage_.timestamp), Instant.now().minus(duration).toEpochMilli())
-                ), "for device " + device + " last " + duration.toMillis() + "ms");
+        return query(EventQuery.bySource(
+                eventType(),
+                device.serialNumber(),
+                Instant.now().minus(duration),
+                Integer.MAX_VALUE));
     }
 
-
-    /**
-     * Get messages for the given device.
-     *
-     * @param device
-     * @return
-     */
     public Stream<VEDirectMessage> byDevice(VictronDevice device) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
-        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
-        cq.select(root);
-        cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.serialNumber()));
-        return queryStream(cq, "byDevice " + device);
+        return query(EventQuery.bySource(eventType(), device.serialNumber(), Instant.EPOCH, Integer.MAX_VALUE));
     }
 
-    /**
-     * Get messages for the given device.
-     *
-     * @param device
-     * @return
-     */
     public long countByDevice(VictronDevice device) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
-        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
-        cq.select(cb.count(root));
-        cq.where(cb.equal(root.get(VEDirectMessage_.serialNumber), device.serialNumber()));
-        return Benchmark.bench(() -> entityManager.createQuery(cq).getSingleResult(),
-                "countByDevice {}", device);
+        return Benchmark.bench(() -> byDevice(device).count(), "countByDevice {}", device);
     }
 
     public ControllerHistoryView getControllerHistoryForToday(VictronDevice device) {
         return historyViewCache.computeIfAbsent(new CacheKey<>(device, ControllerHistoryView.class), k -> {
-            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-            CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-            Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
-            cq.multiselect(
-                    cb.max(root.get(VEDirectMessage_.panelPower)),
-                    cb.max(root.get(VEDirectMessage_.panelVoltage)),
-                    cb.max(root.get(VEDirectMessage_.mainVoltage)),
-                    cb.max(root.get(VEDirectMessage_.yieldToday)))
-                .where(cb.and(cb.ge(root.get(VEDirectMessage_.timestamp), getStartOfDay().toEpochMilli()),
-                        cb.equal(root.get(VEDirectMessage_.serialNumber), k.base().serialNumber())));
-            Tuple t = entityManager.createQuery(cq)
-                    .getSingleResult();
+            List<VEDirectMessage> today = todayFor(k.base());
             return new ControllerHistoryView(
-                    Optional.ofNullable(t.get(0, Power.class))
-                            .map(Number::doubleValue)
-                            .orElse(0d),
-                    Optional.ofNullable(t.get(1, Potential.class))
-                            .map(Number::doubleValue)
-                            .orElse(0d),
-                    Optional.ofNullable(t.get(2, Potential.class))
-                            .map(Number::doubleValue)
-                            .orElse(0d),
-                    Optional.ofNullable(t.get(3, Energy.class))
-                            .map(Number::doubleValue)
-                            .orElse(0d));
+                    today.stream().map(VEDirectMessage::panelPower).filter(Objects::nonNull).mapToDouble(Number::doubleValue).max().orElse(0d),
+                    today.stream().map(VEDirectMessage::panelVoltage).filter(Objects::nonNull).mapToDouble(Number::doubleValue).max().orElse(0d),
+                    today.stream().map(VEDirectMessage::mainVoltage).filter(Objects::nonNull).mapToDouble(Number::doubleValue).max().orElse(0d),
+                    today.stream().map(VEDirectMessage::yieldToday).filter(Objects::nonNull).mapToDouble(Number::doubleValue).max().orElse(0d));
         });
     }
 
     public ControllerTimeView getControllerTimeViewForToday(VictronDevice device) {
         return timeViewCache.computeIfAbsent(new CacheKey<>(device, ControllerTimeView.class), k -> {
-            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-            CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-            Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
             Instant startOfDay = getStartOfDay();
-            cq.multiselect(
-                    root.get(VEDirectMessage_.stateOfOperation),
-                    root.get(VEDirectMessage_.offReason),
-                    cb.count(root))
-                    .where(cb.and(cb.ge(root.get(VEDirectMessage_.timestamp), startOfDay.toEpochMilli()),
-                            cb.equal(root.get(VEDirectMessage_.serialNumber), k.base().serialNumber())))
-                    .groupBy(root.get(VEDirectMessage_.stateOfOperation),
-                            root.get(VEDirectMessage_.offReason));
-            return entityManager.createQuery(cq)
-                    .getResultStream()
-                    .reduce(new ControllerTimeView(Duration.between(startOfDay, Instant.now())), (v, t) -> v.apply(
-                            t.get(root.get(VEDirectMessage_.stateOfOperation)),
-                            t.get(root.get(VEDirectMessage_.offReason)),
-                            Optional.ofNullable(t.get(2))
-                                .filter(Long.class::isInstance)
-                                .map(Long.class::cast)
-                                .orElse(0L)
-                    ), (a, b) -> b);
+            ControllerTimeView view = new ControllerTimeView(Duration.between(startOfDay, Instant.now()));
+            todayFor(k.base()).stream()
+                    .collect(Collectors.groupingBy(
+                            message -> Map.entry(
+                                    Optional.ofNullable(message.stateOfOperation()),
+                                    Optional.ofNullable(message.offReason())),
+                            Collectors.counting()))
+                    .forEach((key, count) -> view.apply(
+                            key.getKey().orElse(null),
+                            key.getValue().orElse(null),
+                            count));
+            return view;
         });
     }
 
-    /**
-     * Get all known VictronDevices.
-     *
-     * @return
-     */
     public Set<VictronDevice> devices() {
-        return victronDeviceCache.computeIfAbsent(LocalDate.now(), ld -> {
-            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-            CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-            Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
-            cq.multiselect(
-                    root.get(VEDirectMessage_.productType),
-                    root.get(VEDirectMessage_.serialNumber))
-                    .distinct(true);
-
-            return entityManager
-                    .createQuery(cq)
-                    .getResultStream()
-                    .map(t -> new VictronDevice(
-                            t.get(root.get(VEDirectMessage_.productType)),
-                            t.get(root.get(VEDirectMessage_.serialNumber))))
-                    .collect(Collectors.toSet());
-        });
+        return victronDeviceCache.computeIfAbsent(LocalDate.now(), ld -> queryAll()
+                .filter(message -> message.productType() != null && message.serialNumber() != null)
+                .map(message -> new VictronDevice(message.productType(), message.serialNumber()))
+                .collect(Collectors.toSet()));
     }
 
     public Stream<VEDirectMessage> queryAll() {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
-        return entityManager.createQuery(cq.select(cq.from(VEDirectMessage.class)))
-                .getResultStream();
+        return query(EventQuery.all(eventType()));
     }
 
-    public <T> Stream<VictronDevice> distinctDevices() {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-        Root<VEDirectMessage> root = cq.from(VEDirectMessage.class);
-        cq.multiselect(root.get(VEDirectMessage_.serialNumber), root.get(VEDirectMessage_.productType)).distinct(true);
-        return queryStream(cq, "Distinct Devices")
-                .map(tuple -> new VictronDevice(
-                        tuple.get(root.get(VEDirectMessage_.productType)),
-                        tuple.get(root.get(VEDirectMessage_.serialNumber))));
+    public Stream<VictronDevice> distinctDevices() {
+        return queryAll()
+                .filter(message -> message.productType() != null && message.serialNumber() != null)
+                .map(message -> new VictronDevice(message.productType(), message.serialNumber()))
+                .distinct();
     }
 
     public Optional<VEDirectMessage> max(VictronDevice device) {
-        return Benchmark.bench(() -> Optional.ofNullable(lastMessageCache.computeIfAbsent(new CacheKey<>(device, VEDirectMessage.class), k -> {
-            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-            CriteriaQuery<VEDirectMessage> cq = cb.createQuery(VEDirectMessage.class);
-            Root<VEDirectMessage> veDirectMessageRoot = cq.from(VEDirectMessage.class);
-
-            Subquery<Long> lastTimestampQuery = cq.subquery(Long.class);
-            Root<VEDirectMessage> subQueryRoot = lastTimestampQuery.from(VEDirectMessage.class);
-            lastTimestampQuery.select(cb.max(subQueryRoot.get(VEDirectMessage_.timestamp)));
-
-            cq.select(veDirectMessageRoot);
-            cq.where(cb.and(
-                    cb.equal(veDirectMessageRoot.get(VEDirectMessage_.timestamp), lastTimestampQuery),
-                    cb.equal(veDirectMessageRoot.get(VEDirectMessage_.serialNumber), k.base().serialNumber())));
-                return entityManager.createQuery(cq)
-                        .setFirstResult(0)
-                        .setMaxResults(1)
-                        .getSingleResult();
-        })), "Last VEDirectMessage for " + device);
+        return Benchmark.bench(
+                () -> {
+                    CacheKey<VictronDevice, VEDirectMessage> key = new CacheKey<>(device, VEDirectMessage.class);
+                    VEDirectMessage cached = lastMessageCache.get(key);
+                    if (cached != null) {
+                        return Optional.of(cached);
+                    }
+                    Optional<VEDirectMessage> latest = byDevice(device)
+                            .max(Comparator.nullsFirst(Comparator.comparing(VEDirectMessage::timestamp)));
+                    latest.ifPresent(message -> lastMessageCache.put(key, message));
+                    return latest;
+                },
+                "Last VEDirectMessage for " + device);
     }
 
+    @Override
+    public String eventType() {
+        return EventTypes.VEDIRECT_MESSAGE;
+    }
 
     @Override
-    public Class<VEDirectMessage> getEntityClass() {
+    public Class<VEDirectMessage> payloadType() {
         return VEDirectMessage.class;
     }
 
-
-
     public ControllerView getControllerView(VictronDevice device) {
-        return Benchmark.bench(() -> new ControllerView(
-                device,
-                getControllerTimeViewForToday(device),
-                max(device).map(ControllerStateView::new).orElse(null),
-                getControllerHistoryForToday(device)),
+        return Benchmark.bench(
+                () -> new ControllerView(
+                        device,
+                        getControllerTimeViewForToday(device),
+                        max(device).map(ControllerStateView::new).orElse(null),
+                        getControllerHistoryForToday(device)),
                 "ControllerView for " + device);
+    }
+
+    private List<VEDirectMessage> todayFor(VictronDevice device) {
+        return query(EventQuery.bySource(eventType(), device.serialNumber(), getStartOfDay(), Integer.MAX_VALUE))
+                .toList();
     }
 }

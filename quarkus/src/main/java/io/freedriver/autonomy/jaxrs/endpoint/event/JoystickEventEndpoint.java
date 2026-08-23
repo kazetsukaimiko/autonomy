@@ -2,8 +2,8 @@ package io.freedriver.autonomy.jaxrs.endpoint.event;
 
 import java.util.stream.Stream;
 
+import io.freedriver.autonomy.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.jaxrs.endpoint.EventApi;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.service.JoystickEventCrudService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -21,8 +21,8 @@ public class JoystickEventEndpoint implements EventApi<JoystickEvent> {
     }
 
     @Override
-    public JoystickEvent findOne(Long aLong) {
-        return joystickEventCrudService.get(aLong)
+    public JoystickEvent findOne(String id) {
+        return joystickEventCrudService.get(id)
                 .orElseThrow(() -> new WebApplicationException("Unknown JoystickEvent", 404));
     }
 }

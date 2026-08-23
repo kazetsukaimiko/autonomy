@@ -13,9 +13,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import io.freedriver.autonomy.event.input.joystick.jstest.AllJoysticks;
+import io.freedriver.autonomy.event.input.joystick.jstest.JSTestEvent;
+import io.freedriver.autonomy.event.input.joystick.jstest.JSTestEventType;
 import io.freedriver.autonomy.event.input.joystick.jstest.JSTestReader;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEvent;
-import io.freedriver.autonomy.jpa.entity.event.input.joystick.jstest.JSTestEventType;
 import org.junit.jupiter.api.Test;
 
 public class AllJoysticksTest {
@@ -79,30 +79,29 @@ public class AllJoysticksTest {
 
         JSTestReader.readEvents(simulate())
                 .forEach(jsTestEvent -> {
-                    assertEquals(name, jsTestEvent.getMetadata().getTitle());
-                    assertEquals(name, jsTestEvent.locateSourceId());
+                    assertEquals(name, jsTestEvent.metadata().title());
                 });
 
         List<JSTestEvent> jsTestEvents = JSTestReader.readEvents(simulate())
                 .collect(Collectors.toList());
 
-        jsTestEvents.stream().map(JSTestEvent::getMetadata)
+        jsTestEvents.stream().map(JSTestEvent::metadata)
                 .findFirst()
                 .ifPresentOrElse(jsMetadata -> {
-                    assertEquals(type, jsMetadata.getHardwareType(), "Type must match");
-                    assertEquals(name, jsMetadata.getTitle(), "Title must match");
-                    assertTrue(axes.stream().anyMatch(jsMetadata.getAxisNames()::containsValue), "Axis must be defined in metadata");
-                    assertTrue(buttons.stream().anyMatch(jsMetadata.getButtonNames()::containsValue), "Button must be defined in metadata");
+                    assertEquals(type, jsMetadata.hardwareType(), "Type must match");
+                    assertEquals(name, jsMetadata.title(), "Title must match");
+                    assertTrue(axes.stream().anyMatch(jsMetadata.axisNames()::containsValue), "Axis must be defined in metadata");
+                    assertTrue(buttons.stream().anyMatch(jsMetadata.buttonNames()::containsValue), "Button must be defined in metadata");
                 }, () -> fail("JSMetadata must be present."));
 
-        assertEquals(1, jsTestEvents.stream().map(JSTestEvent::getMetadata).distinct().count(),
+        assertEquals(1, jsTestEvents.stream().map(JSTestEvent::metadata).distinct().count(),
                 "All JSMetadata should point to same instance.");
 
 
-        assertEquals(axes.size(), jsTestEvents.stream().filter(jsTestEvent -> jsTestEvent.getJsTestEventType() == JSTestEventType.AXIS_INITIAL).count());
-        assertEquals(axes.size(), jsTestEvents.stream().filter(jsTestEvent -> jsTestEvent.getJsTestEventType() == JSTestEventType.AXIS).count());
-        assertEquals(buttons.size(), jsTestEvents.stream().filter(jsTestEvent -> jsTestEvent.getJsTestEventType() == JSTestEventType.BUTTON_INITIAL).count());
-        assertEquals(buttons.size(), jsTestEvents.stream().filter(jsTestEvent -> jsTestEvent.getJsTestEventType() == JSTestEventType.BUTTON).count());
+        assertEquals(axes.size(), jsTestEvents.stream().filter(jsTestEvent -> jsTestEvent.jsTestEventType() == JSTestEventType.AXIS_INITIAL).count());
+        assertEquals(axes.size(), jsTestEvents.stream().filter(jsTestEvent -> jsTestEvent.jsTestEventType() == JSTestEventType.AXIS).count());
+        assertEquals(buttons.size(), jsTestEvents.stream().filter(jsTestEvent -> jsTestEvent.jsTestEventType() == JSTestEventType.BUTTON_INITIAL).count());
+        assertEquals(buttons.size(), jsTestEvents.stream().filter(jsTestEvent -> jsTestEvent.jsTestEventType() == JSTestEventType.BUTTON).count());
     }
 
     @Test

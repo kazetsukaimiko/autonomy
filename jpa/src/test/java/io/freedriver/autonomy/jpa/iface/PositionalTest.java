@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+import io.freedriver.autonomy.entity.Positional;
 import org.junit.jupiter.api.Test;
 
 public class PositionalTest {

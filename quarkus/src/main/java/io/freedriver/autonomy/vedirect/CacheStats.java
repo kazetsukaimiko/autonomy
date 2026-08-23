@@ -3,25 +3,15 @@ package io.freedriver.autonomy.vedirect;
 import java.util.function.Function;
 
 import io.freedriver.autonomy.jpa.entity.VEDirectMessage;
-import io.freedriver.autonomy.jpa.entity.VEDirectMessage_;
-import jakarta.persistence.metamodel.SingularAttribute;
 
 public enum CacheStats implements CacheStat {
-    PANEL_VOLTAGE(VEDirectMessage_.panelVoltage, VEDirectMessage::getPanelVoltage),
+    PANEL_VOLTAGE(VEDirectMessage::panelVoltage),
     ;
 
-    private final SingularAttribute<VEDirectMessage, ?> attribute;
     private final Function<VEDirectMessage, ?> function;
 
-    <T> CacheStats(SingularAttribute<VEDirectMessage, T> attribute, Function<VEDirectMessage, T> function) {
-        this.attribute = attribute;
+    <T> CacheStats(Function<VEDirectMessage, T> function) {
         this.function = function;
-    }
-
-
-    @Override
-    public SingularAttribute<VEDirectMessage, ?> getAttribute() {
-        return attribute;
     }
 
     @Override

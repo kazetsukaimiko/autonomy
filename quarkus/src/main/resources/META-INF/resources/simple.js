@@ -8,7 +8,7 @@ function loadAllBoards() {
         .GET("/rest/simple/")
         .accept("application/json")
         .handle(200, function (xhr, request) {
-            const boards = JSON.parse(xhr.responseText);
+            const boards = [...new Set(JSON.parse(xhr.responseText))];
             for (let i = 0; i < boards.length; i++) {
                 loadBoard(boards[i]);
             }
@@ -95,13 +95,10 @@ function setState(uuid, key, state) {
         .POST("/rest/simple/id/"+uuid)
         .accept("application/json")
         .handle(200, function (xhr, request) {
-            //window.location.hash = query;
-            const state = JSON.parse(xhr.responseText);
-            toggleOff("#controls");
-            populateToggles(document.getElementById("controls"), uuid, state);
+            const aliasView = JSON.parse(xhr.responseText);
+            populateToggles(getControls(uuid), uuid, aliasView);
             loadSensorView(uuid, aliasView);
-
-            toggleOn(".controls"); // TODO : Activate Section.
+            toggleOn("#" + getControlsId(uuid));
         })
         .handleOthers(function (xhr, request) {
             logger(xhr.status.toString() + " Failed to fetch woirkspaces: " + xhr.statusText + '\n' + xhr.responseText);
@@ -120,9 +117,11 @@ function getControlsId(uuid) {
 }
 
 function getControls(uuid) {
-    let controlsDiv = document.getElementById(getControlsId(uuid));
+    const controlsId = getControlsId(uuid);
+    let controlsDiv = document.getElementById(controlsId);
     if (controlsDiv == null) {
         controlsDiv = document.createElement("div");
+        controlsDiv.id = controlsId;
         getTabsContainer().appendChild(controlsDiv);
     }
     return controlsDiv;

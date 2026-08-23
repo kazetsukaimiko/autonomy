@@ -7,22 +7,22 @@ import lombok.Builder;
 public record ControllerStateView(VEDirectMessage lastMessage) {
 
     public Double getYield() {
-        return lastMessage.getYieldToday().doubleValue();
+        return lastMessage.yieldToday().doubleValue();
     }
 
     public Double getMainVoltage() {
-        return lastMessage.getMainVoltage().doubleValue();
+        return lastMessage.mainVoltage().doubleValue();
     }
 
     public Double getPanelVoltage() {
-        return lastMessage.getPanelVoltage().doubleValue();
+        return lastMessage.panelVoltage().doubleValue();
     }
 
     public Double getPanelPower() {
-        return lastMessage.getPanelPower().doubleValue();
+        return lastMessage.panelPower().doubleValue();
     }
 
     public Double getMaxPanelPower() {
-        return lastMessage.getMaxPowerToday().doubleValue();
+        return lastMessage.maxPowerToday().doubleValue();
     }
 }

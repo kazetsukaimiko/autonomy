@@ -12,10 +12,17 @@
   <packaging>pom</packaging>
 
   <name>Autonomy Third-Party BOM</name>
-  <description>Third-party dependency versions only (not Jakarta APIs): junit-bom, Jackson via freedriver-bom, Hibernate Validator, Expressly, Freedriver.</description>
+  <description>Third-party dependency versions only (not Jakarta APIs): Jackson/JUnit via freedriver-3p-bom, Freedriver artifacts via freedriver-bom, Hibernate Validator, Expressly.</description>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>io.freedriver</groupId>
+        <artifactId>freedriver-3p-bom</artifactId>
+        <version>${io.freedriver.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>io.freedriver</groupId>
         <artifactId>freedriver-bom</artifactId>
