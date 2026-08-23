@@ -1,13 +1,14 @@
 package io.freedriver.autonomy.service;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @ApplicationScoped
 @Slf4j
 public class ConnectorServiceCommon {
-    private static final List<Connector> ACTIVE_CONNECTORS = new ArrayList<>();
+    private static final List<Connector> ACTIVE_CONNECTORS = new CopyOnWriteArrayList<>();
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .registerModule(new JsonLinkModule())
@@ -40,29 +41,53 @@ public class ConnectorServiceCommon {
 
     public List<UUID> getConnectedBoards() {
         return getAllConnectors().stream()
-                .map(Connector::getUUID)
+                .map(this::uuidOrNull)
+                .filter(Objects::nonNull)
+                .distinct()
                 .collect(Collectors.toList());
     }
 
     /*
      * INTERNALS / HELPERS
      */
-    protected List<Connector> getAllConnectors() {
+    protected synchronized List<Connector> getAllConnectors() {
         // Remove existing closed.
         List<Connector> closed = ACTIVE_CONNECTORS.stream()
                 .filter(this::connectorIsClosed)
                 .collect(Collectors.toList());
         ACTIVE_CONNECTORS.removeAll(closed);
 
-        // Connect new
+        // Connect new. Match by canonical path so /dev/serial/by-id/... and /dev/ttyACM0
+        // are not opened twice against the same Arduino.
         List<CompletableFuture<Void>> threads = Connectors.allDevices()
                 .filter(device -> ACTIVE_CONNECTORS.stream()
-                        .noneMatch(existing -> Objects.equals(existing.device(), device)))
+                        .noneMatch(existing -> sameDevice(existing, device)))
                 .map(device -> Connectors.findOrOpenAndConsume(device, executorService, ACTIVE_CONNECTORS::add))
                 .collect(Collectors.toList());
         threads.forEach(this::waitForCompletion);
 
         return ACTIVE_CONNECTORS;
+    }
+
+    private UUID uuidOrNull(Connector connector) {
+        try {
+            return connector.getUUID();
+        } catch (Exception e) {
+            log.warn("Couldn't read board UUID from {}", connector.device(), e);
+            return null;
+        }
+    }
+
+    private static boolean sameDevice(Connector existing, Path device) {
+        return Objects.equals(canonical(existing.devicePath()), canonical(device));
+    }
+
+    private static Path canonical(Path path) {
+        try {
+            return path.toRealPath();
+        } catch (IOException e) {
+            return path.toAbsolutePath().normalize();
+        }
     }
 
     protected boolean connectorIsClosed(Connector connector) {
@@ -80,7 +105,7 @@ public class ConnectorServiceCommon {
 
     protected Optional<Connector> getConnectorByBoardId(UUID boardId) {
         return getAllConnectors().stream()
-                .filter(connector -> Objects.equals(boardId, connector.getUUID()))
+                .filter(connector -> Objects.equals(boardId, uuidOrNull(connector)))
                 .findFirst();
     }
 
