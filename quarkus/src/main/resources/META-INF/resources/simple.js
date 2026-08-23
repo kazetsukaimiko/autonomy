@@ -8,7 +8,7 @@ function loadAllBoards() {
         .GET("/rest/simple/")
         .accept("application/json")
         .handle(200, function (xhr, request) {
-            const boards = JSON.parse(xhr.responseText);
+            const boards = [...new Set(JSON.parse(xhr.responseText))];
             for (let i = 0; i < boards.length; i++) {
                 loadBoard(boards[i]);
             }
@@ -120,9 +120,11 @@ function getControlsId(uuid) {
 }
 
 function getControls(uuid) {
-    let controlsDiv = document.getElementById(getControlsId(uuid));
+    const controlsId = getControlsId(uuid);
+    let controlsDiv = document.getElementById(controlsId);
     if (controlsDiv == null) {
         controlsDiv = document.createElement("div");
+        controlsDiv.id = controlsId;
         getTabsContainer().appendChild(controlsDiv);
     }
     return controlsDiv;
