@@ -78,7 +78,7 @@ public class VEDirectEventSource implements EventSource {
     }
 
     private void discoverNow() {
-        connectionManager.discover(this::isVictronCable).forEach(this::ensureReader);
+        connectionManager.discover(this::isVictronCable).toList().forEach(this::ensureReader);
     }
 
     private void discoveryLoop() {
