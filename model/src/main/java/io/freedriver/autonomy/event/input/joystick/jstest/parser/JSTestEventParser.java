@@ -28,25 +28,35 @@ public final class JSTestEventParser implements Function<String, JSTestEvent> {
     @Override
     public JSTestEvent apply(String jstestEvent) {
         Map<String, Long> fields = parseFields(jstestEvent);
-        return new JSTestEvent(
-                metadata,
-                Instant.now(),
-                JSTestEventType.ofTypeNumber(fields.get("type")),
-                fields.get("time"),
-                fields.get("number"),
-                fields.get("value"));
+        Long type = fields.get("type");
+        Long time = fields.get("time");
+        Long number = fields.get("number");
+        Long value = fields.get("value");
+        if (type == null || time == null || number == null || value == null) {
+            return null;
+        }
+        JSTestEventType eventType = JSTestEventType.ofTypeNumber(type);
+        if (eventType == null) {
+            return null;
+        }
+        return new JSTestEvent(metadata, Instant.now(), eventType, time, number, value);
     }
 
     private static Map<String, Long> parseFields(String jstestEvent) {
-        return Stream.of(jstestEvent)
-                .filter(JSTestEventParser::isEventLine)
-                .map(eventLine -> eventLine.split("Event: "))
-                .filter(eventLine -> eventLine.length == 2)
-                .map(eventLine -> eventLine[1])
-                .map(eventContent -> eventContent.split("\\s*,\\s* "))
-                .filter(eventPairs -> eventPairs.length == 4)
-                .flatMap(Stream::of)
-                .map(kvpair -> kvpair.split("\\s+"))
-                .collect(Collectors.toMap(kvpair -> kvpair[0], kvpair -> Long.parseLong(kvpair[1])));
+        try {
+            return Stream.of(jstestEvent)
+                    .filter(JSTestEventParser::isEventLine)
+                    .map(eventLine -> eventLine.split("Event: "))
+                    .filter(eventLine -> eventLine.length == 2)
+                    .map(eventLine -> eventLine[1])
+                    .map(eventContent -> eventContent.split("\\s*,\\s* "))
+                    .filter(eventPairs -> eventPairs.length == 4)
+                    .flatMap(Stream::of)
+                    .map(kvpair -> kvpair.split("\\s+"))
+                    .filter(kvpair -> kvpair.length >= 2)
+                    .collect(Collectors.toMap(kvpair -> kvpair[0], kvpair -> Long.parseLong(kvpair[1])));
+        } catch (RuntimeException e) {
+            return Map.of();
+        }
     }
 }

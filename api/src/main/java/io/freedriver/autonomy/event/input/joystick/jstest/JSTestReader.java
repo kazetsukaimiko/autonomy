@@ -68,6 +68,7 @@ public class JSTestReader {
             current[0] = updated.get();
             return Stream.empty();
         }
-        return Stream.of(new JSTestEventParser(current[0]).apply(line));
+        JSTestEvent event = new JSTestEventParser(current[0]).apply(line);
+        return event == null ? Stream.empty() : Stream.of(event);
     }
 }

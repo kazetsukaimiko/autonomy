@@ -95,13 +95,10 @@ function setState(uuid, key, state) {
         .POST("/rest/simple/id/"+uuid)
         .accept("application/json")
         .handle(200, function (xhr, request) {
-            //window.location.hash = query;
-            const state = JSON.parse(xhr.responseText);
-            toggleOff("#controls");
-            populateToggles(document.getElementById("controls"), uuid, state);
+            const aliasView = JSON.parse(xhr.responseText);
+            populateToggles(getControls(uuid), uuid, aliasView);
             loadSensorView(uuid, aliasView);
-
-            toggleOn(".controls"); // TODO : Activate Section.
+            toggleOn("#" + getControlsId(uuid));
         })
         .handleOthers(function (xhr, request) {
             logger(xhr.status.toString() + " Failed to fetch woirkspaces: " + xhr.statusText + '\n' + xhr.responseText);
