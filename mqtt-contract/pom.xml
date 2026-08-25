@@ -11,12 +11,8 @@
     <artifactId>autonomy-mqtt-contract</artifactId>
 
     <name>Autonomy MQTT Contract</name>
-    <description>Shared MQTT appliance JSON contract (schema + Java records). Lean DTO artifact: no JPA, no jsonlink, no Quarkus.</description>
+    <description>Shared MQTT appliance JSON contract (Java records). Lean DTO artifact: no JPA, no jsonlink, no Quarkus.</description>
     <packaging>jar</packaging>
-
-    <properties>
-        <maven.compiler.release>21</maven.compiler.release>
-    </properties>
 
     <dependencyManagement>
         <dependencies>
@@ -47,6 +43,12 @@
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
