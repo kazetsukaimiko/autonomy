@@ -64,6 +64,6 @@ jobs:
           server-password: GITHUB_TOKEN
 
       - name: Deploy mqtt-contract to GitHub Packages
-        run: mvn --batch-mode --no-transfer-progress -pl mqtt-contract -am deploy -DskipTests
+        run: mvn --batch-mode --no-transfer-progress -pl jakarta-bom,3p-bom,mqtt-contract -am deploy -DskipTests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
