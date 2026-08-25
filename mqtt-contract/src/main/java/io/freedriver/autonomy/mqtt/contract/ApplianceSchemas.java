@@ -9,11 +9,11 @@ import lombok.NonNull;
 
 /**
  * Shared MQTT appliance JSON contract. Isolation is the autonomy
- * {@code instanceId} (UUIDv4 only), not a board and not the MQTT protocol client-id.
+ * {@code instanceId} (a UUID), not a board and not the MQTT protocol client-id.
  * {@code instanceName} is UX only: never a topic segment and never in an ACL.
  *
  * Topic methods interpolate {@code UUID.toString()} (hex + hyphens; cannot contain
- * {@code /}, {@code +}, or {@code #}) and reject {@code version() != 4} first.
+ * {@code /}, {@code +}, or {@code #}). Version nibbles are not checked.
  *
  * Required / missing / size checks are Jakarta Validation after parse.
  * Jackson {@code FAIL_ON_UNKNOWN_PROPERTIES} only rejects extra fields.
@@ -36,16 +36,10 @@ public final class ApplianceSchemas {
     private ApplianceSchemas() {}
 
     public static String appliancesTopic(@NonNull UUID instanceId) {
-        if (instanceId.version() != 4) {
-            throw new IllegalArgumentException("instanceId must be UUIDv4");
-        }
         return "freedriver/v1/" + instanceId + "/appliances";
     }
 
     public static String commandsTopic(@NonNull UUID instanceId) {
-        if (instanceId.version() != 4) {
-            throw new IllegalArgumentException("instanceId must be UUIDv4");
-        }
         return "freedriver/v1/" + instanceId + "/commands";
     }
 }

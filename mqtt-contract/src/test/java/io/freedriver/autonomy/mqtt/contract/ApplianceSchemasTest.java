@@ -15,7 +15,6 @@ class ApplianceSchemasTest {
 
     private static final String INSTANCE_ID = "550e8400-e29b-41d4-a716-446655440000";
     private static final UUID INSTANCE_UUID = UUID.fromString(INSTANCE_ID);
-    private static final UUID V1_UUID = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
     @Test
     void topicA_happyPath_parseAndSerialize() {
@@ -149,18 +148,19 @@ class ApplianceSchemasTest {
     }
 
     @Test
-    void topicA_rejectsUuidV1InstanceId() {
-        assertThrows(IllegalArgumentException.class, () -> ApplianceStateMessage.parse("""
-                {"instanceId":"6ba7b810-9dad-11d1-80b4-00c04fd430c8","instanceName":"Cabin","appliedCommandId":null,"appliances":[]}
-                """));
-    }
-
-    @Test
-    void topicHelpers_rejectNonUuidV4() {
-        assertThrows(IllegalArgumentException.class, () -> ApplianceSchemas.appliancesTopic(V1_UUID));
-        assertThrows(IllegalArgumentException.class, () -> ApplianceSchemas.commandsTopic(V1_UUID));
-        assertEquals("freedriver/v1/" + INSTANCE_ID + "/appliances", ApplianceSchemas.appliancesTopic(INSTANCE_UUID));
-        assertEquals("freedriver/v1/" + INSTANCE_ID + "/commands", ApplianceSchemas.commandsTopic(INSTANCE_UUID));
+    void topicHelpers_interpolateUuidToString() {
+        String appliances = ApplianceSchemas.appliancesTopic(INSTANCE_UUID);
+        String commands = ApplianceSchemas.commandsTopic(INSTANCE_UUID);
+        assertEquals("freedriver/v1/" + INSTANCE_ID + "/appliances", appliances);
+        assertEquals("freedriver/v1/" + INSTANCE_ID + "/commands", commands);
+        // UUID.toString() is hex+hyphens; cannot inject MQTT wildcards into the segment
+        assertFalse(INSTANCE_ID.contains("/"));
+        assertFalse(INSTANCE_ID.contains("+"));
+        assertFalse(INSTANCE_ID.contains("#"));
+        assertFalse(appliances.contains("+"));
+        assertFalse(appliances.contains("#"));
+        assertEquals(3, appliances.chars().filter(c -> c == '/').count());
+        assertEquals(3, commands.chars().filter(c -> c == '/').count());
     }
 
     @Test

@@ -16,11 +16,11 @@ import lombok.NonNull;
 /**
  * Topic B: {@code freedriver/v1/{instanceId}/commands} (retain=false, QoS 1).
  * Isolation is the autonomy instance. Boards are not on this wire.
- * {@code instanceId} is UUIDv4, not the MQTT protocol client-id.
+ * {@code instanceId} is a UUID, not the MQTT protocol client-id.
  */
 @Builder(toBuilder = true)
 public record ApplianceCommandMessage(
-        @NonNull @NotNull @UuidV4 UUID instanceId,
+        @NonNull @NotNull UUID instanceId,
         @NonNull @NotBlank String commandId,
         @NonNull @NotBlank @Size(max = ApplianceSchemas.NAME_MAX) String applianceName,
         @NonNull @NotNull Boolean on) {
