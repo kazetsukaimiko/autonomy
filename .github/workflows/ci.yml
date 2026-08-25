@@ -48,7 +48,7 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - name: Checkout autonomy
@@ -77,8 +77,37 @@ jobs:
         working-directory: freedriver
         run: mvn --batch-mode --no-transfer-progress install -DskipTests
 
+      # Published coordinate: io.freedriver.autonomy:autonomy-mqtt-contract:YEAR-MONTH_rBUILD_NUM
+      # Example: 2026-08_r184 (UTC year-month + github.run_number).
+      # Unique non-SNAPSHOT so GitHub Packages does not overwrite the same version.
+      # 1.0.0-SNAPSHOT in git is local-only; versions:set is CI workspace only (not committed).
       # Parent + jakarta-bom + 3p-bom + mqtt-contract only. Do not deploy quarkus/jpa/api/model.
+      # After a successful deploy, tag GITHUB_SHA with the same YEAR-MONTH_rBUILD_NUM.
+      - name: Set unique mqtt-contract release version
+        run: |
+          YEAR="$(date -u +%Y)"
+          MONTH="$(date -u +%m)"
+          NEW_VERSION="${YEAR}-${MONTH}_r${{ github.run_number }}"
+          echo "NEW_VERSION=${NEW_VERSION}" >> "$GITHUB_ENV"
+          echo "Publishing autonomy-mqtt-contract as ${NEW_VERSION} (git SNAPSHOT is local-only)"
+          mvn --batch-mode --no-transfer-progress \
+            org.codehaus.mojo:versions-maven-plugin:2.21.0:set \
+            -DnewVersion="${NEW_VERSION}" \
+            -DgenerateBackupPoms=false \
+            -DprocessAllModules=true
+
       - name: Deploy mqtt-contract to GitHub Packages
         run: mvn --batch-mode --no-transfer-progress -pl jakarta-bom,3p-bom,mqtt-contract -am deploy -DskipTests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag published version
+        run: |
+          if [ -z "${NEW_VERSION}" ]; then
+            echo "NEW_VERSION is empty; refusing to tag"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${NEW_VERSION}" "${GITHUB_SHA}" -m "${NEW_VERSION}"
+          git push origin "refs/tags/${NEW_VERSION}"
