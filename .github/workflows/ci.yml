@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   verify:
@@ -39,4 +40,45 @@ jobs:
 
       # TODO: switch back to full-reactor `mvn verify` once the VEDirect refactor lands and quarkus builds pass.
       - name: Build, test, and Spotless check
-        run: mvn --batch-mode --no-transfer-progress clean verify -pl bom,jpa,api -am
+        run: mvn --batch-mode --no-transfer-progress clean verify -pl bom,jpa,api,mqtt-contract -am
+
+  publish-mqtt-contract:
+    name: Publish mqtt-contract
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout autonomy
+        uses: actions/checkout@v4
+
+      - name: Checkout freedriver
+        uses: actions/checkout@v4
+        with:
+          repository: kazetsukaimiko/freedriver
+          path: freedriver
+
+      - name: Set up JDK 23
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23'
+          distribution: temurin
+          cache: maven
+          cache-dependency-path: |
+            pom.xml
+            freedriver/pom.xml
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Install freedriver SNAPSHOT
+        working-directory: freedriver
+        run: mvn --batch-mode --no-transfer-progress install -DskipTests
+
+      # Parent + jakarta-bom + 3p-bom + mqtt-contract only. Do not deploy quarkus/jpa/api/model.
+      - name: Deploy mqtt-contract to GitHub Packages
+        run: mvn --batch-mode --no-transfer-progress -pl jakarta-bom,3p-bom,mqtt-contract -am deploy -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
