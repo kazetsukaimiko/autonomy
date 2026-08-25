@@ -34,8 +34,6 @@ public final class ApplianceSchemas {
 
     public static final String APPLIANCES_TOPIC_TEMPLATE = "freedriver/v1/{instanceId}/appliances";
     public static final String COMMANDS_TOPIC_TEMPLATE = "freedriver/v1/{instanceId}/commands";
-    public static final String APPLIANCES_WILDCARD = "freedriver/v1/+/appliances";
-    public static final String COMMANDS_WILDCARD = "freedriver/v1/+/commands";
 
     public static final int QOS = 1;
     public static final boolean RETAIN = false;

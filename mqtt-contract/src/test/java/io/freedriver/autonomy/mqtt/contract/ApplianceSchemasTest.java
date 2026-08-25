@@ -44,7 +44,6 @@ class ApplianceSchemasTest {
         assertEquals(
                 "freedriver/v1/" + INSTANCE_ID + "/appliances",
                 ApplianceSchemas.appliancesTopic(INSTANCE_UUID));
-        assertEquals("freedriver/v1/+/appliances", ApplianceSchemas.APPLIANCES_WILDCARD);
         assertEquals("freedriver/v1/{instanceId}/appliances", ApplianceSchemas.APPLIANCES_TOPIC_TEMPLATE);
         assertEquals(1, ApplianceSchemas.QOS);
         assertFalse(ApplianceSchemas.RETAIN);
