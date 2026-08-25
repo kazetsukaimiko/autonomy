@@ -77,7 +77,20 @@ jobs:
         working-directory: freedriver
         run: mvn --batch-mode --no-transfer-progress install -DskipTests
 
+      # Published coordinate: io.freedriver.autonomy:autonomy-mqtt-contract:1.0.<github.run_number>
+      # Unique non-SNAPSHOT so GitHub Packages does not overwrite the same version.
+      # 1.0.0-SNAPSHOT in git is local-only; versions:set is CI workspace only (not committed).
       # Parent + jakarta-bom + 3p-bom + mqtt-contract only. Do not deploy quarkus/jpa/api/model.
+      - name: Set unique mqtt-contract release version
+        run: |
+          NEW_VERSION="1.0.${{ github.run_number }}"
+          echo "Publishing autonomy-mqtt-contract as ${NEW_VERSION} (git SNAPSHOT is local-only)"
+          mvn --batch-mode --no-transfer-progress \
+            org.codehaus.mojo:versions-maven-plugin:2.21.0:set \
+            -DnewVersion="${NEW_VERSION}" \
+            -DgenerateBackupPoms=false \
+            -DprocessAllModules=true
+
       - name: Deploy mqtt-contract to GitHub Packages
         run: mvn --batch-mode --no-transfer-progress -pl jakarta-bom,3p-bom,mqtt-contract -am deploy -DskipTests
         env:
