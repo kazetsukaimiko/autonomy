@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://freedriver.io/schema/v1/commands.json",
-  "title": "ApplianceCommandMessage",
-  "description": "Topic B: freedriver/v1/home/commands (retain=false, QoS 1). name is the alias key.",
+  "title": "ApplianceCommandMessage (superseded)",
+  "description": "SUPERSEDED by schema/v2/commands.json. v1 used shared freedriver/v1/home/commands and field name. Never live-commanded. Isolation is now instanceId (UUIDv4).",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "commandId", "name", "on"],

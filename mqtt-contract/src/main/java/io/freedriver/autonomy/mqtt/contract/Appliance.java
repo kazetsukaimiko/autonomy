@@ -5,4 +5,5 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record Appliance(
-        @NotBlank @Size(max = ApplianceSchemas.NAME_MAX) String name, @NotNull Boolean on) {}
+        @NotBlank @Size(max = ApplianceSchemas.NAME_MAX) String applianceName,
+        @NotNull Boolean on) {}

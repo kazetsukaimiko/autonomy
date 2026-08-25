@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://freedriver.io/schema/v1/appliances.json",
-  "title": "ApplianceStateMessage",
-  "description": "Topic A: freedriver/v1/home/appliances (retain=false, QoS 1). lastUpdated is not in MQTT. name is the alias key.",
+  "title": "ApplianceStateMessage (superseded)",
+  "description": "SUPERSEDED by schema/v2/appliances.json. v1 used shared freedriver/v1/home/appliances and field name. Never live-commanded. Isolation is now instanceId (UUIDv4).",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "appliances"],

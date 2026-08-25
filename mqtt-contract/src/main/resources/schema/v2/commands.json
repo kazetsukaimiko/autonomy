@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freedriver.io/schema/v2/commands.json",
+  "title": "ApplianceCommandMessage",
+  "description": "Topic B: freedriver/v1/{instanceId}/commands (retain=false, QoS 1). Isolation is instanceId (UUIDv4), not a board and not the MQTT client-id. applianceName is the alias key. Boards are not on this wire. Schema 2 replaces v1 (never live-commanded).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "instanceId", "commandId", "applianceName", "on"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+      "description": "Autonomy instance UUIDv4 (8-4-4-4-12). Not the MQTT protocol client-id. Rejects /, +, #."
+    },
+    "commandId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "applianceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "on": {
+      "type": "boolean"
+    }
+  }
+}
