@@ -405,10 +405,7 @@ public class SimpleAliasService  {
 
          */
 
-        return AliasView.builder()
-                .applianceStates(applianceStates)
-                .groupStates(groupStates)
-                .build();
+        return AliasView.of(applianceStates, groupStates);
     }
 
 
@@ -518,7 +515,7 @@ public class SimpleAliasService  {
             sendAnalogSensorEvents(mapping, response);
             return cacheBoardState(mapping, response);
         }
-        return Response.builder().build();
+        return Response.empty();
     }
 
     public Response setupBoard(UUID boardId) throws IOException {

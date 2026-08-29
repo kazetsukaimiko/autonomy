@@ -59,7 +59,7 @@ public class ConnectorServiceCommon {
 
         // Connect new. Match by canonical path so /dev/serial/by-id/... and /dev/ttyACM0
         // are not opened twice against the same Arduino.
-        List<CompletableFuture<Void>> threads = Connectors.allDevices()
+        List<CompletableFuture<Void>> threads = Connectors.allDevices().stream()
                 .filter(device -> ACTIVE_CONNECTORS.stream()
                         .noneMatch(existing -> sameDevice(existing, device)))
                 .map(device -> Connectors.findOrOpenAndConsume(device, executorService, ACTIVE_CONNECTORS::add))

@@ -29,4 +29,9 @@ public record AliasView(
     public AliasView() {
         this(null, null, null, null, null, null, null);
     }
+
+    public static AliasView of(
+            Map<String, Boolean> applianceStates, Map<String, Boolean> groupStates) {
+        return new AliasView(applianceStates, groupStates, null, null, null, null, null);
+    }
 }
