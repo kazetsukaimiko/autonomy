@@ -1,28 +1,49 @@
 package io.freedriver.autonomy.mqtt.contract;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.NonNull;
 
-/** Topic A: {@code freedriver/v1/home/appliances} (retain=false, QoS 1). */
+/**
+ * Topic A: {@code freedriver/v1/{instanceId}/appliances} (retain=false, QoS 1).
+ * Isolation is the autonomy instance. Boards are not on this wire.
+ * {@code instanceId} is a UUID, not the MQTT protocol client-id.
+ * {@code instanceName} is UX-only and is never a topic segment or ACL.
+ */
+@Builder(toBuilder = true)
 public record ApplianceStateMessage(
-        @NotNull @Min(1) @Max(1) Integer schemaVersion,
+        @NonNull @NotNull UUID instanceId,
+        @NonNull @NotBlank String instanceName,
         String appliedCommandId,
-        @NotNull @Valid List<Appliance> appliances) {
+        @NonNull @NotNull @Valid List<Appliance> appliances) {
+
+    private static final Validator VALIDATOR = Validation.buildDefaultValidatorFactory().getValidator();
 
     public ApplianceStateMessage {
-        if (appliances != null) {
-            appliances = List.copyOf(appliances);
-        }
+        appliances = List.copyOf(appliances);
     }
 
     public static ApplianceStateMessage parse(String json) {
         try {
             ApplianceStateMessage parsed = ApplianceSchemas.STRICT.readValue(json, ApplianceStateMessage.class);
-            return ApplianceSchemas.validate(parsed);
+            Set<ConstraintViolation<ApplianceStateMessage>> violations = VALIDATOR.validate(parsed);
+            if (!violations.isEmpty()) {
+                String detail = violations.stream()
+                        .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                        .collect(Collectors.joining("; "));
+                throw new IllegalArgumentException("Rejected MQTT contract: " + detail);
+            }
+            return parsed;
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
