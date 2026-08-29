@@ -4,10 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import lombok.AccessLevel;
 import lombok.Builder;
 
-@Builder(toBuilder = true, access = AccessLevel.PUBLIC)
+@Builder(toBuilder = true)
 public record AliasView(
         Map<String, Boolean> applianceStates,
         Map<String, Boolean> groupStates,
