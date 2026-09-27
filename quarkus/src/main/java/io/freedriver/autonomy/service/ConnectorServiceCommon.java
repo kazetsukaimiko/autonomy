@@ -159,6 +159,7 @@ public class ConnectorServiceCommon {
         UUID boardId = uuidOrNull(connector);
         if (boardId != null) {
             applianceRestoreService.beginAwaitingRestore(boardId);
+            applianceRestoreService.dropStalePinCache(boardId);
             newlyConnected.add(boardId);
         }
         ACTIVE_CONNECTORS.add(connector);

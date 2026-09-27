@@ -157,12 +157,35 @@ class ApplianceRestoreTest {
     }
 
     @Test
-    void setupBoardDoesNotSaveTheResetModeSet() throws IOException {
+    void setupBoardSavesAllOffAndAReconnectRestoresNothingOn() throws IOException {
+        store.write(Map.of("fridge", true, "hallway", true));
+        restore.beginAwaitingRestore(boardId);
+        restore.onBoardsReady(List.of(boardId));
+        assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
+
+        board.pins.clear();
+        restore.beginAwaitingRestore(boardId);
+        restore.onBoardsReady(List.of(boardId));
+        assertEquals(1, restore.pendingDeferredRestores());
+
+        aliases.digitalPinCache.put(new PinCoordinate(boardId, FRIDGE_PIN), true);
         aliases.setupBoard(boardId);
 
-        assertEquals(LoadedApplianceState.Status.MISSING, store.load().status());
-        assertEquals(0, writeCount());
-        assertFalse(Files.exists(store.stateFile()));
+        assertEquals(Boolean.FALSE, store.load().states().get("fridge"));
+        assertEquals(Boolean.FALSE, store.load().states().get("hallway"));
+        assertEquals(Boolean.FALSE, aliases.digitalPinCache.get(new PinCoordinate(boardId, FRIDGE_PIN)));
+        assertEquals(Boolean.FALSE, aliases.digitalPinCache.get(new PinCoordinate(boardId, HALLWAY_PIN)));
+        assertEquals(0, restore.pendingDeferredRestores());
+        assertFalse(restore.isAwaitingRestore(boardId));
+
+        clock.advance(Duration.ofSeconds(30));
+        board.requests.clear();
+        board.pins.clear();
+        restore.beginAwaitingRestore(boardId);
+        restore.onBoardsReady(List.of(boardId));
+
+        assertEquals(Boolean.FALSE, board.pins.get(FRIDGE_PIN));
+        assertEquals(Boolean.FALSE, board.pins.get(HALLWAY_PIN));
     }
 
     @Test
@@ -185,6 +208,53 @@ class ApplianceRestoreTest {
         assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
         assertEquals(Boolean.FALSE, board.pins.get(HALLWAY_PIN));
         assertFalse(restore.isAwaitingRestore(boardId));
+        assertEquals(0, scheduledRestores);
+    }
+
+    @Test
+    void sendThatTimesOutAfterApplyWritesNothingOnAReconnectInsideTheWindow() throws IOException {
+        store.write(Map.of("fridge", true, "hallway", false));
+        board.failAfterApply = true;
+
+        restore.beginAwaitingRestore(boardId);
+        restore.onBoardsReady(List.of(boardId));
+
+        assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
+        assertEquals(Boolean.FALSE, board.pins.get(HALLWAY_PIN));
+        assertEquals(1, writeCount());
+        assertEquals(1, scheduledRestores);
+        assertEquals(1, restore.pendingDeferredRestores());
+        assertTrue(restore.isAwaitingRestore(boardId));
+
+        board.requests.clear();
+        board.pins.clear();
+        restore.beginAwaitingRestore(boardId);
+        restore.onBoardsReady(List.of(boardId));
+
+        assertEquals(0, writeCount());
+        assertTrue(board.requests.isEmpty());
+        assertEquals(1, scheduledRestores);
+        assertEquals(1, restore.pendingDeferredRestores());
+    }
+
+    @Test
+    void publishConnectedBoardDropsCachedPinsSoAToggleReadsTheBoard() throws IOException {
+        UUID otherBoard = UUID.randomUUID();
+        aliases.digitalPinCache.put(new PinCoordinate(boardId, FRIDGE_PIN), true);
+        aliases.digitalPinCache.put(new PinCoordinate(boardId, HALLWAY_PIN), true);
+        aliases.digitalPinCache.put(new PinCoordinate(otherBoard, OVEN_PIN), true);
+        board.pins.put(FRIDGE_PIN, false);
+        board.pins.put(HALLWAY_PIN, false);
+
+        connectors.publishConnectedBoard(connector, new ArrayList<>());
+
+        assertFalse(aliases.digitalPinCache.containsKey(new PinCoordinate(boardId, FRIDGE_PIN)));
+        assertFalse(aliases.digitalPinCache.containsKey(new PinCoordinate(boardId, HALLWAY_PIN)));
+        assertEquals(Boolean.TRUE, aliases.digitalPinCache.get(new PinCoordinate(otherBoard, OVEN_PIN)));
+
+        aliases.handleJoystickEvent(fridgePress());
+
+        assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
     }
 
     @Test
@@ -465,7 +535,10 @@ class ApplianceRestoreTest {
         assertEquals("{", Files.readString(store.stateFile()));
         assertTrue(lines.stream().anyMatch(line -> line.contains("treating it as no saved state")), lines::toString);
         assertTrue(
-                lines.stream().anyMatch(line -> line.equals("No saved appliance state exists; leaving every appliance off")),
+                lines.stream().anyMatch(line -> line.equals("Saved appliance state is unreadable; leaving every appliance off")),
+                lines::toString);
+        assertTrue(
+                lines.stream().noneMatch(line -> line.equals("No saved appliance state exists; leaving every appliance off")),
                 lines::toString);
     }
 
@@ -573,6 +646,7 @@ class ApplianceRestoreTest {
         private final Map<Identifier, Boolean> pins = new LinkedHashMap<>();
         private final List<Request> requests = new ArrayList<>();
         private boolean failNextSend;
+        private boolean failAfterApply;
         private boolean failUnplugged;
 
         @Override
@@ -587,6 +661,10 @@ class ApplianceRestoreTest {
             requests.add(request);
             if (request.write() != null) {
                 request.write().digital().forEach((pin, state) -> pins.put(pin, state.getValue()));
+            }
+            if (failAfterApply) {
+                failAfterApply = false;
+                throw new IllegalStateException("timed out after applying");
             }
             return Response.builder().uuid(uuid).digital(Map.copyOf(pins)).build();
         }

@@ -103,6 +103,10 @@ public class SimpleAliasService  {
         connectorService.withBoardLock(action);
     }
 
+    void forgetCachedDigitalPins(UUID boardId) {
+        digitalPinCache.keySet().removeIf(pin -> boardId.equals(pin.boardId()));
+    }
+
     public void waitFor(Duration duration) throws InterruptedException {
         Thread.sleep(duration.toMillis());
     }
@@ -573,17 +577,34 @@ public class SimpleAliasService  {
     }
 
     /**
-     * Sets every appliance pin to output as part of the board reset. That all-off
-     * mode set is not saved; the following restore writes the saved state.
+     * Sets every appliance pin to output. The firmware drives those pins HIGH, which
+     * is off, so that all-off state is saved and any restore still waiting for this
+     * board is dropped.
      */
     public Response setupBoard(UUID boardId) throws IOException {
-        Request request = getMapping(boardId)
-                .appliances()
+        Mapping mapping = getMapping(boardId);
+        Request request = mapping.appliances()
                 .stream()
                 .map(Appliance::identifier)
                 .map(id -> new ModeSet(id, Mode.OUTPUT))
                 .reduce(Request.empty(), Request::modeSet, (a, b) -> a);
-        return connectorService.send(boardId, request);
+        return applianceRestoreService.underRestoreLock(() -> connectorService.withBoardLock(() -> {
+            Response response = connectorService.send(boardId, request);
+            Map<String, Boolean> allOff = new LinkedHashMap<>();
+            Map<Identifier, Boolean> pinsOff = new LinkedHashMap<>();
+            for (Appliance appliance : mapping.appliances()) {
+                allOff.put(appliance.name(), false);
+                pinsOff.put(appliance.identifier(), false);
+            }
+            try {
+                applianceStateStore.merge(allOff);
+            } catch (IOException e) {
+                log.warn("Couldn't save appliance state", e);
+            }
+            rememberDigital(boardId, pinsOff);
+            applianceRestoreService.clearPendingRestore(boardId);
+            return response;
+        }));
     }
 
     /**

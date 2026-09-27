@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import io.freedriver.jsonlink.config.v2.Appliance;
 import io.freedriver.jsonlink.config.v2.Mapping;
@@ -106,6 +107,35 @@ public class ApplianceRestoreService {
     }
 
     /**
+     * Drops pin values cached before this board reset, so a joystick toggle or a
+     * state read waits for the board instead of using the pre-reset values.
+     */
+    void dropStalePinCache(UUID boardId) {
+        aliases.forgetCachedDigitalPins(boardId);
+    }
+
+    /**
+     * Runs {@code action} under the restore lock. Callers that also need the board
+     * lock take that lock inside this one.
+     */
+    <T> T underRestoreLock(Supplier<T> action) {
+        synchronized (restoreLock) {
+            return action.get();
+        }
+    }
+
+    /**
+     * Drops a restore that is waiting to run for this board. The board's outputs
+     * were just confirmed another way.
+     */
+    void clearPendingRestore(UUID boardId) {
+        synchronized (restoreLock) {
+            awaitingRestore.remove(boardId);
+            deferredDue.remove(boardId);
+        }
+    }
+
+    /**
      * Restores every newly connected board whose own window has elapsed.
      * A board still inside its window keeps waiting until that window ends.
      */
@@ -188,15 +218,20 @@ public class ApplianceRestoreService {
     private void restoreUnlocked(Collection<UUID> boardIds) {
         aliases.withBoardLock(() -> {
             LoadedApplianceState loaded = store.load();
+            if (loaded.status() == LoadedApplianceState.Status.UNREADABLE) {
+                log.info("Saved appliance state is unreadable; leaving every appliance off");
+                boardIds.forEach(awaitingRestore::remove);
+                return;
+            }
             if (loaded.status() != LoadedApplianceState.Status.PRESENT) {
-                log.info("No saved appliance state exists; leaving every appliance off");
+                if (loaded.status() == LoadedApplianceState.Status.MISSING) {
+                    log.info("No saved appliance state exists; leaving every appliance off");
+                }
                 boardIds.forEach(awaitingRestore::remove);
                 return;
             }
             for (UUID boardId : boardIds) {
-                if (restoreBoard(boardId, loaded.states())) {
-                    lastRestoreByBoard.put(boardId, clock.instant());
-                }
+                restoreBoard(boardId, loaded.states());
             }
         });
     }
@@ -230,6 +265,7 @@ public class ApplianceRestoreService {
         for (Appliance appliance : mapping.appliances()) {
             desired.put(appliance.name(), Boolean.TRUE.equals(saved.get(appliance.name())));
         }
+        lastRestoreByBoard.put(boardId, clock.instant());
         try {
             if (!desired.isEmpty()) {
                 aliases.setState(boardId, desired);
@@ -240,6 +276,7 @@ public class ApplianceRestoreService {
             return false;
         } catch (IOException | RuntimeException e) {
             log.warn("Couldn't restore appliances for board {}", boardId, e);
+            scheduleDeferredRestore(boardId);
             return false;
         }
         for (Appliance appliance : mapping.appliances()) {
