@@ -28,8 +28,7 @@ class BoardDeviceDiscoveryTest {
         Path config = config("[" + ARDUINO_IDS + "]");
         createUsbTty(sysClassTty, devRoot, "ttyACM0", "2341", "0042");
 
-        List<Path> before = BoardDeviceDiscovery.discover(config, sysClassTty, devRoot);
-        assertEquals(List.of(devRoot.resolve("ttyACM0")), before);
+        assertEquals(List.of(devRoot.resolve("ttyACM0")), BoardDeviceDiscovery.discover(config, sysClassTty, devRoot));
 
         removeTty(sysClassTty, devRoot, "ttyACM0");
         createUsbTty(sysClassTty, devRoot, "ttyACM1", "2341", "0042");
@@ -80,21 +79,20 @@ class BoardDeviceDiscoveryTest {
     void doesNotOpenTheSameBoardTwice() throws IOException {
         Path sysClassTty = tmp.resolve("sys/class/tty");
         Path devRoot = tmp.resolve("dev");
-        Path iface = createUsbDevice(sysClassTty, "arduino", "2341", "0042");
-        bindTty(sysClassTty, devRoot, "ttyACM0", iface);
-        bindTty(sysClassTty, devRoot, "ttyACM1", iface);
+        createUsbTty(sysClassTty, devRoot, "ttyACM1", "2341", "0042");
         Path config = config(
                 """
                 [
                   { "vendorId": "2341", "deviceId": "0042" },
-                  { "vendorId": "0x2341", "deviceId": "42" }
+                  { "vendorId": "0x2341", "deviceId": "42" },
+                  { "path": "%s" }
                 ]
-                """);
+                """
+                        .formatted(devRoot.resolve("ttyACM1")));
 
         List<Path> found = BoardDeviceDiscovery.discover(config, sysClassTty, devRoot);
 
-        assertEquals(1, found.size());
-        assertEquals(devRoot.resolve("ttyACM0"), found.get(0));
+        assertEquals(List.of(devRoot.resolve("ttyACM1")), found);
         assertEquals(found, BoardDeviceDiscovery.discover(config, sysClassTty, devRoot));
     }
 
@@ -114,31 +112,16 @@ class BoardDeviceDiscoveryTest {
 
     private static void createUsbTty(Path sysClassTty, Path devRoot, String ttyName, String vendor, String product)
             throws IOException {
-        bindTty(sysClassTty, devRoot, ttyName, createUsbDevice(sysClassTty, ttyName + "-usb", vendor, product));
-    }
-
-    private static Path createUsbDevice(Path sysClassTty, String name, String vendor, String product)
-            throws IOException {
-        Path usbDevice = sysClassTty.getParent().getParent().resolve("devices").resolve(name);
-        Path iface = usbDevice.resolve(name + "-iface");
+        Path usbDevice = sysClassTty.getParent().getParent().resolve("devices").resolve(ttyName + "-usb");
+        Path iface = usbDevice.resolve(ttyName + "-iface");
         Files.createDirectories(iface);
         Files.writeString(usbDevice.resolve("idVendor"), vendor + "\n");
         Files.writeString(usbDevice.resolve("idProduct"), product + "\n");
-        return iface;
-    }
-
-    private static void bindTty(Path sysClassTty, Path devRoot, String ttyName, Path iface) throws IOException {
         Path ttyDir = sysClassTty.resolve(ttyName);
         Files.createDirectories(ttyDir);
-        Path deviceLink = ttyDir.resolve("device");
-        if (!Files.exists(deviceLink)) {
-            Files.createSymbolicLink(deviceLink, iface);
-        }
+        Files.createSymbolicLink(ttyDir.resolve("device"), iface);
         Files.createDirectories(devRoot);
-        Path node = devRoot.resolve(ttyName);
-        if (!Files.exists(node)) {
-            Files.writeString(node, "");
-        }
+        Files.writeString(devRoot.resolve(ttyName), "");
     }
 
     private static void removeTty(Path sysClassTty, Path devRoot, String ttyName) throws IOException {
