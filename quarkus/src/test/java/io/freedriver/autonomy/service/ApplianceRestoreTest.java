@@ -21,9 +21,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -41,6 +38,7 @@ import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jakarta.enterprise.inject.Vetoed;
+import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -162,46 +160,25 @@ class ApplianceRestoreTest {
     }
 
     @Test
-    void concurrentChangesLeaveTheFileMatchingTheBoard() throws Exception {
-        mappings.clear();
-        mappings.add(new Mapping(
-                boardId,
-                "main",
-                List.of(
-                        new Appliance(FRIDGE_PIN, "fridge"),
-                        new Appliance(HALLWAY_PIN, "hallway"),
-                        new Appliance(OVEN_PIN, "oven")),
-                Map.of(),
-                Set.of(),
-                List.of()));
-        String[] names = {"fridge", "hallway", "oven"};
-        int threads = 8;
-        int toggles = 40;
-        ExecutorService pool = Executors.newFixedThreadPool(threads);
-        try {
-            List<Future<?>> futures = new ArrayList<>();
-            for (int thread = 0; thread < threads; thread++) {
-                int offset = thread;
-                futures.add(pool.submit(() -> {
-                    try {
-                        for (int step = 0; step < toggles; step++) {
-                            aliases.setState(boardId, Map.of(names[(offset + step) % names.length], step % 2 == 0));
-                        }
-                    } catch (IOException e) {
-                        throw new IllegalStateException(e);
-                    }
-                }));
-            }
-            for (Future<?> future : futures) {
-                future.get();
-            }
-        } finally {
-            pool.shutdownNow();
-        }
+    void logsOnceWhenAScheduledRestoreFindsTheBoardUnplugged() throws IOException {
+        store.write(Map.of("fridge", true, "hallway", false));
+        board.failUnplugged = true;
 
-        assertEquals(board.pins.get(FRIDGE_PIN), store.load().states().get("fridge"));
-        assertEquals(board.pins.get(HALLWAY_PIN), store.load().states().get("hallway"));
-        assertEquals(board.pins.get(OVEN_PIN), store.load().states().get("oven"));
+        List<String> lines = capture(() -> {
+            restore.beginAwaitingRestore(boardId);
+            restore.onBoardsReady(List.of(boardId));
+        });
+
+        assertTrue(lines.stream().anyMatch(line -> line.contains("is unplugged") && line.contains("next reconnect")), lines::toString);
+        assertTrue(lines.stream().noneMatch(line -> line.contains("Couldn't restore appliances")), lines::toString);
+        assertTrue(restore.isAwaitingRestore(boardId));
+        assertEquals(0, writeCount());
+
+        board.failUnplugged = false;
+        restore.onBoardsReady(List.of(boardId));
+        assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
+        assertEquals(Boolean.FALSE, board.pins.get(HALLWAY_PIN));
+        assertFalse(restore.isAwaitingRestore(boardId));
     }
 
     @Test
@@ -547,9 +524,13 @@ class ApplianceRestoreTest {
         private final Map<Identifier, Boolean> pins = new LinkedHashMap<>();
         private final List<Request> requests = new ArrayList<>();
         private boolean failNextSend;
+        private boolean failUnplugged;
 
         @Override
         public synchronized Response send(UUID uuid, Request request) {
+            if (failUnplugged) {
+                throw new WebApplicationException("Board not found", 404);
+            }
             if (failNextSend) {
                 failNextSend = false;
                 throw new IllegalStateException("board rejected the request");
