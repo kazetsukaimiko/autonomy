@@ -57,8 +57,9 @@ public class ConnectorServiceCommon {
                 .collect(Collectors.toList());
         ACTIVE_CONNECTORS.removeAll(closed);
 
-        // Open the tty node whose sysfs ids match connectors.json. One canonical path is one board.
+        // Open each ttyACM node whose sysfs ids match connectors.json. One canonical path is one board.
         List<CompletableFuture<Void>> threads = BoardDeviceDiscovery.discover().stream()
+                .filter(BoardDeviceDiscovery::isTtyAcmNode)
                 .filter(device -> ACTIVE_CONNECTORS.stream()
                         .noneMatch(existing -> sameDevice(existing, device)))
                 .map(device -> Connectors.findOrOpenAndConsume(device, executorService, ACTIVE_CONNECTORS::add))
