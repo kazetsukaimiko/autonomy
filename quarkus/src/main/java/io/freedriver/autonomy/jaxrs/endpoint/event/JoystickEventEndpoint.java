@@ -1,6 +1,6 @@
 package io.freedriver.autonomy.jaxrs.endpoint.event;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 import io.freedriver.autonomy.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.jaxrs.endpoint.EventApi;
@@ -23,8 +23,8 @@ public class JoystickEventEndpoint implements EventApi<JoystickEvent> {
     JoystickEventCrudService joystickEventCrudService;
 
     @Override
-    public List<JoystickEvent> findAll() {
-        return joystickEventCrudService.fromStartOfDay().toList();
+    public Stream<JoystickEvent> findAll() {
+        return joystickEventCrudService.fromStartOfDay();
     }
 
     @Override

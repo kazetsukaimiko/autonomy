@@ -2,6 +2,7 @@ package io.freedriver.autonomy;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -42,7 +43,13 @@ class NoDatasourceStartupTest {
                 .when().get("/rest/event")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(0));
+                .body(equalTo("[]"));
+
+        given()
+                .when().get("/rest/stream-serialization")
+                .then()
+                .statusCode(200)
+                .body(equalTo("[\"alpha\",\"beta\",\"gamma\"]"));
 
         given()
                 .when().get("/rest/vedirect/device")
