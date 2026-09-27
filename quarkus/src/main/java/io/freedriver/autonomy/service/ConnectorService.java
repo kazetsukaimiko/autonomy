@@ -3,7 +3,6 @@ package io.freedriver.autonomy.service;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -12,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import io.freedriver.jsonlink.jackson.schema.v1.AnalogRead;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
@@ -55,14 +53,5 @@ public class ConnectorService extends ConnectorServiceCommon {
         return send(boardId, pins.stream()
                 .reduce(Request.empty(), Request::digitalRead, (a, b) -> a)
                 .analogRead(analogReads));
-    }
-
-    public Map<Identifier, Boolean> writeDigital(UUID boardId, Map<Identifier, Boolean> state) {
-        Request request = state.entrySet().stream()
-                .reduce(Request.empty(),
-                        (req, e) -> req.digitalWrite(new DigitalWrite(e.getKey(), e.getValue())),
-                        (a, b) -> a);
-        return send(boardId, request)
-                .digital();
     }
 }
