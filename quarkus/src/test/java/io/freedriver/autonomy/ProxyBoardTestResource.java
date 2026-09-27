@@ -8,12 +8,9 @@ import java.util.Map;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 /**
- * Installs a one-board mapping before the application starts, and puts the previous file back after.
+ * Points {@code autonomy.mappings.file} at a temporary mapping before the application starts.
  */
 public class ProxyBoardTestResource implements QuarkusTestResourceLifecycleManager {
-
-    private static final Path MAPPINGS = Path.of(
-            System.getProperty("user.home"), ".config", "autonomy", "mappings_v2.json");
 
     private static final String MAPPING = """
             {"eventTTL":7,"eventTTLUnit":"DAYS","mappings":[{
@@ -30,34 +27,27 @@ public class ProxyBoardTestResource implements QuarkusTestResourceLifecycleManag
             }]}
             """;
 
-    private byte[] previous;
-    private boolean hadFile;
+    private Path mappings;
 
     @Override
     public Map<String, String> start() {
         try {
-            Files.createDirectories(MAPPINGS.getParent());
-            if (Files.exists(MAPPINGS)) {
-                hadFile = true;
-                previous = Files.readAllBytes(MAPPINGS);
-            }
-            Files.writeString(MAPPINGS, MAPPING);
+            mappings = Files.createTempFile("mappings_v2", ".json");
+            Files.writeString(mappings, MAPPING);
         } catch (IOException e) {
-            throw new IllegalStateException("Could not prepare " + MAPPINGS, e);
+            throw new IllegalStateException("Could not prepare mappings file", e);
         }
-        return Map.of();
+        return Map.of("autonomy.mappings.file", mappings.toString());
     }
 
     @Override
     public void stop() {
         try {
-            if (hadFile) {
-                Files.write(MAPPINGS, previous);
-            } else {
-                Files.deleteIfExists(MAPPINGS);
+            if (mappings != null) {
+                Files.deleteIfExists(mappings);
             }
         } catch (IOException e) {
-            throw new IllegalStateException("Could not restore " + MAPPINGS, e);
+            throw new IllegalStateException("Could not delete " + mappings, e);
         }
     }
 }

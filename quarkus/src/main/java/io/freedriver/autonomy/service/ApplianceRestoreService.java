@@ -24,7 +24,6 @@ import io.freedriver.jsonlink.config.v2.Mapping;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -187,17 +186,19 @@ public class ApplianceRestoreService {
     }
 
     private void restoreUnlocked(Collection<UUID> boardIds) {
-        LoadedApplianceState loaded = store.load();
-        if (loaded.status() != LoadedApplianceState.Status.PRESENT) {
-            log.info("No saved appliance state exists; leaving every appliance off");
-            boardIds.forEach(awaitingRestore::remove);
-            return;
-        }
-        for (UUID boardId : boardIds) {
-            if (restoreBoard(boardId, loaded.states())) {
-                lastRestoreByBoard.put(boardId, clock.instant());
+        aliases.withBoardLock(() -> {
+            LoadedApplianceState loaded = store.load();
+            if (loaded.status() != LoadedApplianceState.Status.PRESENT) {
+                log.info("No saved appliance state exists; leaving every appliance off");
+                boardIds.forEach(awaitingRestore::remove);
+                return;
             }
-        }
+            for (UUID boardId : boardIds) {
+                if (restoreBoard(boardId, loaded.states())) {
+                    lastRestoreByBoard.put(boardId, clock.instant());
+                }
+            }
+        });
     }
 
     private boolean insideWindow(UUID boardId) {
@@ -233,13 +234,9 @@ public class ApplianceRestoreService {
             if (!desired.isEmpty()) {
                 aliases.setState(boardId, desired);
             }
-        } catch (WebApplicationException unplugged) {
-            if (unplugged.getResponse() != null && unplugged.getResponse().getStatus() == 404) {
-                log.info("Board {} is unplugged; the next reconnect will restore it", boardId);
-                lastRestoreByBoard.remove(boardId);
-                return false;
-            }
-            log.warn("Couldn't restore appliances for board {}", boardId, unplugged);
+        } catch (BoardNotFoundException unplugged) {
+            log.info("Board {} is unplugged; the next reconnect will restore it", boardId);
+            lastRestoreByBoard.remove(boardId);
             return false;
         } catch (IOException | RuntimeException e) {
             log.warn("Couldn't restore appliances for board {}", boardId, e);

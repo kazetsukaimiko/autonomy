@@ -52,6 +52,7 @@ import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Default;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 @Slf4j
@@ -90,6 +91,17 @@ public class SimpleAliasService  {
 
     @Inject
     ApplianceRestoreService applianceRestoreService;
+
+    @Inject
+    @ConfigProperty(name = "autonomy.mappings.file")
+    String mappingsFile;
+
+    /**
+     * Guards board discovery, sends, and the save that follows. Must not wrap slow work.
+     */
+    void withBoardLock(Runnable action) {
+        connectorService.withBoardLock(action);
+    }
 
     public void waitFor(Duration duration) throws InterruptedException {
         Thread.sleep(duration.toMillis());
@@ -191,12 +203,7 @@ public class SimpleAliasService  {
 
     public Mappings getMappings() throws IOException {
         return ObjectMapperContextResolver.getMapper().readValue(
-                DirectoryProviders.CONFIG
-                        .getProvider()
-                        .subdir(Autonomy.DEPLOYMENT)
-                        .file("mappings_v2.json")
-                        .get()
-                        .toFile(),
+                Path.of(mappingsFile).toFile(),
                 Mappings.class);
     }
 

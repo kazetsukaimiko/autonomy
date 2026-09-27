@@ -14,13 +14,20 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -38,7 +45,6 @@ import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jakarta.enterprise.inject.Vetoed;
-import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -179,6 +185,49 @@ class ApplianceRestoreTest {
         assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
         assertEquals(Boolean.FALSE, board.pins.get(HALLWAY_PIN));
         assertFalse(restore.isAwaitingRestore(boardId));
+    }
+
+    @Test
+    void twoBoardsPublishingTogetherAreBothRestored() {
+        List<NamedConnector> left = boards(64);
+        List<NamedConnector> right = boards(64);
+        List<Set<UUID>> restored = new ArrayList<>();
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        ConnectorServiceCommon racing = new ConnectorServiceCommon() {
+            @Override
+            protected void discoverDevices(Collection<UUID> newlyConnected) {
+                CountDownLatch started = new CountDownLatch(2);
+                CountDownLatch go = new CountDownLatch(1);
+                CompletableFuture<Void> leftTask = CompletableFuture.runAsync(
+                        () -> publishTogether(this, started, go, left, newlyConnected), pool);
+                CompletableFuture<Void> rightTask = CompletableFuture.runAsync(
+                        () -> publishTogether(this, started, go, right, newlyConnected), pool);
+                await(started);
+                go.countDown();
+                waitForCompletion(leftTask);
+                waitForCompletion(rightTask);
+            }
+
+            @Override
+            void restoreNewlyConnected(List<UUID> newlyConnected) {
+                restored.add(new HashSet<>(newlyConnected));
+            }
+        };
+        racing.applianceRestoreService = restore;
+        try {
+            racing.refreshConnectedBoards();
+            Set<UUID> expected = new HashSet<>();
+            left.forEach(board -> expected.add(board.getUUID()));
+            right.forEach(board -> expected.add(board.getUUID()));
+            assertEquals(1, restored.size());
+            assertEquals(expected.size(), restored.get(0).size());
+            assertEquals(expected, restored.get(0));
+        } finally {
+            left.forEach(racing::forgetTrackedConnector);
+            right.forEach(racing::forgetTrackedConnector);
+            pool.shutdownNow();
+            racing.executorService.shutdownNow();
+        }
     }
 
     @Test
@@ -529,7 +578,7 @@ class ApplianceRestoreTest {
         @Override
         public synchronized Response send(UUID uuid, Request request) {
             if (failUnplugged) {
-                throw new WebApplicationException("Board not found", 404);
+                throw new BoardNotFoundException("Board not found");
             }
             if (failNextSend) {
                 failNextSend = false;
@@ -540,6 +589,39 @@ class ApplianceRestoreTest {
                 request.write().digital().forEach((pin, state) -> pins.put(pin, state.getValue()));
             }
             return Response.builder().uuid(uuid).digital(Map.copyOf(pins)).build();
+        }
+    }
+
+    private static List<NamedConnector> boards(int count) {
+        List<NamedConnector> boards = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            boards.add(new NamedConnector(UUID.randomUUID()));
+        }
+        return boards;
+    }
+
+    private static void publishTogether(
+            ConnectorServiceCommon connectors,
+            CountDownLatch started,
+            CountDownLatch go,
+            List<NamedConnector> boards,
+            Collection<UUID> newlyConnected) {
+        started.countDown();
+        await(started);
+        await(go);
+        for (NamedConnector board : boards) {
+            connectors.publishConnectedBoard(board, newlyConnected);
+        }
+    }
+
+    private static void await(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("timed out waiting for both boards to publish");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
         }
     }
 

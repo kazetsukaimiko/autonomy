@@ -2,6 +2,7 @@ package io.freedriver.autonomy.service;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +99,7 @@ public class ProxyFakeConnectorService extends ConnectorService {
     }
 
     @Override
-    protected void discoverDevices(List<UUID> newlyConnected) {
+    protected void discoverDevices(Collection<UUID> newlyConnected) {
         if (!armed) {
             return;
         }
