@@ -4,9 +4,8 @@ After=network.target
 
 [Service]
 # Note: %h is systemd user specifier for $HOME
-ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -jar %h/.local/autonomy/quarkus-run.jar -DrestartOn=%h/.local/autonomy/quarkus-run.jar -DrestartCommand="%h/bin/restartAutonomy.sh"
-# Graceful shutdown: Quarkus handles SIGTERM (via kill $MAINPID) for proper shutdown hooks, datasource close etc.
-# Do not depend on or post-stop h2 here (h2 is optional/separate; previous Requires+ExecStopPost could lead to abrupt kills and DB issues).
+ExecStart=/usr/bin/java -jar %h/.local/autonomy/quarkus-run.jar -DrestartOn=%h/.local/autonomy/quarkus-run.jar -DrestartCommand="%h/bin/restartAutonomy.sh"
+# Quarkus handles SIGTERM (via kill $MAINPID) and runs shutdown hooks.
 ExecStop=/bin/kill $MAINPID
 KillMode=control-group
 Restart=always

@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=%h/.local/autonomy-next
-ExecStart=/usr/bin/java -Dquarkus.http.host=0.0.0.0 -Dquarkus.http.port=8080 -Dquarkus.datasource.jdbc.url=jdbc:h2:%h/.config/autonomy/autonomy-q3.h2db -jar %h/.local/autonomy-next/quarkus-run.jar
+ExecStart=/usr/bin/java -Dquarkus.http.host=0.0.0.0 -Dquarkus.http.port=8080 -jar %h/.local/autonomy-next/quarkus-run.jar
 ExecStop=/bin/kill $MAINPID
 KillMode=control-group
 TimeoutStopSec=20
