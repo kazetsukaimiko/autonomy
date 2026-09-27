@@ -68,4 +68,4 @@ With the migration to Quarkus, the goal is to break up Autonomy as a monolithic 
 
 Message bus interaction should be agnostic of the implementation- ideally continue use of CDI Event interfaces or JMS. 
 
-Additionally there are items not captured in this repository- by default the application uses H2 database but for my purposes I actually use MySQL. Logstash then moves event data from all event sources to ElasticSearch / Kibana. An effort is being made to pull this environment into VCS through Dockerfiles and confd. Kibana is uses mostly ask visual questions about lithium cell health.
+Event writes are accepted and discarded. Appliance mappings and sensor history live under `~/.config/autonomy/`. Observability tooling such as Logstash and Kibana sits outside this repository.
