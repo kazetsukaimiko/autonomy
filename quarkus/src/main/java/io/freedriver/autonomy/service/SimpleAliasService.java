@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -83,6 +84,12 @@ public class SimpleAliasService  {
 
     @Inject
     Event<SpeechEvent> speech;
+
+    @Inject
+    ApplianceStateStore applianceStateStore;
+
+    @Inject
+    ApplianceRestoreService applianceRestoreService;
 
     public void waitFor(Duration duration) throws InterruptedException {
         Thread.sleep(duration.toMillis());
@@ -216,6 +223,13 @@ public class SimpleAliasService  {
 
     public Map<Identifier, Boolean> cacheBoardDigitalState(UUID boardId, Map<Identifier, Boolean> digitalState) {
         digitalState.forEach((k, v) -> digitalPinCache.put(new PinCoordinate(boardId, k), v));
+        if (!ignoreBoardReportedState(boardId)) {
+            try {
+                recordConfirmedOutputs(getMapping(boardId), digitalState);
+            } catch (IOException e) {
+                log.warn("Couldn't save board-reported appliance state for {}", boardId, e);
+            }
+        }
         return digitalState;
     }
 
@@ -223,6 +237,9 @@ public class SimpleAliasService  {
         // Cache Digital Pins
         currentState.digital().forEach((k, v) ->
                 digitalPinCache.put(new PinCoordinate(mapping.connectorId(), k), v));
+        if (!ignoreBoardReportedState(mapping.connectorId())) {
+            recordConfirmedOutputs(mapping, currentState.digital());
+        }
 
         /*
         // Cache Analog Pins
@@ -513,7 +530,9 @@ public class SimpleAliasService  {
 
             Response response = connectorService.send(boardId, r);
             sendAnalogSensorEvents(mapping, response);
-            return cacheBoardState(mapping, response);
+            Response cached = cacheBoardState(mapping, response);
+            recordConfirmedOutputs(mapping, response.digital());
+            return cached;
         }
         return emptyResponse();
     }
@@ -582,7 +601,39 @@ public class SimpleAliasService  {
 
         log.trace(request.toString());
 
-        cacheBoardState(mapping, connectorService.send(mapping.connectorId(), request));
+        Response response = connectorService.send(mapping.connectorId(), request);
+        cacheBoardState(mapping, response);
+        recordConfirmedOutputs(mapping, response.digital());
+    }
+
+    /**
+     * Saves on/off values the board has confirmed. Names that are not appliances are ignored.
+     * Callers that apply a user or joystick change call this even while a restore is pending.
+     * Board-reported snapshots go through {@link #cacheBoardState} instead, which skips them
+     * until restore has finished so a reset cannot overwrite the saved state with all-off.
+     */
+    private void recordConfirmedOutputs(Mapping mapping, Map<Identifier, Boolean> digital) {
+        if (applianceStateStore == null || digital == null || digital.isEmpty()) {
+            return;
+        }
+        Map<String, Boolean> updates = new LinkedHashMap<>();
+        for (Appliance appliance : mapping.appliances()) {
+            if (digital.containsKey(appliance.identifier())) {
+                updates.put(appliance.name(), digital.get(appliance.identifier()));
+            }
+        }
+        if (updates.isEmpty()) {
+            return;
+        }
+        try {
+            applianceStateStore.merge(updates);
+        } catch (IOException e) {
+            log.warn("Couldn't save appliance state", e);
+        }
+    }
+
+    private boolean ignoreBoardReportedState(UUID boardId) {
+        return applianceRestoreService != null && applianceRestoreService.isAwaitingRestore(boardId);
     }
 
 }

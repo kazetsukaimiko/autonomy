@@ -3,6 +3,8 @@ package io.freedriver.autonomy.service;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,6 +23,7 @@ import io.freedriver.jsonlink.jackson.JsonLinkModule;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +41,18 @@ public class ConnectorServiceCommon {
 
 
     protected ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+    @Inject
+    ApplianceRestoreService applianceRestoreService;
+
+    /**
+     * Opens boards that are not already connected. Each open waits out the board
+     * reset and completes the UUID handshake before the connector is published,
+     * and saved appliance state is restored after that.
+     */
+    public void refreshConnectedBoards() {
+        getAllConnectors();
+    }
 
     public List<UUID> getConnectedBoards() {
         return getAllConnectors().stream()
@@ -59,14 +74,46 @@ public class ConnectorServiceCommon {
 
         // Connect new. Match by canonical path so /dev/serial/by-id/... and /dev/ttyACM0
         // are not opened twice against the same Arduino.
+        // findOrOpenAndConsume returns only after the reset wait and UUID handshake.
+        List<UUID> newlyConnected = Collections.synchronizedList(new ArrayList<>());
         List<CompletableFuture<Void>> threads = Connectors.allDevices().stream()
                 .filter(device -> ACTIVE_CONNECTORS.stream()
                         .noneMatch(existing -> sameDevice(existing, device)))
-                .map(device -> Connectors.findOrOpenAndConsume(device, executorService, ACTIVE_CONNECTORS::add))
+                .map(device -> Connectors.findOrOpenAndConsume(
+                        device, executorService, connector -> publishConnectedBoard(connector, newlyConnected)))
                 .collect(Collectors.toList());
         threads.forEach(this::waitForCompletion);
+        restoreNewlyConnected(newlyConnected);
 
         return ACTIVE_CONNECTORS;
+    }
+
+    /**
+     * Marks the board awaiting restore before other callers can use it, so the
+     * all-off snapshot after reset is not saved as a user change.
+     */
+    void publishConnectedBoard(Connector connector, List<UUID> newlyConnected) {
+        UUID boardId = uuidOrNull(connector);
+        if (boardId != null && applianceRestoreService != null) {
+            applianceRestoreService.beginAwaitingRestore(boardId);
+            newlyConnected.add(boardId);
+        }
+        ACTIVE_CONNECTORS.add(connector);
+    }
+
+    void restoreNewlyConnected(List<UUID> newlyConnected) {
+        if (applianceRestoreService == null || newlyConnected.isEmpty()) {
+            return;
+        }
+        try {
+            applianceRestoreService.onBoardsReady(List.copyOf(newlyConnected));
+        } catch (RuntimeException e) {
+            log.warn("Couldn't restore appliances after board handshake", e);
+        }
+    }
+
+    void forgetTrackedConnector(Connector connector) {
+        ACTIVE_CONNECTORS.remove(connector);
     }
 
     private UUID uuidOrNull(Connector connector) {
