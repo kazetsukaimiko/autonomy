@@ -174,6 +174,71 @@ class ApplianceStateStoreTest {
     }
 
     @Test
+    void refusesASymlinkedStateDirectory() throws IOException {
+        assumeTrue(posix(), "POSIX file permissions are not available");
+        Path real = temp.resolve("real");
+        Files.createDirectories(real);
+        Path link = temp.resolve("link");
+        Files.createSymbolicLink(link, real);
+        ApplianceStateStore store = new ApplianceStateStore(link);
+
+        java.util.List<String> lines = capture(() -> {
+            try {
+                store.write(Map.of("fridge", true));
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+
+        assertEquals(LoadedApplianceState.Status.UNTRUSTED, store.load().status());
+        assertFalse(Files.exists(real.resolve(ApplianceStateStore.FILE_NAME)));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("not a real directory")), lines::toString);
+    }
+
+    @Test
+    void refusesASymlinkedStateFile() throws IOException {
+        assumeTrue(posix(), "POSIX file permissions are not available");
+        Path directory = temp.resolve("state");
+        Files.createDirectories(directory);
+        Path outside = temp.resolve("outside.json");
+        Files.writeString(outside, "{\"fridge\":true}");
+        Path link = directory.resolve(ApplianceStateStore.FILE_NAME);
+        Files.createSymbolicLink(link, outside);
+        ApplianceStateStore store = new ApplianceStateStore(directory);
+
+        java.util.List<String> lines = capture(store::load);
+
+        assertEquals(LoadedApplianceState.Status.UNTRUSTED, store.load().status());
+        assertEquals("{\"fridge\":true}", Files.readString(outside));
+        assertTrue(Files.isSymbolicLink(link));
+        store.merge(Map.of("hallway", true));
+        assertEquals("{\"fridge\":true}", Files.readString(outside));
+        assertTrue(Files.isSymbolicLink(link));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("not a regular file")), lines::toString);
+    }
+
+    @Test
+    void refusesAGroupWritableStateFile() throws IOException {
+        assumeTrue(posix(), "POSIX file permissions are not available");
+        Path directory = temp.resolve("state");
+        ApplianceStateStore store = new ApplianceStateStore(directory);
+        store.write(Map.of("fridge", true));
+        Files.setPosixFilePermissions(
+                store.stateFile(), PosixFilePermissions.fromString("rw-rw----"));
+
+        java.util.List<String> lines = capture(store::load);
+
+        assertEquals(LoadedApplianceState.Status.UNTRUSTED, store.load().status());
+        assertTrue(store.load().states().isEmpty());
+        store.merge(Map.of("fridge", false));
+        assertTrue(Files.readString(store.stateFile()).contains("true"));
+        assertEquals(
+                "rw-rw----",
+                PosixFilePermissions.toString(Files.getPosixFilePermissions(store.stateFile())));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("group or other writable")), lines::toString);
+    }
+
+    @Test
     void missingFileIsAFirstStart() {
         ApplianceStateStore store = new ApplianceStateStore(temp.resolve("absent"));
         LoadedApplianceState loaded = store.load();

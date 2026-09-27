@@ -4,13 +4,15 @@ import java.util.Map;
 
 /**
  * Appliance on/off values read from the state file.
- * {@link Status#MISSING} and {@link Status#UNREADABLE} both mean nothing is restored.
+ * {@link Status#MISSING}, {@link Status#UNREADABLE}, and {@link Status#UNTRUSTED}
+ * all mean nothing is restored.
  */
 record LoadedApplianceState(Status status, Map<String, Boolean> states) {
 
     enum Status {
         MISSING,
         UNREADABLE,
+        UNTRUSTED,
         PRESENT
     }
 
@@ -24,6 +26,10 @@ record LoadedApplianceState(Status status, Map<String, Boolean> states) {
 
     static LoadedApplianceState unreadable() {
         return new LoadedApplianceState(Status.UNREADABLE, Map.of());
+    }
+
+    static LoadedApplianceState untrusted() {
+        return new LoadedApplianceState(Status.UNTRUSTED, Map.of());
     }
 
     static LoadedApplianceState present(Map<String, Boolean> states) {

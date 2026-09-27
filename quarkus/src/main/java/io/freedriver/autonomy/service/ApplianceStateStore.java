@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.UserPrincipal;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,7 +33,10 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * process user. Missing parents keep the default permissions. Each write goes to
  * a temp file in that directory, is forced to disk, and is renamed over the
  * previous file. Load, update, and write of one change run together so two
- * overlapping saves cannot drop each other.
+ * overlapping saves cannot drop each other. A directory that is not a real
+ * directory owned by this user, or a state file that is not a regular
+ * non-symlink file owned by this user without group or other write, is refused:
+ * nothing is restored and nothing is written.
  */
 @ApplicationScoped
 @Slf4j
@@ -66,8 +72,15 @@ public class ApplianceStateStore {
      * a boolean is skipped and logged; the other entries are kept.
      */
     public synchronized LoadedApplianceState load() {
+        if (!ensureTrusted()) {
+            return LoadedApplianceState.untrusted();
+        }
+        return readState();
+    }
+
+    private LoadedApplianceState readState() {
         Path file = stateFile();
-        if (!Files.isRegularFile(file)) {
+        if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
             return LoadedApplianceState.missing();
         }
         try {
@@ -98,13 +111,13 @@ public class ApplianceStateStore {
      * Replaces the saved on/off value for each named appliance and leaves the others.
      */
     public synchronized void merge(Map<String, Boolean> updates) throws IOException {
-        if (updates.isEmpty()) {
+        if (updates.isEmpty() || !ensureTrusted()) {
             return;
         }
-        LoadedApplianceState loaded = load();
+        LoadedApplianceState loaded = readState();
         Map<String, Boolean> states = new LinkedHashMap<>(loaded.states());
         states.putAll(updates);
-        write(states, loaded);
+        writeTrusted(states, loaded);
     }
 
     /**
@@ -112,10 +125,13 @@ public class ApplianceStateStore {
      * An existing file that cannot be read is moved aside before the new file is written.
      */
     public synchronized void write(Map<String, Boolean> states) throws IOException {
-        write(states, load());
+        if (!ensureTrusted()) {
+            return;
+        }
+        writeTrusted(states, readState());
     }
 
-    private void write(Map<String, Boolean> states, LoadedApplianceState existing) throws IOException {
+    private void writeTrusted(Map<String, Boolean> states, LoadedApplianceState existing) throws IOException {
         ensureDirectory();
         if (existing.status() == LoadedApplianceState.Status.UNREADABLE) {
             moveUnreadableAside();
@@ -172,6 +188,68 @@ public class ApplianceStateStore {
             return;
         }
         Files.createFile(temp);
+    }
+
+    /**
+     * The directory, when it already exists, is a real directory owned by this
+     * user. The state file, when it already exists, is a regular non-symlink
+     * file owned by this user with no group or other write bit.
+     */
+    private boolean ensureTrusted() {
+        if (!posix()) {
+            return true;
+        }
+        try {
+            String problem = trustProblem();
+            if (problem == null) {
+                return true;
+            }
+            log.error("Refusing appliance state at {}: {}", directory, problem);
+            return false;
+        } catch (IOException e) {
+            log.error("Refusing appliance state at {}", directory, e);
+            return false;
+        }
+    }
+
+    private String trustProblem() throws IOException {
+        if (Files.exists(directory, LinkOption.NOFOLLOW_LINKS)) {
+            PosixFileAttributes directoryAttributes = Files.readAttributes(
+                    directory, PosixFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+            if (directoryAttributes.isSymbolicLink()
+                    || !directoryAttributes.isDirectory()
+                    || !ownedByProcessUser(directoryAttributes.owner())) {
+                return "directory is not a real directory owned by this user";
+            }
+        }
+        Path file = stateFile();
+        if (!Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
+            return null;
+        }
+        PosixFileAttributes fileAttributes = Files.readAttributes(
+                file, PosixFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        if (fileAttributes.isSymbolicLink()
+                || !fileAttributes.isRegularFile()
+                || !ownedByProcessUser(fileAttributes.owner())) {
+            return "file is not a regular file owned by this user";
+        }
+        Set<PosixFilePermission> permissions = fileAttributes.permissions();
+        if (permissions.contains(PosixFilePermission.GROUP_WRITE)
+                || permissions.contains(PosixFilePermission.OTHERS_WRITE)) {
+            return "file is group or other writable";
+        }
+        return null;
+    }
+
+    private boolean ownedByProcessUser(UserPrincipal owner) throws IOException {
+        String userName = System.getProperty("user.name");
+        if (userName != null && userName.equals(owner.getName())) {
+            return true;
+        }
+        UserPrincipal current = directory.getFileSystem()
+                .getUserPrincipalLookupService()
+                .lookupPrincipalByName(userName);
+        return owner.equals(current);
     }
 
     private void ensureDirectory() throws IOException {
