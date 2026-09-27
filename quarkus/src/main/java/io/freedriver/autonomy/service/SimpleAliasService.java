@@ -515,6 +515,14 @@ public class SimpleAliasService  {
             sendAnalogSensorEvents(mapping, response);
             return cacheBoardState(mapping, response);
         }
+        return emptyResponse();
+    }
+
+    /**
+     * Empty board response, built the same way as {@link Request#empty()}.
+     * The record supplies empty info, error, debug, digital, and analog collections.
+     */
+    private static Response emptyResponse() {
         return Response.builder().build();
     }
 
