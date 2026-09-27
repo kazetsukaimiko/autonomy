@@ -143,21 +143,19 @@ public class SimpleAliasService  {
     }
 
     public Future<Boolean> cacheAnalogPins(Mapping mapping) {
-        return pool.submit(() -> {
-            synchronized (connectorService) {
-                try {
-                    Request readAnalogPinsAnyway = Request.empty()
-                            .analogRead(mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead));
-                    Response response = connectorService.send(mapping.connectorId(), readAnalogPinsAnyway);
-                    cacheBoardState(mapping, response);
-                    sendAnalogSensorEvents(mapping, response);
-                    return true;
-                } catch (Exception e) {
-                    log.warn("Couldn't cache Analog Pin State. ", e);
-                    return false;
-                }
+        return pool.submit(() -> connectorService.withBoardLock(() -> {
+            try {
+                Request readAnalogPinsAnyway = Request.empty()
+                        .analogRead(mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead));
+                Response response = connectorService.send(mapping.connectorId(), readAnalogPinsAnyway);
+                cacheBoardState(mapping, response);
+                sendAnalogSensorEvents(mapping, response);
+                return true;
+            } catch (Exception e) {
+                log.warn("Couldn't cache Analog Pin State. ", e);
+                return false;
             }
-        });
+        }));
     }
 
     /**
@@ -203,7 +201,7 @@ public class SimpleAliasService  {
     }
 
     public Map<Identifier, Boolean> currentState(UUID boardId, Mapping mapping) {
-        synchronized (connectorService) {
+        return connectorService.withBoardLock(() -> {
             Map<Identifier, Boolean> digitalStateFromCache = mapping.appliances().stream()
                     .map(appliance -> new PinCoordinate(boardId, appliance.identifier()))
                     .filter(pinCoordinate -> digitalPinCache.containsKey(pinCoordinate))
@@ -222,11 +220,11 @@ public class SimpleAliasService  {
                             mapping.appliances().stream().map(Appliance::identifier).collect(Collectors.toSet()),
                             mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead))
             ).digital();
-        }
+        });
     }
 
     public Map<Identifier, Boolean> cacheBoardDigitalState(UUID boardId, Map<Identifier, Boolean> digitalState) {
-        synchronized (connectorService) {
+        return connectorService.withBoardLock(() -> {
             rememberDigital(boardId, digitalState);
             if (!ignoreBoardReportedState(boardId)) {
                 try {
@@ -236,11 +234,11 @@ public class SimpleAliasService  {
                 }
             }
             return digitalState;
-        }
+        });
     }
 
     public Response cacheBoardState(Mapping mapping, Response currentState) {
-        synchronized (connectorService) {
+        return connectorService.withBoardLock(() -> {
             // Cache Digital Pins
             rememberDigital(mapping.connectorId(), currentState.digital());
             if (!ignoreBoardReportedState(mapping.connectorId())) {
@@ -286,7 +284,7 @@ public class SimpleAliasService  {
          */
 
             return currentState;
-        }
+        });
     }
 
     private void speak(AnalogAlert analogAlert, Map<String, Double> percentages) {
@@ -527,21 +525,21 @@ public class SimpleAliasService  {
             log.info("Setting states:");
             desiredState.forEach((k, v) -> log.info(k+": " + (v ? "true":"false")));
 
-            Request r = identifiers(boardId, desiredState)
+            Request writes = identifiers(boardId, desiredState)
                     .entrySet()
                     .stream()
                     .map(e -> new DigitalWrite(e.getKey(), e.getValue()))
                     .reduce(Request.empty(), Request::digitalWrite, (a, b) -> a);
-            r = mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead)
-                    .reduce(r, Request::analogRead, (a, b) -> a);
+            Request request = mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead)
+                    .reduce(writes, Request::analogRead, (a, b) -> a);
 
-            synchronized (connectorService) {
-                Response response = connectorService.send(boardId, r);
+            return connectorService.withBoardLock(() -> {
+                Response response = connectorService.send(boardId, request);
                 sendAnalogSensorEvents(mapping, response);
                 rememberDigital(boardId, response.digital());
                 recordConfirmedOutputs(mapping, response.digital());
                 return response;
-            }
+            });
         }
         return emptyResponse();
     }
@@ -609,7 +607,7 @@ public class SimpleAliasService  {
     }
 
     private void toggleAppliances(Mapping mapping, List<String> appliances) {
-        synchronized (connectorService) {
+        connectorService.withBoardLock(() -> {
             Map<Identifier, Boolean> digitalState = currentState(mapping.connectorId(), mapping);
             // Whether they should be turned on or not.
             boolean setStateAs = mapping.appliances()
@@ -631,7 +629,7 @@ public class SimpleAliasService  {
             Response response = connectorService.send(mapping.connectorId(), request);
             rememberDigital(mapping.connectorId(), response.digital());
             recordConfirmedOutputs(mapping, response.digital());
-        }
+        });
     }
 
     private void rememberDigital(UUID boardId, Map<Identifier, Boolean> digital) {

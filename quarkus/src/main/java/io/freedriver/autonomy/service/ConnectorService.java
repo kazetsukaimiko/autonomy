@@ -51,13 +51,13 @@ public class ConnectorService extends ConnectorServiceCommon {
 
      */
 
-    public synchronized Response readDigitalAndAnalog(UUID boardId, Collection<Identifier> pins, Stream<AnalogRead> analogReads) {
+    public Response readDigitalAndAnalog(UUID boardId, Collection<Identifier> pins, Stream<AnalogRead> analogReads) {
         return send(boardId, pins.stream()
                 .reduce(Request.empty(), Request::digitalRead, (a, b) -> a)
                 .analogRead(analogReads));
     }
 
-    public synchronized Map<Identifier, Boolean> writeDigital(UUID boardId, Map<Identifier, Boolean> state) {
+    public Map<Identifier, Boolean> writeDigital(UUID boardId, Map<Identifier, Boolean> state) {
         Request request = state.entrySet().stream()
                 .reduce(Request.empty(),
                         (req, e) -> req.digitalWrite(new DigitalWrite(e.getKey(), e.getValue())),

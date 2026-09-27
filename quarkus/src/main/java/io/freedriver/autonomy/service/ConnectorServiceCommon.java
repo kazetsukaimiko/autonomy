@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,6 +12,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,11 +30,21 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * The service by which we interact with connectors.
+ *
+ * <p>One {@link ReentrantLock} guards the open-connector list and the board
+ * conversation. {@link #send}, discovery inside {@link #getAllConnectors}, and
+ * the confirmed-output save all enter it through {@link #withBoardLock} and
+ * through nothing else. The reset wait and UUID handshake run under that lock.
+ * Appliance restore runs only after the lock is released, then {@code setState}
+ * takes the same lock again to write the saved outputs. Callers must not
+ * synchronize on this bean or on its client proxy.
  */
 @ApplicationScoped
 @Slf4j
 public class ConnectorServiceCommon {
     private static final List<Connector> ACTIVE_CONNECTORS = new CopyOnWriteArrayList<>();
+    private final ReentrantLock boardLock = new ReentrantLock();
+    private final ThreadLocal<List<UUID>> restoreAfterUnlock = ThreadLocal.withInitial(ArrayList::new);
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .registerModule(new JsonLinkModule())
@@ -62,20 +73,68 @@ public class ConnectorServiceCommon {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Runs {@code action} under the board lock. The outermost caller restores any
+     * boards discovered while the lock was held, after releasing it.
+     */
+    public <T> T withBoardLock(Supplier<T> action) {
+        boolean outermost = !boardLock.isHeldByCurrentThread();
+        boardLock.lock();
+        try {
+            return action.get();
+        } finally {
+            boardLock.unlock();
+            if (outermost) {
+                List<UUID> pending = new ArrayList<>(restoreAfterUnlock.get());
+                restoreAfterUnlock.remove();
+                restoreNewlyConnected(pending);
+            }
+        }
+    }
+
+    public void withBoardLock(Runnable action) {
+        withBoardLock(() -> {
+            action.run();
+            return null;
+        });
+    }
+
+    protected boolean holdingBoardLock() {
+        return boardLock.isHeldByCurrentThread();
+    }
+
     /*
      * INTERNALS / HELPERS
      */
-    protected synchronized List<Connector> getAllConnectors() {
-        // Remove existing closed.
+    protected List<Connector> getAllConnectors() {
+        withBoardLock(() -> {
+            noteNewBoards(openNewBoards());
+            return null;
+        });
+        return ACTIVE_CONNECTORS;
+    }
+
+    /**
+     * Drops closed connectors and opens new ones. Called with the board lock held.
+     * The reset wait and UUID handshake happen here. Restore does not.
+     */
+    protected List<UUID> openNewBoards() {
         List<Connector> closed = ACTIVE_CONNECTORS.stream()
                 .filter(this::connectorIsClosed)
                 .collect(Collectors.toList());
         ACTIVE_CONNECTORS.removeAll(closed);
+        List<UUID> newlyConnected = new ArrayList<>();
+        discoverDevices(newlyConnected);
+        return newlyConnected;
+    }
 
-        // Connect new. Match by canonical path so /dev/serial/by-id/... and /dev/ttyACM0
+    /**
+     * Opens each new serial device. {@code findOrOpenAndConsume} returns only after
+     * the reset wait and UUID handshake. Called with the board lock held.
+     */
+    protected void discoverDevices(List<UUID> newlyConnected) {
+        // Match by canonical path so /dev/serial/by-id/... and /dev/ttyACM0
         // are not opened twice against the same Arduino.
-        // findOrOpenAndConsume returns only after the reset wait and UUID handshake.
-        List<UUID> newlyConnected = Collections.synchronizedList(new ArrayList<>());
         List<CompletableFuture<Void>> threads = Connectors.allDevices().stream()
                 .filter(device -> ACTIVE_CONNECTORS.stream()
                         .noneMatch(existing -> sameDevice(existing, device)))
@@ -83,9 +142,12 @@ public class ConnectorServiceCommon {
                         device, executorService, connector -> publishConnectedBoard(connector, newlyConnected)))
                 .collect(Collectors.toList());
         threads.forEach(this::waitForCompletion);
-        restoreNewlyConnected(newlyConnected);
+    }
 
-        return ACTIVE_CONNECTORS;
+    private void noteNewBoards(List<UUID> boardIds) {
+        if (!boardIds.isEmpty()) {
+            restoreAfterUnlock.get().addAll(boardIds);
+        }
     }
 
     /**
@@ -151,7 +213,7 @@ public class ConnectorServiceCommon {
     }
 
     protected Optional<Connector> getConnectorByBoardId(UUID boardId) {
-        return getAllConnectors().stream()
+        return ACTIVE_CONNECTORS.stream()
                 .filter(connector -> Objects.equals(boardId, uuidOrNull(connector)))
                 .findFirst();
     }
@@ -165,10 +227,17 @@ public class ConnectorServiceCommon {
                 .collect(Collectors.joining(","));
     }*/
 
-    public synchronized Response send(UUID uuid, Request request) {
-        return getConnectorByBoardId(uuid)
-                .map(connector -> connector.send(request))
-                .orElseThrow(() -> new WebApplicationException("Board not found, present devices: " + ACTIVE_CONNECTORS.stream().map(Connector::device).collect(Collectors.joining(",")), 404));
+    public Response send(UUID uuid, Request request) {
+        return withBoardLock(() -> {
+            noteNewBoards(openNewBoards());
+            return getConnectorByBoardId(uuid)
+                    .map(connector -> connector.send(request))
+                    .orElseThrow(() -> new WebApplicationException(
+                            "Board not found, present devices: " + ACTIVE_CONNECTORS.stream()
+                                    .map(Connector::device)
+                                    .collect(Collectors.joining(",")),
+                            404));
+        });
     }
 
     /*

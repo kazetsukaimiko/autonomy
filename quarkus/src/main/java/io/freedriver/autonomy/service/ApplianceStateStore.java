@@ -101,9 +101,10 @@ public class ApplianceStateStore {
         if (updates.isEmpty()) {
             return;
         }
-        Map<String, Boolean> states = new LinkedHashMap<>(load().states());
+        LoadedApplianceState loaded = load();
+        Map<String, Boolean> states = new LinkedHashMap<>(loaded.states());
         states.putAll(updates);
-        write(states);
+        write(states, loaded);
     }
 
     /**
@@ -111,8 +112,12 @@ public class ApplianceStateStore {
      * An existing file that cannot be read is moved aside before the new file is written.
      */
     public synchronized void write(Map<String, Boolean> states) throws IOException {
+        write(states, load());
+    }
+
+    private void write(Map<String, Boolean> states, LoadedApplianceState existing) throws IOException {
         ensureDirectory();
-        if (load().status() == LoadedApplianceState.Status.UNREADABLE) {
+        if (existing.status() == LoadedApplianceState.Status.UNREADABLE) {
             moveUnreadableAside();
         }
         Path target = stateFile();
