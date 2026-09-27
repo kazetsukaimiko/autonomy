@@ -57,9 +57,8 @@ public class ConnectorServiceCommon {
                 .collect(Collectors.toList());
         ACTIVE_CONNECTORS.removeAll(closed);
 
-        // Connect new. Match by canonical path so /dev/serial/by-id/... and /dev/ttyACM0
-        // are not opened twice against the same Arduino.
-        List<CompletableFuture<Void>> threads = Connectors.allDevices().stream()
+        // Open the tty node whose sysfs ids match connectors.json. One canonical path is one board.
+        List<CompletableFuture<Void>> threads = BoardDeviceDiscovery.discover().stream()
                 .filter(device -> ACTIVE_CONNECTORS.stream()
                         .noneMatch(existing -> sameDevice(existing, device)))
                 .map(device -> Connectors.findOrOpenAndConsume(device, executorService, ACTIVE_CONNECTORS::add))
