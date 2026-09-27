@@ -515,7 +515,7 @@ public class SimpleAliasService  {
             sendAnalogSensorEvents(mapping, response);
             return cacheBoardState(mapping, response);
         }
-        return Response.empty();
+        return Response.builder().build();
     }
 
     public Response setupBoard(UUID boardId) throws IOException {
