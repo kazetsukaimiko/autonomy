@@ -33,6 +33,7 @@ public class ProxyBoardTestResource implements QuarkusTestResourceLifecycleManag
     public Map<String, String> start() {
         try {
             mappings = Files.createTempFile("mappings_v2", ".json");
+            mappings.toFile().deleteOnExit();
             Files.writeString(mappings, MAPPING);
         } catch (IOException e) {
             throw new IllegalStateException("Could not prepare mappings file", e);
@@ -42,12 +43,5 @@ public class ProxyBoardTestResource implements QuarkusTestResourceLifecycleManag
 
     @Override
     public void stop() {
-        try {
-            if (mappings != null) {
-                Files.deleteIfExists(mappings);
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not delete " + mappings, e);
-        }
     }
 }
