@@ -131,6 +131,49 @@ class ApplianceStateStoreTest {
     }
 
     @Test
+    void createsMissingParentsWithDefaultPermissionsAndTheStateDirectoryAs0700() throws IOException {
+        assumeTrue(posix(), "POSIX file permissions are not available");
+        Path parent = temp.resolve("missing-parent");
+        Path directory = parent.resolve("state");
+        Path controlParent = temp.resolve("control-parent");
+        Files.createDirectories(controlParent);
+        String defaultMode = PosixFilePermissions.toString(Files.getPosixFilePermissions(controlParent));
+
+        ApplianceStateStore store = new ApplianceStateStore(directory);
+        store.write(Map.of("fridge", true));
+
+        assertEquals(defaultMode, PosixFilePermissions.toString(Files.getPosixFilePermissions(parent)));
+        assertEquals("rwx------", PosixFilePermissions.toString(Files.getPosixFilePermissions(directory)));
+    }
+
+    @Test
+    void movesAnUnreadableFileAsideBeforeWritingANewOne() throws IOException {
+        Path directory = temp.resolve("state");
+        Files.createDirectories(directory);
+        Path file = directory.resolve(ApplianceStateStore.FILE_NAME);
+        Files.writeString(file, "{");
+        ApplianceStateStore store = new ApplianceStateStore(directory);
+
+        java.util.List<String> lines = capture(() -> {
+            try {
+                store.merge(Map.of("fridge", true));
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+
+        Path corrupt = directory.resolve(ApplianceStateStore.CORRUPT_FILE_NAME);
+        assertEquals("{", Files.readString(corrupt));
+        assertEquals(Boolean.TRUE, store.load().states().get("fridge"));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("aside to appliance-state.json.corrupt")), lines::toString);
+
+        Files.writeString(file, "{");
+        store.merge(Map.of("fridge", false));
+        assertEquals("{", Files.readString(corrupt));
+        assertEquals(Boolean.FALSE, store.load().states().get("fridge"));
+    }
+
+    @Test
     void missingFileIsAFirstStart() {
         ApplianceStateStore store = new ApplianceStateStore(temp.resolve("absent"));
         LoadedApplianceState loaded = store.load();

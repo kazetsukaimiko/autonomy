@@ -15,11 +15,15 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -49,6 +53,8 @@ class ApplianceRestoreTest {
 
     private static final Identifier FRIDGE_PIN = Identifier.of(40);
     private static final Identifier HALLWAY_PIN = Identifier.of(41);
+    private static final Identifier OVEN_PIN = Identifier.of(42);
+    private static final Identifier HEATER_PIN = Identifier.of(43);
 
     @TempDir
     Path temp;
@@ -62,6 +68,7 @@ class ApplianceRestoreTest {
             Map.of("11:0", List.of("fridge")),
             Set.of(),
             List.of());
+    private final List<Mapping> mappings = new ArrayList<>();
 
     private ApplianceStateStore store;
     private FakeBoard board;
@@ -69,17 +76,21 @@ class ApplianceRestoreTest {
     private ApplianceRestoreService restore;
     private ConnectorServiceCommon connectors;
     private Connector connector;
+    private int scheduledRestores;
 
     @BeforeEach
     void setUp() {
         store = new ApplianceStateStore(temp.resolve("state"));
         board = new FakeBoard();
-        aliases = new FixedMappingAliasService(mapping);
+        mappings.clear();
+        mappings.add(mapping);
+        scheduledRestores = 0;
+        aliases = new FixedMappingAliasService(mappings);
         aliases.connectorService = board;
         aliases.digitalPinCache = new ConcurrentHashMap<>();
         aliases.applianceStateStore = store;
         restore = new ApplianceRestoreService(
-                store, clock, Duration.ofSeconds(30), (command, delay) -> { });
+                store, clock, Duration.ofSeconds(30), (command, delay) -> scheduledRestores++);
         restore.aliases = aliases;
         aliases.applianceRestoreService = restore;
         connectors = new ConnectorServiceCommon();
@@ -105,6 +116,95 @@ class ApplianceRestoreTest {
     }
 
     @Test
+    void savesEachConfirmedChangeOnce() throws IOException {
+        CountingStore counting = new CountingStore(temp.resolve("once"));
+        aliases.applianceStateStore = counting;
+
+        aliases.setState(boardId, Map.of("fridge", true));
+        aliases.digitalPinCache.put(new PinCoordinate(boardId, HALLWAY_PIN), false);
+        aliases.handleJoystickEvent(fridgePress());
+        aliases.cacheBoardState(mapping, digital(Map.of(HALLWAY_PIN, true)));
+
+        assertEquals(3, counting.merges);
+    }
+
+    @Test
+    void savesAGroupChange() throws IOException {
+        mappings.clear();
+        mappings.add(new Mapping(
+                boardId,
+                "main",
+                List.of(
+                        new Appliance(FRIDGE_PIN, "fridge", Set.of("kitchen")),
+                        new Appliance(OVEN_PIN, "oven", Set.of("kitchen")),
+                        new Appliance(HALLWAY_PIN, "hallway", Set.of("hall"))),
+                Map.of(),
+                Set.of(),
+                List.of()));
+
+        aliases.setGroup(boardId, "kitchen", true);
+
+        assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
+        assertEquals(Boolean.TRUE, board.pins.get(OVEN_PIN));
+        assertFalse(board.pins.containsKey(HALLWAY_PIN));
+        assertEquals(Boolean.TRUE, store.load().states().get("fridge"));
+        assertEquals(Boolean.TRUE, store.load().states().get("oven"));
+        assertFalse(store.load().states().containsKey("hallway"));
+    }
+
+    @Test
+    void setupBoardDoesNotSaveTheResetModeSet() throws IOException {
+        aliases.setupBoard(boardId);
+
+        assertEquals(LoadedApplianceState.Status.MISSING, store.load().status());
+        assertEquals(0, writeCount());
+        assertFalse(Files.exists(store.stateFile()));
+    }
+
+    @Test
+    void concurrentChangesLeaveTheFileMatchingTheBoard() throws Exception {
+        mappings.clear();
+        mappings.add(new Mapping(
+                boardId,
+                "main",
+                List.of(
+                        new Appliance(FRIDGE_PIN, "fridge"),
+                        new Appliance(HALLWAY_PIN, "hallway"),
+                        new Appliance(OVEN_PIN, "oven")),
+                Map.of(),
+                Set.of(),
+                List.of()));
+        String[] names = {"fridge", "hallway", "oven"};
+        int threads = 8;
+        int toggles = 40;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        try {
+            List<Future<?>> futures = new ArrayList<>();
+            for (int thread = 0; thread < threads; thread++) {
+                int offset = thread;
+                futures.add(pool.submit(() -> {
+                    try {
+                        for (int step = 0; step < toggles; step++) {
+                            aliases.setState(boardId, Map.of(names[(offset + step) % names.length], step % 2 == 0));
+                        }
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                }));
+            }
+            for (Future<?> future : futures) {
+                future.get();
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertEquals(board.pins.get(FRIDGE_PIN), store.load().states().get("fridge"));
+        assertEquals(board.pins.get(HALLWAY_PIN), store.load().states().get("hallway"));
+        assertEquals(board.pins.get(OVEN_PIN), store.load().states().get("oven"));
+    }
+
+    @Test
     void doesNotSaveASetStateChangeTheBoardRejects() {
         board.failNextSend = true;
 
@@ -117,19 +217,7 @@ class ApplianceRestoreTest {
     void savesAJoystickChange() throws IOException {
         aliases.digitalPinCache.put(new PinCoordinate(boardId, FRIDGE_PIN), false);
         aliases.digitalPinCache.put(new PinCoordinate(boardId, HALLWAY_PIN), false);
-        JoystickEvent press = new JoystickEvent(
-                "event-1",
-                clock.instant(),
-                GenerationOrigin.HUMAN,
-                "test",
-                "joystick",
-                "11:0",
-                11L,
-                0L,
-                false,
-                JoystickEventType.BUTTON_UP);
-
-        aliases.handleJoystickEvent(press);
+        aliases.handleJoystickEvent(fridgePress());
 
         assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
         assertEquals(Boolean.TRUE, store.load().states().get("fridge"));
@@ -201,6 +289,99 @@ class ApplianceRestoreTest {
     }
 
     @Test
+    void suppressedReconnectRestoresOnceWhenTheWindowEnds() throws IOException {
+        store.write(Map.of("fridge", true, "hallway", false));
+        restore.beginAwaitingRestore(boardId);
+        restore.onBoardsReady(List.of(boardId));
+        board.pins.clear();
+        board.requests.clear();
+
+        restore.beginAwaitingRestore(boardId);
+        restore.onBoardsReady(List.of(boardId));
+        restore.onBoardsReady(List.of(boardId));
+
+        assertEquals(1, scheduledRestores);
+        assertEquals(1, restore.pendingDeferredRestores());
+        assertEquals(0, writeCount());
+        assertTrue(restore.isAwaitingRestore(boardId));
+
+        clock.advance(Duration.ofSeconds(29));
+        restore.runDueDeferredRestores();
+        assertEquals(0, writeCount());
+        assertTrue(restore.isAwaitingRestore(boardId));
+        assertEquals(1, restore.pendingDeferredRestores());
+
+        clock.advance(Duration.ofSeconds(1));
+        List<String> lines = capture(() -> restore.runDueDeferredRestores());
+
+        assertEquals(1, writeCount());
+        assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
+        assertEquals(Boolean.FALSE, board.pins.get(HALLWAY_PIN));
+        assertEquals(1, lines.stream().filter(line -> line.equals("Restored appliance fridge to ON")).count());
+        assertFalse(restore.isAwaitingRestore(boardId));
+        assertEquals(0, restore.pendingDeferredRestores());
+
+        board.requests.clear();
+        restore.runDueDeferredRestores();
+        assertEquals(0, writeCount());
+    }
+
+    @Test
+    void anotherBoardRestoresDuringTheFirstBoardsWindow() throws IOException {
+        UUID otherBoard = UUID.randomUUID();
+        mappings.add(new Mapping(
+                otherBoard,
+                "aux",
+                List.of(new Appliance(HEATER_PIN, "heater")),
+                Map.of(),
+                Set.of(),
+                List.of()));
+        store.write(Map.of("fridge", true, "hallway", false, "heater", true));
+        restore.beginAwaitingRestore(boardId);
+        restore.onBoardsReady(List.of(boardId));
+        board.pins.clear();
+        board.requests.clear();
+
+        restore.beginAwaitingRestore(otherBoard);
+        List<String> lines = capture(() -> restore.onBoardsReady(List.of(otherBoard)));
+
+        assertEquals(Boolean.TRUE, board.pins.get(HEATER_PIN));
+        assertEquals(1, lines.stream().filter(line -> line.equals("Restored appliance heater to ON")).count());
+        assertTrue(lines.stream().noneMatch(line -> line.contains("not restoring again")), lines::toString);
+        assertFalse(restore.isAwaitingRestore(otherBoard));
+        assertEquals(0, scheduledRestores);
+    }
+
+    @Test
+    void namesOnAnotherBoardAreSkippedWithoutAWarning() throws IOException {
+        UUID otherBoard = UUID.randomUUID();
+        mappings.add(new Mapping(
+                otherBoard,
+                "aux",
+                List.of(new Appliance(HEATER_PIN, "heater")),
+                Map.of(),
+                Set.of(),
+                List.of()));
+        Path directory = temp.resolve("state");
+        Files.createDirectories(directory);
+        Files.writeString(directory.resolve(ApplianceStateStore.FILE_NAME), """
+                {"fridge":true,"hallway":false,"heater":true,"ghost":true}
+                """);
+
+        List<String> lines = capture(() -> {
+            restore.beginAwaitingRestore(boardId);
+            restore.onBoardsReady(List.of(boardId));
+        });
+
+        assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
+        assertEquals(Boolean.FALSE, board.pins.get(HALLWAY_PIN));
+        assertFalse(board.pins.containsKey(HEATER_PIN));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("Skipping saved state for unknown appliance 'ghost'")), lines::toString);
+        assertTrue(lines.stream().noneMatch(line -> line.contains("unknown appliance 'heater'")), lines::toString);
+        assertTrue(lines.stream().noneMatch(line -> line.equals("Restored appliance heater to ON")));
+    }
+
+    @Test
     void firstStartWithNoFileLeavesEveryApplianceOff() {
         List<String> lines = capture(() -> {
             restore.beginAwaitingRestore(boardId);
@@ -262,6 +443,20 @@ class ApplianceRestoreTest {
                 lines::toString);
     }
 
+    private JoystickEvent fridgePress() {
+        return new JoystickEvent(
+                "event-1",
+                clock.instant(),
+                GenerationOrigin.HUMAN,
+                "test",
+                "joystick",
+                "11:0",
+                11L,
+                0L,
+                false,
+                JoystickEventType.BUTTON_UP);
+    }
+
     private long writeCount() {
         return board.requests.stream()
                 .filter(request -> request.write() != null && !request.write().isEmpty())
@@ -312,23 +507,38 @@ class ApplianceRestoreTest {
 
     @Vetoed
     private static final class FixedMappingAliasService extends SimpleAliasService {
-        private final Mapping mapping;
+        private final List<Mapping> mappings;
 
-        private FixedMappingAliasService(Mapping mapping) {
-            this.mapping = mapping;
+        private FixedMappingAliasService(List<Mapping> mappings) {
+            this.mappings = mappings;
         }
 
         @Override
         public Mappings getMappings() {
-            return new Mappings(null, null, Set.of(mapping));
+            return new Mappings(null, null, new LinkedHashSet<>(mappings));
         }
 
         @Override
         public Mapping getMapping(UUID boardId) {
-            if (!boardId.equals(mapping.connectorId())) {
-                throw new IllegalArgumentException("unknown board " + boardId);
-            }
-            return mapping;
+            return mappings.stream()
+                    .filter(candidate -> boardId.equals(candidate.connectorId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("unknown board " + boardId));
+        }
+    }
+
+    @Vetoed
+    private static final class CountingStore extends ApplianceStateStore {
+        private int merges;
+
+        private CountingStore(Path directory) {
+            super(directory);
+        }
+
+        @Override
+        public synchronized void merge(Map<String, Boolean> updates) throws IOException {
+            merges++;
+            super.merge(updates);
         }
     }
 
