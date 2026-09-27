@@ -1,10 +1,12 @@
 package io.freedriver.autonomy.service;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Iterator;
@@ -25,14 +27,17 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * Saves the last on or off state of every appliance under {@code autonomy.state.dir}.
  *
  * <p>The directory is created mode 0700 and the file mode 0600, owned by the
- * process user. Each write goes to a temp file in that directory and is renamed
- * over the previous file.
+ * process user. Missing parents keep the default permissions. Each write goes to
+ * a temp file in that directory, is forced to disk, and is renamed over the
+ * previous file. Load, update, and write of one change run together so two
+ * overlapping saves cannot drop each other.
  */
 @ApplicationScoped
 @Slf4j
 public class ApplianceStateStore {
 
     static final String FILE_NAME = "appliance-state.json";
+    static final String CORRUPT_FILE_NAME = "appliance-state.json.corrupt";
 
     private static final Set<PosixFilePermission> DIRECTORY_PERMISSIONS = Set.of(
             PosixFilePermission.OWNER_READ,
@@ -47,9 +52,7 @@ public class ApplianceStateStore {
     private final ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
     @Inject
-    public ApplianceStateStore(
-            @ConfigProperty(name = "autonomy.state.dir", defaultValue = "${user.home}/.local/share/autonomy")
-            String stateDir) {
+    public ApplianceStateStore(@ConfigProperty(name = "autonomy.state.dir") String stateDir) {
         this(Path.of(stateDir));
     }
 
@@ -62,7 +65,7 @@ public class ApplianceStateStore {
      * be parsed at all is logged and treated the same way. An entry that is not
      * a boolean is skipped and logged; the other entries are kept.
      */
-    public LoadedApplianceState load() {
+    public synchronized LoadedApplianceState load() {
         Path file = stateFile();
         if (!Files.isRegularFile(file)) {
             return LoadedApplianceState.missing();
@@ -94,7 +97,7 @@ public class ApplianceStateStore {
     /**
      * Replaces the saved on/off value for each named appliance and leaves the others.
      */
-    public void merge(Map<String, Boolean> updates) throws IOException {
+    public synchronized void merge(Map<String, Boolean> updates) throws IOException {
         if (updates.isEmpty()) {
             return;
         }
@@ -105,15 +108,21 @@ public class ApplianceStateStore {
 
     /**
      * Writes every saved state. The temp file is removed if the rename does not finish.
+     * An existing file that cannot be read is moved aside before the new file is written.
      */
-    public void write(Map<String, Boolean> states) throws IOException {
+    public synchronized void write(Map<String, Boolean> states) throws IOException {
         ensureDirectory();
+        if (load().status() == LoadedApplianceState.Status.UNREADABLE) {
+            moveUnreadableAside();
+        }
         Path target = stateFile();
         Path temp = directory.resolve(".appliance-state-" + UUID.randomUUID() + ".tmp");
         try {
             createPrivateFile(temp);
             mapper.writeValue(temp.toFile(), states);
+            forceFile(temp);
             moveIntoPlace(temp, target);
+            forceDirectory();
         } finally {
             try {
                 Files.deleteIfExists(temp);
@@ -131,6 +140,27 @@ public class ApplianceStateStore {
         Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 
+    private void moveUnreadableAside() throws IOException {
+        Path file = stateFile();
+        Path corrupt = directory.resolve(CORRUPT_FILE_NAME);
+        Files.move(file, corrupt, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        log.warn("Moved unreadable appliance state file {} aside to {}", file, corrupt.getFileName());
+    }
+
+    private static void forceFile(Path temp) throws IOException {
+        try (FileChannel channel = FileChannel.open(temp, StandardOpenOption.WRITE)) {
+            channel.force(true);
+        }
+    }
+
+    private void forceDirectory() {
+        try (FileChannel channel = FileChannel.open(directory, StandardOpenOption.READ)) {
+            channel.force(true);
+        } catch (IOException | UnsupportedOperationException | IllegalStateException e) {
+            log.debug("Couldn't force appliance state directory {} to disk", directory, e);
+        }
+    }
+
     private void createPrivateFile(Path temp) throws IOException {
         if (posix()) {
             Files.createFile(temp, PosixFilePermissions.asFileAttribute(FILE_PERMISSIONS));
@@ -141,14 +171,20 @@ public class ApplianceStateStore {
 
     private void ensureDirectory() throws IOException {
         if (!Files.isDirectory(directory)) {
+            Path parent = directory.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
             try {
                 if (posix()) {
-                    Files.createDirectories(directory, PosixFilePermissions.asFileAttribute(DIRECTORY_PERMISSIONS));
+                    Files.createDirectory(directory, PosixFilePermissions.asFileAttribute(DIRECTORY_PERMISSIONS));
                 } else {
-                    Files.createDirectories(directory);
+                    Files.createDirectory(directory);
                 }
             } catch (FileAlreadyExistsException alreadyExists) {
-                throw new IOException("Appliance state path is not a directory: " + directory, alreadyExists);
+                if (!Files.isDirectory(directory)) {
+                    throw new IOException("Appliance state path is not a directory: " + directory, alreadyExists);
+                }
             }
         }
         if (!posix()) {

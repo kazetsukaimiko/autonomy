@@ -94,7 +94,7 @@ public class ConnectorServiceCommon {
      */
     void publishConnectedBoard(Connector connector, List<UUID> newlyConnected) {
         UUID boardId = uuidOrNull(connector);
-        if (boardId != null && applianceRestoreService != null) {
+        if (boardId != null) {
             applianceRestoreService.beginAwaitingRestore(boardId);
             newlyConnected.add(boardId);
         }
@@ -102,7 +102,7 @@ public class ConnectorServiceCommon {
     }
 
     void restoreNewlyConnected(List<UUID> newlyConnected) {
-        if (applianceRestoreService == null || newlyConnected.isEmpty()) {
+        if (newlyConnected.isEmpty()) {
             return;
         }
         try {

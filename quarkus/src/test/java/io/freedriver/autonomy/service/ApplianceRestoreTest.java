@@ -78,7 +78,8 @@ class ApplianceRestoreTest {
         aliases.connectorService = board;
         aliases.digitalPinCache = new ConcurrentHashMap<>();
         aliases.applianceStateStore = store;
-        restore = new ApplianceRestoreService(store, clock, Duration.ofSeconds(30));
+        restore = new ApplianceRestoreService(
+                store, clock, Duration.ofSeconds(30), (command, delay) -> { });
         restore.aliases = aliases;
         aliases.applianceRestoreService = restore;
         connectors = new ConnectorServiceCommon();
