@@ -577,9 +577,11 @@ public class SimpleAliasService  {
     }
 
     /**
-     * Sets every appliance pin to output. The firmware drives those pins HIGH, which
-     * is off, so that all-off state is saved and any restore still waiting for this
-     * board is dropped.
+     * Serves {@code GET /simple/id/{board}/setup}. The firmware drives the mapped
+     * pins HIGH, which is off, so this request saves every mapped appliance off,
+     * sets those cache entries to false, and drops a restore still waiting for
+     * the board. Discovery and reconnect do not call this, and the reset that
+     * comes with a new connection does not write the state file.
      */
     public Response setupBoard(UUID boardId) throws IOException {
         Mapping mapping = getMapping(boardId);

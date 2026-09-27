@@ -157,7 +157,31 @@ class ApplianceRestoreTest {
     }
 
     @Test
-    void setupBoardSavesAllOffAndAReconnectRestoresNothingOn() throws IOException {
+    void discoveryReconnectRestoresASavedOnApplianceAndLeavesTheFileOn() throws IOException {
+        store.write(Map.of("fridge", true, "hallway", false));
+        ConnectorServiceCommon connecting = new ConnectorServiceCommon() {
+            @Override
+            protected void discoverDevices(Collection<UUID> newlyConnected) {
+                publishConnectedBoard(connector, newlyConnected);
+            }
+        };
+        connecting.applianceRestoreService = restore;
+        try {
+            connecting.refreshConnectedBoards();
+        } finally {
+            connecting.forgetTrackedConnector(connector);
+            connecting.executorService.shutdownNow();
+        }
+
+        assertEquals(Boolean.TRUE, board.pins.get(FRIDGE_PIN));
+        assertEquals(Boolean.FALSE, board.pins.get(HALLWAY_PIN));
+        assertEquals(Boolean.TRUE, store.load().states().get("fridge"));
+        assertEquals(Boolean.FALSE, store.load().states().get("hallway"));
+        assertTrue(board.requests.stream().allMatch(request -> request.mode() == null || request.mode().isEmpty()));
+    }
+
+    @Test
+    void explicitSetupRequestSavesAllOffAndAReconnectLeavesEverythingOff() throws IOException {
         store.write(Map.of("fridge", true, "hallway", true));
         restore.beginAwaitingRestore(boardId);
         restore.onBoardsReady(List.of(boardId));
