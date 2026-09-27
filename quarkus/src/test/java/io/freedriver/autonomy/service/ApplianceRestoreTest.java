@@ -36,6 +36,7 @@ import io.freedriver.jsonlink.config.v2.Mappings;
 import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import jakarta.enterprise.inject.Vetoed;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -308,6 +309,7 @@ class ApplianceRestoreTest {
         return lines;
     }
 
+    @Vetoed
     private static final class FixedMappingAliasService extends SimpleAliasService {
         private final Mapping mapping;
 
@@ -329,6 +331,7 @@ class ApplianceRestoreTest {
         }
     }
 
+    @Vetoed
     private static final class FakeBoard extends ConnectorService {
         private final Map<Identifier, Boolean> pins = new LinkedHashMap<>();
         private final List<Request> requests = new ArrayList<>();
