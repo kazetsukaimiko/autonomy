@@ -14,6 +14,8 @@
     <module>3p-bom</module>
     <module>model</module>
     <module>mqtt-contract</module>
+    <module>mqtt-api</module>
+    <module>mqtt-impl</module>
     <module>jpa</module>
     <module>api</module>
     <module>quarkus</module>
@@ -26,6 +28,8 @@
     <maven.compiler.source>23</maven.compiler.source>
     <maven.compiler.target>23</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Installed from source. The commit id lives only in freedriver-web.sha. -->
+    <freedriver-mqtt-contract.version>1.0.0-SNAPSHOT</freedriver-mqtt-contract.version>
   </properties>
 
   <repositories>

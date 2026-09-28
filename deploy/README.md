@@ -6,10 +6,12 @@ The Maven antrun plugin in the `quarkus` module copies the built application, th
 
 ## Deploy Process
 
-1. Build and install (from the autonomy repo root or the `quarkus` module):
+1. Install the pinned MQTT contract, then build (from the autonomy repo root):
    ```
+   ./scripts/install-freedriver-mqtt-contract.sh
    mvn install -pl quarkus -am
    ```
+   The script checks out freedriver-web at the commit in `freedriver-web.sha` and installs `freedriver-mqtt-contract`. JDK 23 is required. MQTT itself stays off unless configured; see [docs/mqtt.md](../docs/mqtt.md).
    - This produces `quarkus/target/quarkus-app/...` and `quarkus-run.jar`.
    - The antrun plugin (bound to the `install` phase) copies:
      * App files → `~/.local/autonomy/` (full layout and the top-level runner jar).
@@ -113,6 +115,10 @@ RestartSec=3
 [Install]
 WantedBy=default.target
 ```
+
+## MQTT
+
+Publishing is off unless `autonomy.mqtt.enabled=true`. Enable it on only one of `autonomy.service` and `autonomy-next.service`: both would use the client id `autonomy-<instanceId>`. Leave the unit files unchanged and put the keys in a drop-in for the one unit that should publish, for example `~/.config/systemd/user/autonomy.service.d/mqtt.conf`. The keys, an example, and the journald grep string are in [docs/mqtt.md](../docs/mqtt.md). The password is a file path (`autonomy.mqtt.password-file`), not a value in the unit.
 
 ## Other Notes
 

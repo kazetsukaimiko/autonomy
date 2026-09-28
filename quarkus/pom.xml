@@ -52,6 +52,11 @@
 
         <dependency>
             <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest</artifactId>
         </dependency>
 
@@ -68,6 +73,12 @@
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -94,6 +105,17 @@
         <dependency>
             <groupId>io.freedriver.autonomy</groupId>
             <artifactId>autonomy-model</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.freedriver.autonomy</groupId>
+            <artifactId>autonomy-mqtt-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.freedriver.autonomy</groupId>
+            <artifactId>autonomy-mqtt-impl</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>
