@@ -20,7 +20,22 @@ The wire types are freedriver-web's `io.freedriver:freedriver-mqtt-contract` (`A
 
 ## Contract pin
 
-The commit is the single line in `freedriver-web.sha` at the repo root. The installed Maven coordinate is `io.freedriver:freedriver-mqtt-contract:1.0.0-SNAPSHOT`, built from that commit. No GitHub Packages token.
+The pin is one line, `freedriver-web.sha` at the repo root: the full 40-character commit SHA of `kazetsukaimiko/freedriver-web` `main` that `freedriver-mqtt-contract` was built from. That file is the only copy. Techops reads it for build provenance with:
+
+```
+tr -d '[:space:]' < freedriver-web.sha
+```
+
+Confirm that commit is contained in `main`:
+
+```
+SHA=$(tr -d '[:space:]' < freedriver-web.sha)
+git clone --filter=blob:none --no-checkout https://github.com/kazetsukaimiko/freedriver-web.git /tmp/freedriver-web-pin
+git -C /tmp/freedriver-web-pin fetch origin main
+git -C /tmp/freedriver-web-pin merge-base --is-ancestor "$SHA" FETCH_HEAD && echo "$SHA is on main"
+```
+
+`./scripts/install-freedriver-mqtt-contract.sh` rejects a value that is not 40 hex characters, checks out that commit, and installs the contract. The installed Maven coordinate is `io.freedriver:freedriver-mqtt-contract:1.0.0-SNAPSHOT`. No GitHub Packages token.
 
 JDK 23 is required. freedriver-web sets `maven.compiler.release` to 23, and autonomy compiles with source and target 23.
 
@@ -46,7 +61,7 @@ Body, periodic map (`appliedCommandId` is null until a later command card):
 
 ```json
 {
-  "instanceName": "Cabin",
+  "instanceName": "example",
   "appliedCommandId": null,
   "appliances": [
     {"applianceName": "fridge", "state": true}
@@ -54,7 +69,7 @@ Body, periodic map (`appliedCommandId` is null until a later command card):
 }
 ```
 
-TLS to `host:port` (default `mqtt.freedriver.io:8883`). Hostname verification stays on. With no `ca-file`, the JVM public CA trust store is the trust anchor (the broker uses Let's Encrypt). `ca-file` replaces that trust store with the certificates in the file. There is no certificate pin and no skip-verify.
+TLS to `host:port` (default `mqtt.freedriver.io:8883`). Hostname verification stays on. Leave `ca-file` unset: the broker certificate is Let's Encrypt, and the JVM public CA trust store is the trust anchor. `ca-file` is only an override that replaces that trust store; it does not turn hostname verification off. There is no certificate pin and no skip-verify. A certificate that is trusted but names a different host is refused and logged as `hostname mismatch`.
 
 Reconnect is autonomy's capped exponential backoff (1s initial, 60s cap, up to 20% jitter), not Paho automatic reconnect. It retries forever. Each new session is clean and publishes the current snapshot; a previous payload is not replayed. A failed first connect does not stop the process.
 
@@ -74,7 +89,15 @@ A pin that is not in the cache yet is omitted, not reported as off. If the mappi
 
 ## Configuration
 
-Prefix `autonomy.mqtt`. Jakarta Validation runs at startup. When MQTT is off, the required keys may be absent. When it is on, a missing or invalid required key stops startup. A bad password, an unreadable password file, or a broker that is down does not stop startup; the connector keeps retrying.
+Prefix `autonomy.mqtt`. Jakarta Validation runs at startup. When MQTT is off, the required keys may be absent. When it is on, a missing or invalid required key stops startup. A bad password, a missing password file, or a broker that is down does not stop the process; the connector keeps retrying.
+
+The password file is a path the operator sets. On a deployed host it lives in that user's `~/.config/autonomy/` directory. The code has no default path. Before the file is read, group and other permission bits must all be off (`600` or `400`; owner execute is also owner-only). If group or others can read, write, or execute it, MQTT stays off and does not retry. The process keeps running. One ERROR line on `io.freedriver.autonomy.mqtt` names the path and not the contents:
+
+```
+MQTT off; password file is readable or writable by group or others path=<path>
+```
+
+The reader removes one trailing `\n` or `\r\n` and nothing else. A trailing space, a leading space, or a second newline is part of the password.
 
 | Key | Default | Required when enabled |
 | --- | --- | --- |
@@ -82,8 +105,8 @@ Prefix `autonomy.mqtt`. Jakarta Validation runs at startup. When MQTT is off, th
 | `host` | `mqtt.freedriver.io` | hostname or IPv4, no scheme |
 | `port` | `8883` | 1–65535 |
 | `username` | | yes |
-| `password-file` | | yes, path only; the file is read by the connector and is never logged |
-| `ca-file` | JVM public CAs | optional PEM or DER certificates |
+| `password-file` | | yes, path only; owner-only mode; contents are never logged |
+| `ca-file` | JVM public CAs | leave unset in deployment; the broker certificate is Let's Encrypt |
 | `client-id` | `autonomy-<instanceId>` | optional override |
 | `instance-id` | | yes, UUID |
 | `instance-name` | | yes, non-blank |
@@ -95,33 +118,33 @@ Startup INFO lists host, port, username, client id, instance id, instance name, 
 
 Connect failures name the cause: `certificate not trusted`, `hostname mismatch`, `bad credentials` (MQTT code 4), `not authorized` (code 5), `unreachable or timeout`. An unreadable password or CA file is `password file unreadable` or `ca file unreadable`. INFO logs every reconnect attempt with its number and delay. WARN logs every 5th consecutive failure with the attempt number, the next delay, and the cause.
 
-Example (environment file or Quarkus system properties; do not commit the password):
+Example (placeholders only; do not commit a real instance id, password, or host path). `ca-file` stays unset. Quarkus does not expand `~`, so the password path in a properties file is absolute. The deployed file is `~/.config/autonomy/mqtt-password`, mode `600` or `400`.
 
 ```
 autonomy.mqtt.enabled=true
 autonomy.mqtt.host=mqtt.freedriver.io
 autonomy.mqtt.port=8883
-autonomy.mqtt.username=autonomy
-autonomy.mqtt.password-file=/path/to/autonomy.pass
-autonomy.mqtt.instance-id=550e8400-e29b-41d4-a716-446655440000
-autonomy.mqtt.instance-name=Cabin
+autonomy.mqtt.username=<broker-username>
+autonomy.mqtt.password-file=/home/<user>/.config/autonomy/mqtt-password
+autonomy.mqtt.instance-id=00000000-0000-4000-8000-000000000000
+autonomy.mqtt.instance-name=example
 autonomy.mqtt.publish-interval=10s
 ```
 
 Equivalent environment variables: `AUTONOMY_MQTT_ENABLED`, `AUTONOMY_MQTT_USERNAME`, `AUTONOMY_MQTT_PASSWORD_FILE`, `AUTONOMY_MQTT_INSTANCE_ID`, `AUTONOMY_MQTT_INSTANCE_NAME`, and the same pattern for the other keys.
 
-Only one of `autonomy.service` and `autonomy-next.service` may set `enabled=true`. Both would use the client id `autonomy-<instanceId>`. Leave the unit files as they are and enable MQTT from one drop-in, for example `~/.config/systemd/user/autonomy.service.d/mqtt.conf`:
+Only one of `autonomy.service` and `autonomy-next.service` may set `enabled=true`. Both would use the client id `autonomy-<instanceId>`. Leave the unit files as they are and enable MQTT from one drop-in, for example `~/.config/systemd/user/autonomy.service.d/mqtt.conf`. `%h` is that user's home:
 
 ```
 [Service]
 Environment=AUTONOMY_MQTT_ENABLED=true
-Environment=AUTONOMY_MQTT_USERNAME=autonomy
-Environment=AUTONOMY_MQTT_PASSWORD_FILE=/path/to/autonomy.pass
-Environment=AUTONOMY_MQTT_INSTANCE_ID=550e8400-e29b-41d4-a716-446655440000
-Environment=AUTONOMY_MQTT_INSTANCE_NAME=Cabin
+Environment=AUTONOMY_MQTT_USERNAME=<broker-username>
+Environment=AUTONOMY_MQTT_PASSWORD_FILE=%h/.config/autonomy/mqtt-password
+Environment=AUTONOMY_MQTT_INSTANCE_ID=00000000-0000-4000-8000-000000000000
+Environment=AUTONOMY_MQTT_INSTANCE_NAME=example
 ```
 
-Do not add the same drop-in to `autonomy-next.service`.
+Do not add the same drop-in to `autonomy-next.service`. Do not set `AUTONOMY_MQTT_CA_FILE`.
 
 ## CI
 

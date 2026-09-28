@@ -16,7 +16,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Starts the publish loop when MQTT is enabled. A failed connect stays on the
- * background thread and does not stop the process.
+ * background thread. A password file that is not owner-only makes that thread
+ * return. Neither case stops the process.
  */
 @ApplicationScoped
 public class MqttStatePublisher {

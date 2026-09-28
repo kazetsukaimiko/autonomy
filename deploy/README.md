@@ -118,7 +118,7 @@ WantedBy=default.target
 
 ## MQTT
 
-Publishing is off unless `autonomy.mqtt.enabled=true`. Enable it on only one of `autonomy.service` and `autonomy-next.service`: both would use the client id `autonomy-<instanceId>`. Leave the unit files unchanged and put the keys in a drop-in for the one unit that should publish, for example `~/.config/systemd/user/autonomy.service.d/mqtt.conf`. The keys, an example, and the journald grep string are in [docs/mqtt.md](../docs/mqtt.md). The password is a file path (`autonomy.mqtt.password-file`), not a value in the unit.
+Publishing is off unless `autonomy.mqtt.enabled=true`. Enable it on only one of `autonomy.service` and `autonomy-next.service`: both would use the client id `autonomy-<instanceId>`. Leave the unit files unchanged and put the keys in a drop-in for the one unit that should publish, for example `~/.config/systemd/user/autonomy.service.d/mqtt.conf`. The password file is that user's `~/.config/autonomy/mqtt-password` (mode `600` or `400`); the unit stores the path, not the password. Leave the CA file unset. The broker certificate is Let's Encrypt. The keys, a placeholder example, and the journald grep string are in [docs/mqtt.md](../docs/mqtt.md).
 
 ## Other Notes
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Installs io.freedriver:freedriver-mqtt-contract:1.0.0-SNAPSHOT built from the
-# freedriver-web commit named in freedriver-web.sha. Does not use GitHub Packages.
+# full 40-character freedriver-web main commit in freedriver-web.sha.
+# That file is the only pin. Does not use GitHub Packages.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

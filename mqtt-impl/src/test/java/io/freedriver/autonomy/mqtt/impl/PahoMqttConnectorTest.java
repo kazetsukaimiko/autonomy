@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.LoggerFactory;
 
 class PahoMqttConnectorTest {
@@ -266,13 +268,60 @@ class PahoMqttConnectorTest {
     }
 
     @Test
-    void hostnameMismatchIsNamed() throws Exception {
+    void refusesABrokerCertificateForADifferentHostname() throws Exception {
         broker = startBroker(mismatchKeystore, SECRET);
         MutableSource source = new MutableSource(Map.of("fridge", false), 1);
         ReconnectPolicy policy = new ReconnectPolicy(Duration.ofMillis(50), Duration.ofMillis(50), 0, () -> 0);
         startPublisher(settings(broker.port(), mismatchPem, Duration.ofHours(1)), source,
                 policy, Duration.ofMillis(50), Duration.ofMinutes(1), 5);
+        awaitLog(line -> line.contains("trust=ca-file"));
         awaitLog(line -> line.contains("cause=hostname mismatch"));
+        awaitLog(line -> line.contains("reconnect attempt 1 in "));
+        assertTrue(lines().stream().noneMatch(line -> line.contains("cause=certificate not trusted")));
+        assertTrue(lines().stream().noneMatch(line -> line.startsWith("connected host=")));
+    }
+
+    @Test
+    void passwordFileWithOneTrailingCrLfAndMode400Connects() throws Exception {
+        broker = startBroker(matchingKeystore, SECRET);
+        subscriber = subscribe(matchingPem, SECRET);
+        MutableSource source = new MutableSource(Map.of("fridge", true), 1);
+        startPublisher(settings(broker.port(), matchingPem, Duration.ofHours(1)), source,
+                ReconnectPolicy.standard(), Duration.ofMillis(50), Duration.ofMinutes(1), 5,
+                SECRET + "\r\n", "r--------");
+        Captured captured = awaitMessage();
+        assertEquals(TOPIC, captured.topic());
+        awaitLog(line -> line.startsWith("connected host="));
+    }
+
+    @Test
+    void passwordFileDoesNotTrimWhitespaceAroundTheNewline() throws Exception {
+        broker = startBroker(matchingKeystore, SECRET);
+        MutableSource source = new MutableSource(Map.of("fridge", false), 1);
+        ReconnectPolicy policy = new ReconnectPolicy(Duration.ofMillis(40), Duration.ofMillis(40), 0, () -> 0);
+        startPublisher(settings(broker.port(), matchingPem, Duration.ofHours(1)), source,
+                policy, Duration.ofMillis(50), Duration.ofMinutes(1), 5,
+                SECRET + " \n", "rw-------");
+        awaitLog(line -> line.contains("cause=bad credentials") && line.contains("reasonCode=4"));
+        assertTrue(lines().stream().noneMatch(line -> line.startsWith("connected host=")));
+    }
+
+    @Test
+    @Timeout(5)
+    void refusesAPasswordFileGroupOrOthersCanRead() throws Exception {
+        MqttSettings configured = settings(1, matchingPem, Duration.ofHours(1));
+        Files.writeString(passwordFile, SECRET + "\n");
+        Files.setPosixFilePermissions(passwordFile, PosixFilePermissions.fromString("rw-r--r--"));
+        connector = new PahoMqttConnector(
+                ReconnectPolicy.standard(), Duration.ofMillis(20), Duration.ofMinutes(1), 5);
+        connector.start(configured, new MutableSource(Map.of("fridge", false), 1));
+        assertTrue(appender.list.stream().anyMatch(event -> event.getLevel() == Level.ERROR
+                && event.getFormattedMessage().contains(
+                        "MQTT off; password file is readable or writable by group or others path=")
+                && event.getFormattedMessage().contains(passwordFile.toString())
+                && !event.getFormattedMessage().contains(SECRET)));
+        assertTrue(lines().stream().noneMatch(line -> line.startsWith("connecting host=")));
+        assertTrue(lines().stream().noneMatch(line -> line.startsWith("MQTT settings")));
     }
 
     @Test
@@ -312,7 +361,13 @@ class PahoMqttConnectorTest {
 
     private void startPublisher(MqttSettings settings, ApplianceStateSource source, ReconnectPolicy policy,
             Duration poll, Duration summary, int warnEvery) throws IOException {
-        Files.writeString(passwordFile, SECRET + "\n");
+        startPublisher(settings, source, policy, poll, summary, warnEvery, SECRET + "\n", "rw-------");
+    }
+
+    private void startPublisher(MqttSettings settings, ApplianceStateSource source, ReconnectPolicy policy,
+            Duration poll, Duration summary, int warnEvery, String passwordContents, String mode) throws IOException {
+        Files.writeString(passwordFile, passwordContents);
+        Files.setPosixFilePermissions(passwordFile, PosixFilePermissions.fromString(mode));
         connector = new PahoMqttConnector(policy, poll, summary, warnEvery);
         worker = new Thread(() -> connector.start(settings, source), "test-mqtt");
         worker.setDaemon(true);

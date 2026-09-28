@@ -77,6 +77,11 @@ public final class PahoMqttConnector implements MqttConnector {
 
     @Override
     public void start(MqttSettings settings, ApplianceStateSource states) {
+        Path passwordFile = settings.passwordFile();
+        if (Files.isRegularFile(passwordFile) && !PasswordFiles.ownerOnly(passwordFile)) {
+            refusePasswordFile(passwordFile);
+            return;
+        }
         worker = Thread.currentThread();
         logSettings(settings);
         nextSummary = Instant.now().plus(summaryInterval);
@@ -86,6 +91,9 @@ public final class PahoMqttConnector implements MqttConnector {
                 openSession(settings);
                 attempt = 0;
                 runSession(settings, states);
+            } catch (PasswordFilePermissions rejected) {
+                refusePasswordFile(rejected.path());
+                break;
             } catch (ConnectionDropped dropped) {
                 if (stopped.get()) {
                     break;
@@ -115,6 +123,10 @@ public final class PahoMqttConnector implements MqttConnector {
         }
     }
 
+    private static void refusePasswordFile(Path path) {
+        LOG.error("MQTT off; password file is readable or writable by group or others path={}", path);
+    }
+
     private void logSettings(MqttSettings settings) {
         String trust = settings.caFile().isPresent() ? "ca-file" : "jvm-cacerts";
         LOG.info("MQTT settings host={} port={} username={} clientId={} instanceId={} instanceName={} trust={} publishInterval={}",
@@ -129,6 +141,15 @@ public final class PahoMqttConnector implements MqttConnector {
     }
 
     private void openSession(MqttSettings settings) throws Exception {
+        char[] password = PasswordFiles.read(settings.passwordFile());
+        try {
+            openSession(settings, password);
+        } finally {
+            Arrays.fill(password, '\0');
+        }
+    }
+
+    private void openSession(MqttSettings settings, char[] password) throws Exception {
         LOG.info("connecting host={} port={}", settings.host(), settings.port());
         connectionLoss.set(null);
         lastSnapshot = null;
@@ -171,13 +192,8 @@ public final class PahoMqttConnector implements MqttConnector {
         options.setConnectionTimeout(wholeSeconds(settings.connectTimeout()));
         options.setHttpsHostnameVerificationEnabled(true);
         options.setSocketFactory(MqttTrust.socketFactory(settings.caFile()));
-        char[] password = readPassword(settings.passwordFile());
-        try {
-            options.setPassword(password);
-            created.connect(options);
-        } finally {
-            Arrays.fill(password, '\0');
-        }
+        options.setPassword(password);
+        created.connect(options);
         if (stopped.get()) {
             closeCurrentClient();
             return;
@@ -349,23 +365,6 @@ public final class PahoMqttConnector implements MqttConnector {
             return Integer.MAX_VALUE;
         }
         return (int) seconds;
-    }
-
-    private static char[] readPassword(Path file) throws ConfigFileException {
-        try {
-            if (!Files.isRegularFile(file)) {
-                throw new ConfigFileException("password file unreadable");
-            }
-            String password = Files.readString(file).trim();
-            if (password.isEmpty()) {
-                throw new ConfigFileException("password file unreadable");
-            }
-            return password.toCharArray();
-        } catch (ConfigFileException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ConfigFileException("password file unreadable");
-        }
     }
 
     private static final class ConnectionDropped extends Exception {
