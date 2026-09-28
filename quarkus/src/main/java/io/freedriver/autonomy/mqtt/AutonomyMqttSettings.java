@@ -21,7 +21,7 @@ public final class AutonomyMqttSettings implements MqttSettings {
 
     @Override
     public boolean enabled() {
-        return config.enabled();
+        return Boolean.TRUE.equals(MqttConfigValues.enabled(config.enabled()));
     }
 
     @Override
@@ -31,7 +31,7 @@ public final class AutonomyMqttSettings implements MqttSettings {
 
     @Override
     public int port() {
-        return config.port();
+        return MqttConfigValues.port(config.port());
     }
 
     @Override
@@ -66,16 +66,16 @@ public final class AutonomyMqttSettings implements MqttSettings {
 
     @Override
     public Duration publishInterval() {
-        return config.publishInterval();
+        return MqttConfigValues.duration(config.publishInterval());
     }
 
     @Override
     public Duration keepalive() {
-        return config.keepalive();
+        return MqttConfigValues.duration(config.keepalive());
     }
 
     @Override
     public Duration connectTimeout() {
-        return config.connectTimeout();
+        return MqttConfigValues.duration(config.connectTimeout());
     }
 }

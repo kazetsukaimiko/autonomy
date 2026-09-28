@@ -1,16 +1,15 @@
 package io.freedriver.autonomy.mqtt;
 
-import java.time.Duration;
 import java.util.Optional;
 
 /**
- * Config values {@link MqttStatePublisher} validates. Kept off the
- * {@link AutonomyMqttConfig} mapping so a bad value leaves the process running.
+ * Text values {@link MqttStatePublisher} validates. Parsing happens here, not
+ * while Quarkus loads {@link AutonomyMqttConfig}.
  */
 @MqttConfigValid
 public record MqttStartupConfig(AutonomyMqttConfig config) {
 
-    public boolean enabled() {
+    public String enabled() {
         return config.enabled();
     }
 
@@ -18,7 +17,7 @@ public record MqttStartupConfig(AutonomyMqttConfig config) {
         return config.host();
     }
 
-    public int port() {
+    public String port() {
         return config.port();
     }
 
@@ -46,15 +45,15 @@ public record MqttStartupConfig(AutonomyMqttConfig config) {
         return config.instanceName();
     }
 
-    public Duration publishInterval() {
+    public String publishInterval() {
         return config.publishInterval();
     }
 
-    public Duration keepalive() {
+    public String keepalive() {
         return config.keepalive();
     }
 
-    public Duration connectTimeout() {
+    public String connectTimeout() {
         return config.connectTimeout();
     }
 }

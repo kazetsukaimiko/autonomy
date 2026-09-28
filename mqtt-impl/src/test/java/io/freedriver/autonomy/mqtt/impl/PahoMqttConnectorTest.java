@@ -200,7 +200,7 @@ class PahoMqttConnectorTest {
         awaitLog(line -> line.contains("MQTT settings")
                 && line.contains("host=127.0.0.1")
                 && line.contains("port=" + broker.port())
-                && line.contains("username=autonomy")
+                && !line.contains("username=")
                 && line.contains("clientId=autonomy-" + INSTANCE_ID)
                 && line.contains("instanceId=" + INSTANCE_ID)
                 && line.contains("instanceName=Cabin")

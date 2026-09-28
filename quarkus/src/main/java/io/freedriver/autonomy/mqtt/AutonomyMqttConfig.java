@@ -1,26 +1,26 @@
 package io.freedriver.autonomy.mqtt;
 
-import java.time.Duration;
 import java.util.Optional;
 
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
 /**
- * {@code autonomy.mqtt.*}. Plain mapping: {@link MqttStatePublisher} validates
- * {@link MqttStartupConfig} after the application has started.
+ * {@code autonomy.mqtt.*} as text. Quarkus stores every value as a string so a
+ * malformed port, flag, or duration leaves the process running.
+ * {@link MqttStatePublisher} parses {@link MqttStartupConfig} after startup.
  */
 @ConfigMapping(prefix = "autonomy.mqtt")
 public interface AutonomyMqttConfig {
 
     @WithDefault("false")
-    boolean enabled();
+    String enabled();
 
     @WithDefault("mqtt.freedriver.io")
     String host();
 
     @WithDefault("8883")
-    int port();
+    String port();
 
     Optional<String> username();
 
@@ -35,11 +35,11 @@ public interface AutonomyMqttConfig {
     Optional<String> instanceName();
 
     @WithDefault("10s")
-    Duration publishInterval();
+    String publishInterval();
 
     @WithDefault("60s")
-    Duration keepalive();
+    String keepalive();
 
     @WithDefault("10s")
-    Duration connectTimeout();
+    String connectTimeout();
 }

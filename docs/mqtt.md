@@ -91,7 +91,7 @@ The published map includes pins that are already in the cache. When the mappings
 
 ## Configuration
 
-Prefix `autonomy.mqtt`. The mapping is plain configuration. `MqttStatePublisher` validates `MqttStartupConfig` once the application is up. With MQTT disabled, the required keys are optional. With MQTT enabled, each missing or invalid key is named in one ERROR on `io.freedriver.autonomy.mqtt`. The password is never logged. MQTT stays off and the service keeps running:
+Prefix `autonomy.mqtt`. Every value is text, including `enabled`, `port`, and the durations, so a malformed value leaves the process running. `MqttStatePublisher` parses `MqttStartupConfig` once the application is up. With MQTT disabled, the required identity keys are optional. A missing or invalid key, a port outside 1–65535, a duration that is zero or negative, or an `enabled` value other than `true` or `false`, is named in one ERROR on `io.freedriver.autonomy.mqtt`. The password is never logged. MQTT stays off and the service keeps running:
 
 ```
 MQTT off; invalid configuration keys=autonomy.mqtt.instanceId,autonomy.mqtt.passwordFile
@@ -109,7 +109,7 @@ The reader removes one trailing `\n` or `\r\n`. A trailing space, a leading spac
 
 | Key | Default | Required when enabled |
 | --- | --- | --- |
-| `enabled` | `false` | |
+| `enabled` | `false` | `true` or `false` |
 | `host` | `mqtt.freedriver.io` | hostname or IPv4 address |
 | `port` | `8883` | 1–65535 |
 | `username` | | yes |
@@ -122,7 +122,7 @@ The reader removes one trailing `\n` or `\r\n`. A trailing space, a leading spac
 | `keepalive` | `60s` | positive; Paho receives whole seconds, minimum 1 |
 | `connect-timeout` | `10s` | positive; Paho receives whole seconds, minimum 1 |
 
-Startup INFO lists host, port, username, client id, instance id, instance name, trust source (`jvm-cacerts` or `ca-file`), and publish interval. The password is never logged.
+Startup INFO lists host, port, client id, instance id, instance name, trust source (`jvm-cacerts` or `ca-file`), and publish interval. The broker username stays off that line. The password is never logged.
 
 Connect failures name the cause: `certificate not trusted`, `hostname mismatch`, `bad credentials` (MQTT code 4), `not authorized` (code 5), `unreachable or timeout`, or `other` together with the cause's class name. An unreadable password or CA file is `password file unreadable` or `ca file unreadable`. INFO logs every reconnect attempt with its number and delay. WARN logs every 5th consecutive failure with the attempt number, the next delay, and the cause.
 

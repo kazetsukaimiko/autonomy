@@ -129,10 +129,9 @@ public final class PahoMqttConnector implements MqttConnector {
 
     private void logSettings(MqttSettings settings) {
         String trust = settings.caFile().isPresent() ? "ca-file" : "jvm-cacerts";
-        LOG.info("MQTT settings host={} port={} username={} clientId={} instanceId={} instanceName={} trust={} publishInterval={}",
+        LOG.info("MQTT settings host={} port={} clientId={} instanceId={} instanceName={} trust={} publishInterval={}",
                 settings.host(),
                 settings.port(),
-                settings.username(),
                 settings.clientId(),
                 settings.instanceId(),
                 settings.instanceName(),

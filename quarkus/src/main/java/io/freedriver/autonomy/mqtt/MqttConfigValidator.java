@@ -1,37 +1,44 @@
 package io.freedriver.autonomy.mqtt;
 
-import java.time.Duration;
 import java.util.UUID;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Startup rules for {@code autonomy.mqtt.*} when publishing is turned on.
+ * Startup rules for {@code autonomy.mqtt.*}. Typed text is parsed here.
+ * Required identity keys apply when {@code enabled} is true.
  */
 public class MqttConfigValidator implements ConstraintValidator<MqttConfigValid, MqttStartupConfig> {
 
     @Override
     public boolean isValid(MqttStartupConfig value, ConstraintValidatorContext context) {
-        if (value == null || !value.enabled()) {
+        if (value == null) {
             return true;
         }
         context.disableDefaultConstraintViolation();
         boolean valid = true;
+        Boolean enabled = MqttConfigValues.enabled(value.enabled());
+        if (enabled == null) {
+            valid = violation(context, "enabled", "must be true or false");
+        }
+        if (MqttConfigValues.port(value.port()) == null) {
+            valid &= violation(context, "port", "must be 1-65535");
+        }
+        valid &= requireDuration(context, "publishInterval", value.publishInterval());
+        valid &= requireDuration(context, "keepalive", value.keepalive());
+        valid &= requireDuration(context, "connectTimeout", value.connectTimeout());
+        if (!Boolean.TRUE.equals(enabled)) {
+            return valid;
+        }
         valid &= requireText(context, "host", value.host(), "is required");
         if (value.host() != null && (value.host().contains("://") || value.host().contains("/"))) {
             valid &= violation(context, "host", "must be a hostname or IPv4 address");
-        }
-        if (value.port() < 1 || value.port() > 65535) {
-            valid &= violation(context, "port", "must be 1-65535");
         }
         valid &= requirePresent(context, "username", value.username(), "is required");
         valid &= requirePresent(context, "passwordFile", value.passwordFile(), "is required");
         valid &= requireUuid(context, value.instanceId());
         valid &= requirePresent(context, "instanceName", value.instanceName(), "is required");
-        valid &= requirePositive(context, "publishInterval", value.publishInterval());
-        valid &= requirePositive(context, "keepalive", value.keepalive());
-        valid &= requirePositive(context, "connectTimeout", value.connectTimeout());
         if (value.clientId().isPresent() && value.clientId().get().isBlank()) {
             valid &= violation(context, "clientId", "must not be blank");
         }
@@ -39,6 +46,13 @@ public class MqttConfigValidator implements ConstraintValidator<MqttConfigValid,
             valid &= violation(context, "caFile", "must not be blank");
         }
         return valid;
+    }
+
+    private static boolean requireDuration(ConstraintValidatorContext context, String node, String raw) {
+        if (MqttConfigValues.duration(raw) == null) {
+            return violation(context, node, "must be positive");
+        }
+        return true;
     }
 
     private static boolean requireText(ConstraintValidatorContext context, String node, String text, String message) {
@@ -66,13 +80,6 @@ public class MqttConfigValidator implements ConstraintValidator<MqttConfigValid,
         } catch (IllegalArgumentException e) {
             return violation(context, "instanceId", "must be a UUID");
         }
-    }
-
-    private static boolean requirePositive(ConstraintValidatorContext context, String node, Duration duration) {
-        if (duration == null || duration.isZero() || duration.isNegative()) {
-            return violation(context, node, "must be positive");
-        }
-        return true;
     }
 
     private static boolean violation(ConstraintValidatorContext context, String node, String message) {

@@ -3,7 +3,6 @@ package io.freedriver.autonomy.mqtt;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,8 +29,8 @@ class AutonomyMqttSettingsTest {
     private static AutonomyMqttConfig config(String instanceId, Optional<String> clientId) {
         return new AutonomyMqttConfig() {
             @Override
-            public boolean enabled() {
-                return true;
+            public String enabled() {
+                return "true";
             }
 
             @Override
@@ -40,8 +39,8 @@ class AutonomyMqttSettingsTest {
             }
 
             @Override
-            public int port() {
-                return 8883;
+            public String port() {
+                return "8883";
             }
 
             @Override
@@ -75,18 +74,18 @@ class AutonomyMqttSettingsTest {
             }
 
             @Override
-            public Duration publishInterval() {
-                return Duration.ofSeconds(10);
+            public String publishInterval() {
+                return "10s";
             }
 
             @Override
-            public Duration keepalive() {
-                return Duration.ofSeconds(60);
+            public String keepalive() {
+                return "60s";
             }
 
             @Override
-            public Duration connectTimeout() {
-                return Duration.ofSeconds(10);
+            public String connectTimeout() {
+                return "10s";
             }
         };
     }

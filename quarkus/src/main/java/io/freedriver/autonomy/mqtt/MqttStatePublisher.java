@@ -45,7 +45,7 @@ public class MqttStatePublisher {
             LOG.error("MQTT off; invalid configuration keys={}", invalidKeys(violations));
             return;
         }
-        if (!config.enabled()) {
+        if (!Boolean.TRUE.equals(MqttConfigValues.enabled(config.enabled()))) {
             LOG.info("MQTT off");
             return;
         }
