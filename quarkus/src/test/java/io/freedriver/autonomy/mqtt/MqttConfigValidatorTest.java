@@ -58,9 +58,13 @@ class MqttConfigValidatorTest {
         return stub;
     }
 
-    private static final class Stub implements AutonomyMqttConfig {
+    static Stub enabledStub() {
+        return config(true);
+    }
+
+    static final class Stub implements AutonomyMqttConfig {
         private boolean enabled;
-        private String host = "mqtt.freedriver.io";
+        String host = "mqtt.freedriver.io";
         private int port = 8883;
         private Optional<String> username = Optional.empty();
         private Optional<String> passwordFile = Optional.empty();

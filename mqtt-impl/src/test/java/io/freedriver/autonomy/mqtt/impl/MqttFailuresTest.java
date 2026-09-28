@@ -1,6 +1,7 @@
 package io.freedriver.autonomy.mqtt.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.net.ConnectException;
 import javax.net.ssl.SSLHandshakeException;
@@ -38,6 +39,17 @@ class MqttFailuresTest {
                 MqttFailures.describe(new ConnectException("Connection refused")).cause());
         assertEquals("password file unreadable",
                 MqttFailures.describe(new ConfigFileException("password file unreadable")).cause());
+    }
+
+    @Test
+    void namesAnUnrecognisedCauseAsOtherWithItsClass() {
+        IllegalStateException error = new IllegalStateException("password=xK9mQ2vL7p");
+        MqttFailures.Description described = MqttFailures.describe(error);
+        assertEquals("other", described.cause());
+        assertEquals(IllegalStateException.class.getName(), described.causeClass());
+        assertEquals("none", described.reasonCode());
+        assertFalse(described.cause().contains("xK9mQ2vL7p"));
+        assertFalse(described.causeClass().contains("xK9mQ2vL7p"));
     }
 
     private static final class FakeCertPathException extends Exception {

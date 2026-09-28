@@ -1,26 +1,28 @@
 # MQTT appliance state
 
-Autonomy publishes this home's appliance state to the freedriver.io Mosquitto broker. It does not subscribe to commands. Publishing stays off unless `autonomy.mqtt.enabled=true`.
+Autonomy publishes this home's appliance state to the freedriver.io Mosquitto broker. Publishing runs when `autonomy.mqtt.enabled=true`.
 
-Every MQTT line uses the logger category `io.freedriver.autonomy.mqtt`. On hakobune, Techops greps that string:
+Every MQTT line uses the logger category `io.freedriver.autonomy.mqtt`. Techops reads them with:
 
 ```
-journalctl --user-unit autonomy.service | grep 'io.freedriver.autonomy.mqtt'
+journalctl --user-unit autonomy-next.service | grep 'io.freedriver.autonomy.mqtt'
 ```
 
-Per-publish lines are DEBUG. The default level is INFO. Set `quarkus.log.category."io.freedriver.autonomy.mqtt".level=DEBUG` to see them. "Sent" in the once-a-minute INFO summary is a QoS 1 publish that returned after PUBACK. `acknowledged` counts those; `failed` counts publishes that did not.
+`autonomy-next.service` is the unit that enables MQTT. `autonomy.service` stays disabled.
+
+Per-publish lines are DEBUG. The default level is INFO. Set `quarkus.log.category."io.freedriver.autonomy.mqtt".level=DEBUG` to see them. "Sent" in the once-a-minute INFO summary is a QoS 1 publish that returned after PUBACK. `acknowledged` counts those; `failed` counts publishes that returned without a PUBACK.
 
 ## Modules
 
-* `mqtt-api` is the client-agnostic API: `MqttConnector`, `MqttSettings`, `ApplianceStateSource`, and the logger category. It has no wire DTOs and no MQTT client.
-* `mqtt-impl` is the Eclipse Paho MQTT v3 1.2.5 client, TLS, reconnect, and logging. It is the only module that references Paho or `io.freedriver:freedriver-mqtt-contract`.
-* `quarkus` depends on `mqtt-api` at compile scope and on `mqtt-impl` at runtime scope. Service sources do not mention Paho. A later client swap stays inside `mqtt-impl`.
+* `mqtt-api` is the client-agnostic API: `MqttConnector`, `MqttSettings`, `ApplianceStateSource`, and the logger category. Wire messages and the MQTT client live in `mqtt-impl`.
+* `mqtt-impl` is the Eclipse Paho MQTT v3 1.2.5 client, TLS, reconnect, and logging. It is the module that references Paho and `io.freedriver:freedriver-mqtt-contract`.
+* `quarkus` depends on `mqtt-api` at compile scope and on `mqtt-impl` at runtime scope. Service sources call the `mqtt-api` interfaces. A later client swap stays inside `mqtt-impl`.
 
-The wire types are freedriver-web's `io.freedriver:freedriver-mqtt-contract` (`Appliance`, `ApplianceStateMessage`, `ApplianceJson`, `ApplianceSchemas`). Autonomy's own `mqtt-contract` module is a different body shape and is not used here. It stays in the reactor because CI still builds it. Retiring it is a follow-up.
+The wire types are freedriver-web's `io.freedriver:freedriver-mqtt-contract` (`Appliance`, `ApplianceStateMessage`, `ApplianceJson`, `ApplianceSchemas`). Autonomy's `mqtt-contract` module is a different body shape. It stays in the reactor because CI still builds it. Retiring it is a follow-up.
 
 ## Contract pin
 
-The pin is one line, `freedriver-web.sha` at the repo root: the full 40-character commit SHA of `kazetsukaimiko/freedriver-web` `main` that `freedriver-mqtt-contract` was built from. That file is the only copy. Techops reads it for build provenance with:
+The pin is one line, `freedriver-web.sha` at the repo root: the full 40-character commit SHA of `kazetsukaimiko/freedriver-web` `main` that `freedriver-mqtt-contract` was built from. Techops reads that file for build provenance:
 
 ```
 tr -d '[:space:]' < freedriver-web.sha
@@ -35,7 +37,7 @@ git -C /tmp/freedriver-web-pin fetch origin main
 git -C /tmp/freedriver-web-pin merge-base --is-ancestor "$SHA" FETCH_HEAD && echo "$SHA is on main"
 ```
 
-`./scripts/install-freedriver-mqtt-contract.sh` rejects a value that is not 40 hex characters, checks out that commit, and installs the contract. The installed Maven coordinate is `io.freedriver:freedriver-mqtt-contract:1.0.0-SNAPSHOT`. No GitHub Packages token.
+`./scripts/install-freedriver-mqtt-contract.sh` accepts a 40-character hex commit, checks out that commit, and installs the contract. The installed Maven coordinate is `io.freedriver:freedriver-mqtt-contract:1.0.0-SNAPSHOT`. The build uses that checkout.
 
 JDK 23 is required. freedriver-web sets `maven.compiler.release` to 23, and autonomy compiles with source and target 23.
 
@@ -51,11 +53,11 @@ That script checks out `https://github.com/kazetsukaimiko/freedriver-web` at the
 ./mvnw --batch-mode -pl mqtt-contract -am install -DskipTests
 ```
 
-Run it before any build that includes `mqtt-impl` or `quarkus` (`mvn -pl quarkus -am` now builds `mqtt-impl`).
+Run it before any build that includes `mqtt-impl` or `quarkus` (`mvn -pl quarkus -am` builds `mqtt-impl`).
 
 ## Wire
 
-Topic: `freedriver/v1/{instanceId}/appliances` (`ApplianceSchemas.appliancesTopic`). QoS 1, retain false. `instanceId` is only the topic segment.
+Topic: `freedriver/v1/{instanceId}/appliances` (`ApplianceSchemas.appliancesTopic`). QoS 1, retain false. `instanceId` is the topic segment.
 
 Body, periodic map (`appliedCommandId` is null until a later command card):
 
@@ -69,43 +71,49 @@ Body, periodic map (`appliedCommandId` is null until a later command card):
 }
 ```
 
-TLS to `host:port` (default `mqtt.freedriver.io:8883`). Hostname verification stays on. Leave `ca-file` unset: the broker certificate is Let's Encrypt, and the JVM public CA trust store is the trust anchor. `ca-file` is only an override that replaces that trust store; it does not turn hostname verification off. There is no certificate pin and no skip-verify. A certificate that is trusted but names a different host is refused and logged as `hostname mismatch`.
+TLS to `host:port` (default `mqtt.freedriver.io:8883`). Hostname verification is always on. Leave `ca-file` unset: the broker certificate is Let's Encrypt, and the JVM public CA trust store is the trust anchor. `ca-file` replaces that trust store with the certificates in the file, and hostname verification stays on either way. A certificate that is trusted but names a different host is refused and logged as `hostname mismatch`.
 
-Reconnect is autonomy's capped exponential backoff (1s initial, 60s cap, up to 20% jitter), not Paho automatic reconnect. It retries forever. Each new session is clean and publishes the current snapshot; a previous payload is not replayed. A failed first connect does not stop the process.
+Reconnect is autonomy's capped exponential backoff (1s initial, 60s cap, up to 20% jitter), with each attempt number and delay logged. It retries for the life of the process. Each new session is clean and publishes the current snapshot. A failed first connect leaves the process running.
 
-Names that are blank or longer than `ApplianceSchemas.NAME_MAX` (64) are left out of the body so one bad alias cannot fail the publish.
+Names that are blank or longer than `ApplianceSchemas.NAME_MAX` (64) stay out of the body, so one bad alias leaves the rest of the publish intact.
 
 ## State source
 
-Names come from `SimpleAliasService.getMappings()` (`~/.config/autonomy/mappings_v2.json`). On/off comes from the `@ConnectorCache` `Map<PinCoordinate, Boolean>`. The publisher does not call `currentState()`, `makeView()`, or anything that reads or writes the serial boards.
+Names come from `SimpleAliasService.getMappings()` (`~/.config/autonomy/mappings_v2.json`). On/off comes from the `@ConnectorCache` `Map<PinCoordinate, Boolean>`. The publisher reads those two sources.
 
 The connector checks about once a second. It publishes when the cached map changes, on every connect, and at least every `publish-interval` (default 10s).
 
-Duplicate names: boards are ordered by connector UUID. Within a board, mapping list order is kept. The first appliance with a given name is the one that is published. Later copies are dropped, and one WARN is logged on `io.freedriver.autonomy.mqtt`. The wire has no board id.
+Duplicate names: boards are ordered by connector UUID. Within a board, mapping list order is kept. The first appliance with a given name is the one that is published. Later copies are dropped, and one WARN is logged on `io.freedriver.autonomy.mqtt`. The wire is keyed by appliance name.
 
-A pin that is not in the cache yet is omitted, not reported as off. If the mappings name appliances and none of them are cached, that cycle is not published, so an empty list is not sent in place of a house that simply has not been cached yet. An empty publish is sent only when the mappings themselves name no appliances.
+The published map includes pins that are already in the cache. When the mappings name appliances and the cache is still empty, the publisher skips that cycle. An empty appliance list goes out when the mappings list zero appliances.
 
-`SimpleAliasHandler.setGroup` writes the board through `ConnectorService.writeDigital` and does not update the connector cache. Group flips therefore stay out of the published map until some other path writes the cache (`setState`, or a joystick toggle). This branch does not change that.
+`SimpleAliasHandler.setGroup` writes the board through `ConnectorService.writeDigital` and does not update the connector cache. Group flips therefore stay out of the published map until some other path writes the cache (`setState`, or a joystick toggle).
 
 ## Configuration
 
-Prefix `autonomy.mqtt`. Jakarta Validation runs at startup. When MQTT is off, the required keys may be absent. When it is on, a missing or invalid required key stops startup. A bad password, a missing password file, or a broker that is down does not stop the process; the connector keeps retrying.
+Prefix `autonomy.mqtt`. Jakarta Validation runs at startup. With MQTT disabled, the required keys are optional. With MQTT enabled, each missing or invalid key is named in one ERROR on `io.freedriver.autonomy.mqtt`. The password is never logged. MQTT stays off and the service keeps running:
 
-The password file is a path the operator sets. On a deployed host it lives in that user's `~/.config/autonomy/` directory. The code has no default path. Before the file is read, group and other permission bits must all be off (`600` or `400`; owner execute is also owner-only). If group or others can read, write, or execute it, MQTT stays off and does not retry. The process keeps running. One ERROR line on `io.freedriver.autonomy.mqtt` names the path and not the contents:
+```
+MQTT off; invalid configuration keys=autonomy.mqtt.instanceId,autonomy.mqtt.passwordFile
+```
+
+A bad password, a missing password file, or a broker that is down leaves the process running; the connector keeps retrying.
+
+The password file is a path the operator sets. On a deployed host it lives in that user's `~/.config/autonomy/` directory. Before the file is read, group and other permission bits are off (`600` or `400`; owner execute is also owner-only). A file that group or others can read, write, or execute keeps MQTT off. The process keeps running. One ERROR line on `io.freedriver.autonomy.mqtt` names the path. The password is never logged:
 
 ```
 MQTT off; password file is readable or writable by group or others path=<path>
 ```
 
-The reader removes one trailing `\n` or `\r\n` and nothing else. A trailing space, a leading space, or a second newline is part of the password.
+The reader removes one trailing `\n` or `\r\n`. A trailing space, a leading space, or a second newline stays part of the password.
 
 | Key | Default | Required when enabled |
 | --- | --- | --- |
 | `enabled` | `false` | |
-| `host` | `mqtt.freedriver.io` | hostname or IPv4, no scheme |
+| `host` | `mqtt.freedriver.io` | hostname or IPv4 address |
 | `port` | `8883` | 1–65535 |
 | `username` | | yes |
-| `password-file` | | yes, path only; owner-only mode; contents are never logged |
+| `password-file` | | yes, path only; owner-only mode; the password is never logged |
 | `ca-file` | JVM public CAs | leave unset in deployment; the broker certificate is Let's Encrypt |
 | `client-id` | `autonomy-<instanceId>` | optional override |
 | `instance-id` | | yes, UUID |
@@ -114,11 +122,11 @@ The reader removes one trailing `\n` or `\r\n` and nothing else. A trailing spac
 | `keepalive` | `60s` | positive; Paho receives whole seconds, minimum 1 |
 | `connect-timeout` | `10s` | positive; Paho receives whole seconds, minimum 1 |
 
-Startup INFO lists host, port, username, client id, instance id, instance name, trust source (`jvm-cacerts` or `ca-file`), and publish interval. It does not list the password, the password file's contents, or the CA bytes.
+Startup INFO lists host, port, username, client id, instance id, instance name, trust source (`jvm-cacerts` or `ca-file`), and publish interval. The password is never logged.
 
-Connect failures name the cause: `certificate not trusted`, `hostname mismatch`, `bad credentials` (MQTT code 4), `not authorized` (code 5), `unreachable or timeout`. An unreadable password or CA file is `password file unreadable` or `ca file unreadable`. INFO logs every reconnect attempt with its number and delay. WARN logs every 5th consecutive failure with the attempt number, the next delay, and the cause.
+Connect failures name the cause: `certificate not trusted`, `hostname mismatch`, `bad credentials` (MQTT code 4), `not authorized` (code 5), `unreachable or timeout`, or `other` together with the cause's class name. An unreadable password or CA file is `password file unreadable` or `ca file unreadable`. INFO logs every reconnect attempt with its number and delay. WARN logs every 5th consecutive failure with the attempt number, the next delay, and the cause.
 
-Example (placeholders only; do not commit a real instance id, password, or host path). `ca-file` stays unset. Quarkus does not expand `~`, so the password path in a properties file is absolute. The deployed file is `~/.config/autonomy/mqtt-password`, mode `600` or `400`.
+Example (placeholders). `ca-file` stays unset. A properties file stores the password path as an absolute path. The deployed file is `~/.config/autonomy/mqtt-password`, mode `600` or `400`.
 
 ```
 autonomy.mqtt.enabled=true
@@ -133,7 +141,7 @@ autonomy.mqtt.publish-interval=10s
 
 Equivalent environment variables: `AUTONOMY_MQTT_ENABLED`, `AUTONOMY_MQTT_USERNAME`, `AUTONOMY_MQTT_PASSWORD_FILE`, `AUTONOMY_MQTT_INSTANCE_ID`, `AUTONOMY_MQTT_INSTANCE_NAME`, and the same pattern for the other keys.
 
-Only one of `autonomy.service` and `autonomy-next.service` may set `enabled=true`. Both would use the client id `autonomy-<instanceId>`. Leave the unit files as they are and enable MQTT from one drop-in, for example `~/.config/systemd/user/autonomy.service.d/mqtt.conf`. `%h` is that user's home:
+`autonomy-next.service` enables MQTT. `autonomy.service` stays disabled. The two units would otherwise share the client id `autonomy-<instanceId>`. Leave the unit files as they are and enable MQTT from `~/.config/systemd/user/autonomy-next.service.d/mqtt.conf`. `%h` is that user's home:
 
 ```
 [Service]
@@ -144,34 +152,8 @@ Environment=AUTONOMY_MQTT_INSTANCE_ID=00000000-0000-4000-8000-000000000000
 Environment=AUTONOMY_MQTT_INSTANCE_NAME=example
 ```
 
-Do not add the same drop-in to `autonomy-next.service`. Do not set `AUTONOMY_MQTT_CA_FILE`.
+Leave `AUTONOMY_MQTT_CA_FILE` unset.
 
 ## CI
 
-`.github/workflows/ci.yml` still verifies only `bom,jpa,api,mqtt-contract`, so this branch does not turn that job red. The verify job needs the contract install and the new modules before `mqtt-api` / `mqtt-impl` tests run there. After the existing "Install freedriver SNAPSHOT" step:
-
-```yaml
-      - name: Read freedriver-web pin
-        id: freedriver-web
-        run: echo "sha=$(tr -d '[:space:]' < freedriver-web.sha)" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout freedriver-web
-        uses: actions/checkout@v4
-        with:
-          repository: kazetsukaimiko/freedriver-web
-          ref: ${{ steps.freedriver-web.outputs.sha }}
-          path: freedriver-web
-
-      - name: Install freedriver-mqtt-contract
-        working-directory: freedriver-web
-        run: ./mvnw --batch-mode --no-transfer-progress -pl mqtt-contract -am install -DskipTests
-```
-
-Replace the verify command with:
-
-```yaml
-      - name: Build, test, and Spotless check
-        run: mvn --batch-mode --no-transfer-progress clean verify -pl bom,jpa,api,mqtt-contract,mqtt-api,mqtt-impl -am
-```
-
-JDK 23 is already set up earlier in the job, which `./mvnw` needs in order to compile the contract. The state-source test lives in `quarkus`, which this workflow still excludes (the existing "VEDirect refactor" note). Adding `quarkus` to `-pl` is that separate follow-up, not this workflow edit.
+Workflow coverage for these modules is [autonomy#61](https://github.com/kazetsukaimiko/autonomy/issues/61). That job builds `mqtt-api,mqtt-impl,quarkus`.

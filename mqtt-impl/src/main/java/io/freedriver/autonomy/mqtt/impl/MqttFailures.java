@@ -9,8 +9,9 @@ import java.util.Locale;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
 /**
- * Names a connect or publish failure for the log. Does not include messages that
- * might carry a password, a payload, or a certificate.
+ * Names a connect or publish failure for the log. The cause is a fixed phrase.
+ * The password, payload, and certificate stay out of the description; the class
+ * name is recorded separately.
  */
 public final class MqttFailures {
 
@@ -86,7 +87,7 @@ public final class MqttFailures {
         if (unreachable) {
             return described("unreachable or timeout", mqttCode, error);
         }
-        return described("unreachable or timeout", mqttCode, error);
+        return described("other", mqttCode, error);
     }
 
     private static Description described(String cause, Integer reasonCode, Throwable error) {

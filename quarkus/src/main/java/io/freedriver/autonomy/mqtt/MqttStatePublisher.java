@@ -9,15 +9,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Starts the publish loop when MQTT is enabled. A failed connect stays on the
- * background thread. A password file that is not owner-only makes that thread
- * return. Neither case stops the process.
+ * Starts the publish loop when MQTT is enabled. Invalid settings and a password
+ * file that is not owner-only log one error and leave MQTT off. A failed connect
+ * stays on the background thread. The process keeps running in each case.
  */
 @ApplicationScoped
 public class MqttStatePublisher {
@@ -41,10 +40,8 @@ public class MqttStatePublisher {
     void onStart(@Observes StartupEvent event) {
         Set<ConstraintViolation<AutonomyMqttConfig>> violations = validator.validate(config);
         if (!violations.isEmpty()) {
-            String detail = violations.stream()
-                    .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
-                    .collect(Collectors.joining("; "));
-            throw new ConstraintViolationException("autonomy.mqtt configuration is invalid: " + detail, violations);
+            LOG.error("MQTT off; invalid configuration keys={}", invalidKeys(violations));
+            return;
         }
         if (!config.enabled()) {
             LOG.info("MQTT off");
@@ -61,6 +58,16 @@ public class MqttStatePublisher {
         }, "mqtt-state");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    static String invalidKeys(Set<ConstraintViolation<AutonomyMqttConfig>> violations) {
+        return violations.stream()
+                .map(violation -> violation.getPropertyPath().toString())
+                .filter(key -> !key.isBlank())
+                .distinct()
+                .sorted()
+                .map(key -> "autonomy.mqtt." + key)
+                .collect(Collectors.joining(","));
     }
 
     void onStop(@Observes ShutdownEvent event) {
