@@ -9,7 +9,7 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 /**
- * Checks {@link AutonomyMqttConfig} when MQTT is enabled.
+ * Checks {@link MqttStartupConfig} when MQTT is enabled.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

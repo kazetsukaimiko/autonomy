@@ -5,9 +5,11 @@ import java.util.stream.Collectors;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.interceptor.Interceptor;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
@@ -37,8 +39,8 @@ public class MqttStatePublisher {
         this.states = states;
     }
 
-    void onStart(@Observes StartupEvent event) {
-        Set<ConstraintViolation<AutonomyMqttConfig>> violations = validator.validate(config);
+    void onStart(@Observes @Priority(Interceptor.Priority.APPLICATION) StartupEvent event) {
+        Set<ConstraintViolation<MqttStartupConfig>> violations = validator.validate(new MqttStartupConfig(config));
         if (!violations.isEmpty()) {
             LOG.error("MQTT off; invalid configuration keys={}", invalidKeys(violations));
             return;
@@ -60,7 +62,7 @@ public class MqttStatePublisher {
         thread.start();
     }
 
-    static String invalidKeys(Set<ConstraintViolation<AutonomyMqttConfig>> violations) {
+    static String invalidKeys(Set<ConstraintViolation<MqttStartupConfig>> violations) {
         return violations.stream()
                 .map(violation -> violation.getPropertyPath().toString())
                 .filter(key -> !key.isBlank())

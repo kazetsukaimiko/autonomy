@@ -7,10 +7,10 @@ import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
 /**
- * {@code autonomy.mqtt.*}. Constraints apply when {@link #enabled()} is true.
+ * {@code autonomy.mqtt.*}. Plain mapping: {@link MqttStatePublisher} validates
+ * {@link MqttStartupConfig} after the application has started.
  */
 @ConfigMapping(prefix = "autonomy.mqtt")
-@MqttConfigValid
 public interface AutonomyMqttConfig {
 
     @WithDefault("false")

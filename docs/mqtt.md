@@ -91,7 +91,7 @@ The published map includes pins that are already in the cache. When the mappings
 
 ## Configuration
 
-Prefix `autonomy.mqtt`. Jakarta Validation runs at startup. With MQTT disabled, the required keys are optional. With MQTT enabled, each missing or invalid key is named in one ERROR on `io.freedriver.autonomy.mqtt`. The password is never logged. MQTT stays off and the service keeps running:
+Prefix `autonomy.mqtt`. The mapping is plain configuration. `MqttStatePublisher` validates `MqttStartupConfig` once the application is up. With MQTT disabled, the required keys are optional. With MQTT enabled, each missing or invalid key is named in one ERROR on `io.freedriver.autonomy.mqtt`. The password is never logged. MQTT stays off and the service keeps running:
 
 ```
 MQTT off; invalid configuration keys=autonomy.mqtt.instanceId,autonomy.mqtt.passwordFile

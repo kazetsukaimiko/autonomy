@@ -18,12 +18,12 @@ class MqttConfigValidatorTest {
 
     @Test
     void disabledConfigPassesWithoutRequiredFields() {
-        assertTrue(validator.validate(config(false)).isEmpty());
+        assertTrue(validator.validate(new MqttStartupConfig(config(false))).isEmpty());
     }
 
     @Test
     void enabledConfigRequiresInstanceIdentityAndLogin() {
-        Set<ConstraintViolation<AutonomyMqttConfig>> violations = validator.validate(config(true));
+        Set<ConstraintViolation<MqttStartupConfig>> violations = validator.validate(new MqttStartupConfig(config(true)));
         assertTrue(violations.stream().anyMatch(violation -> violation.getPropertyPath().toString().equals("instanceId")));
         assertTrue(violations.stream().anyMatch(violation -> violation.getPropertyPath().toString().equals("instanceName")));
         assertTrue(violations.stream().anyMatch(violation -> violation.getPropertyPath().toString().equals("username")));
@@ -37,7 +37,7 @@ class MqttConfigValidatorTest {
         stub.passwordFile = Optional.of("/run/secrets/autonomy.pass");
         stub.instanceId = Optional.of("550e8400-e29b-41d4-a716-446655440000");
         stub.instanceName = Optional.of("Cabin");
-        assertTrue(validator.validate(stub).isEmpty());
+        assertTrue(validator.validate(new MqttStartupConfig(stub)).isEmpty());
     }
 
     @Test
@@ -47,7 +47,7 @@ class MqttConfigValidatorTest {
         stub.passwordFile = Optional.of("/run/secrets/autonomy.pass");
         stub.instanceId = Optional.of("not-a-uuid");
         stub.instanceName = Optional.of("Cabin");
-        Set<ConstraintViolation<AutonomyMqttConfig>> violations = validator.validate(stub);
+        Set<ConstraintViolation<MqttStartupConfig>> violations = validator.validate(new MqttStartupConfig(stub));
         assertEquals(1, violations.size());
         assertEquals("instanceId", violations.iterator().next().getPropertyPath().toString());
     }

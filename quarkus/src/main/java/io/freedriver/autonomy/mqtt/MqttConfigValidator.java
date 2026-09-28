@@ -9,10 +9,10 @@ import jakarta.validation.ConstraintValidatorContext;
 /**
  * Startup rules for {@code autonomy.mqtt.*} when publishing is turned on.
  */
-public class MqttConfigValidator implements ConstraintValidator<MqttConfigValid, AutonomyMqttConfig> {
+public class MqttConfigValidator implements ConstraintValidator<MqttConfigValid, MqttStartupConfig> {
 
     @Override
-    public boolean isValid(AutonomyMqttConfig value, ConstraintValidatorContext context) {
+    public boolean isValid(MqttStartupConfig value, ConstraintValidatorContext context) {
         if (value == null || !value.enabled()) {
             return true;
         }

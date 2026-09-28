@@ -55,8 +55,9 @@ class MqttStatePublisherTest {
 
     @Test
     void invalidKeyListNamesKeysAndOmitsValues() {
-        Set<jakarta.validation.ConstraintViolation<AutonomyMqttConfig>> violations =
-                Validation.buildDefaultValidatorFactory().getValidator().validate(MqttConfigValidatorTest.enabledStub());
+        Set<jakarta.validation.ConstraintViolation<MqttStartupConfig>> violations =
+                Validation.buildDefaultValidatorFactory().getValidator()
+                        .validate(new MqttStartupConfig(MqttConfigValidatorTest.enabledStub()));
         String keys = MqttStatePublisher.invalidKeys(violations);
         assertTrue(keys.contains("autonomy.mqtt.instanceId"));
         assertTrue(keys.contains("autonomy.mqtt.passwordFile"));
