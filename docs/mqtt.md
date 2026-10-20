@@ -87,7 +87,7 @@ Duplicate names: boards are ordered by connector UUID. Within a board, mapping l
 
 The published map includes pins that are already in the cache. When the mappings name appliances and the cache is still empty, the publisher skips that cycle. An empty appliance list goes out when the mappings list zero appliances.
 
-`SimpleAliasHandler.setGroup` writes the board through `ConnectorService.writeDigital` and does not update the connector cache. Group flips therefore stay out of the published map until some other path writes the cache (`setState`, or a joystick toggle).
+`SimpleAliasHandler.setGroup` writes the board through `ConnectorService.writeDigital` and stores that digital response in the connector cache, the same way `setState` does. The next publish, including the one that follows the local change, includes every appliance the group switched. Appliances the board response does not mention keep their cached state.
 
 ## Configuration
 
