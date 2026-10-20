@@ -1,0 +1,57 @@
+# git-cliff configuration for the autonomy changelog.
+# https://git-cliff.org/docs/configuration
+#
+# The Maven build runs git-cliff up to the current YYYY-MM_rN tag and packages
+# the output. Do not commit the generated changelog.
+
+[changelog]
+header = """
+# Changelog
+
+"""
+body = """
+{% if version -%}
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else -%}
+## [unreleased]
+{% endif %}
+{% for entry in commits | commit_groups(groups=commit_parsers_groups) %}
+### {{ entry.group | striptags | trim | upper_first }}
+
+{% for commit in entry.commits %}
+- {% if commit.scope %}*({{ commit.scope }})* {% endif %}{% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message | upper_first }}
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+render_always = false
+postprocessors = [
+    { pattern = "([^\\n])\\n## ", replace = "${1}\n\n## " },
+    { pattern = "\\n{3,}", replace = "\n\n" },
+]
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+require_conventional = false
+split_commits = false
+protect_breaking_commits = false
+filter_commits = true
+fail_on_unmatched_commit = false
+tag_pattern = '^[0-9]{4}-[0-9]{2}_r[0-9]+$'
+sort_commits = "oldest"
+topo_order = false
+topo_order_commits = true
+commit_parsers = [
+    { message = "^feat", group = "<!-- 0 -->Features" },
+    { message = "^fix", group = "<!-- 1 -->Bug Fixes" },
+    { message = "^doc", group = "<!-- 3 -->Documentation" },
+    { message = "^perf", group = "<!-- 4 -->Performance" },
+    { message = "^refactor", group = "<!-- 2 -->Refactor" },
+    { message = "^style", group = "<!-- 5 -->Styling" },
+    { message = "^test", group = "<!-- 6 -->Testing" },
+    { message = "(?i)^chore\\(release\\): prepare for", skip = true },
+    { message = "(?i)^chore\\(deps.*\\)", skip = true },
+    { message = "(?i)^chore|(?i)^ci", group = "<!-- 7 -->Miscellaneous" },
+    { message = "^revert", group = "<!-- 9 -->Revert" },
+]
