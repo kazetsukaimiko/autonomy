@@ -1,5 +1,15 @@
+# Only the fast-jar layout is sent. The rest of the tree, including any local
+# config or secrets, stays out of the image.
 *
-!target/*-runner
-!target/*-runner.jar
-!target/lib/*
-!target/quarkus-app/*
+!target/
+target/*
+!target/quarkus-app/
+!target/quarkus-app/**
+
+target/quarkus-app/**/mappings_v2.json
+target/quarkus-app/**/connectors.json
+target/quarkus-app/**/sensor_history.json
+target/quarkus-app/**/mqtt.pass
+target/quarkus-app/**/mqtt-password
+target/quarkus-app/**/*.pem
+target/quarkus-app/**/*.key
