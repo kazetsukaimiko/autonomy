@@ -128,6 +128,21 @@ Publishing runs when `autonomy.mqtt.enabled=true` on `autonomy-next.service`. `a
 * **Quarkus layout**: The deployed layout is the fast-jar produced by `quarkus:build`. A `native` profile exists and is not the default deploy path.
 * **Permissions**: The antrun plugin marks the scripts executable. The units are user units.
 
+## Container image
+
+`quarkus/src/main/docker/Dockerfile.jvm` builds an image of that fast-jar and installs the `joystick` package so `jstest` is on `PATH`. The process is the non-root user `autonomy` (uid 10001, home `/home/autonomy`). The image has no house config. Mount the two directories the process already reads, `~/.config/autonomy` and `~/.config/jsonlink`:
+
+```
+mvn -pl quarkus -am package -DskipTests
+docker build -f quarkus/src/main/docker/Dockerfile.jvm -t autonomy quarkus
+docker run --rm -p 8080:8080 \
+  -v "$HOME/.config/autonomy:/home/autonomy/.config/autonomy" \
+  -v "$HOME/.config/jsonlink:/home/autonomy/.config/jsonlink" \
+  autonomy
+```
+
+`package` leaves the fast-jar in `quarkus/target/quarkus-app/` and does not copy it into `~/.local`. JDK 23 and the pinned MQTT contract from the deploy steps above are required before that Maven command. The image directories `/home/autonomy/.config/autonomy` and `/home/autonomy/.config/jsonlink` are empty mount points. The host directories must be readable by uid 10001, and writable if the process should update mappings or `connectors.json`. `GET /rest/simple/` is served on port 8080. MQTT stays off unless `autonomy.mqtt.enabled=true` is set at runtime. Leave the password file on the mount. Do not copy it into the image.
+
 ## Source of Truth
 
 * The files in `deploy/systemd/` and this README are canonical.

@@ -1,54 +1,68 @@
 ####
-# This Dockerfile is used in order to build a container that runs the Quarkus application in JVM mode
+# Autonomy Quarkus fast-jar.
 #
-# Before building the container image run:
+# The image contains the fast-jar and the joystick package (`jstest`). It does
+# not contain house config. Mount the two directories onto the container user's
+# home so the process reads ~/.config/autonomy and ~/.config/jsonlink:
 #
-# ./mvnw package
+#   ./scripts/install-freedriver-mqtt-contract.sh
+#   mvn -pl quarkus -am package -DskipTests
+#   docker build -f src/main/docker/Dockerfile.jvm -t autonomy .
 #
-# Then, build the image with:
+# Run from the quarkus module, after the fast-jar exists in target/quarkus-app.
+# From the repo root the context is the quarkus directory:
 #
-# docker build -f src/main/docker/Dockerfile.jvm -t quarkus/quarkus-jvm .
+#   docker build -f quarkus/src/main/docker/Dockerfile.jvm -t autonomy quarkus
 #
-# Then run the container using:
+#   docker run --rm -p 8080:8080 \
+#     -v "$HOME/.config/autonomy:/home/autonomy/.config/autonomy" \
+#     -v "$HOME/.config/jsonlink:/home/autonomy/.config/jsonlink" \
+#     autonomy
 #
-# docker run -i --rm -p 8080:8080 quarkus/quarkus-jvm
-#
-# If you want to include the debug port into your docker image
-# you will have to expose the debug port (default 5005) like this :  EXPOSE 8080 5050
-#
-# Then run the container using :
-#
-# docker run -i --rm -p 8080:8080 -p 5005:5005 -e JAVA_ENABLE_DEBUG="true" quarkus/quarkus-jvm
+# The process is the non-root user autonomy (uid 10001, home /home/autonomy).
+# Those mounts must be readable by that uid. Give them write access only when
+# the process should update mappings or connectors.json. Do not copy secrets
+# into this image. MQTT stays off unless autonomy.mqtt.enabled=true is set at
+# runtime, and the password file stays on the mount.
 #
 ###
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3 
+# linux/amd64 manifest of eclipse-temurin:23-jre-noble. JDK 23 matches the build.
+FROM eclipse-temurin:23-jre-noble@sha256:dae8f3deeb48ba738c6ee0067db4b49a09683e613c63a235e34bf6b65efdc746
 
-ARG JAVA_PACKAGE=java-11-openjdk-headless
-ARG RUN_JAVA_VERSION=1.3.8
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
-# Install java and the run-java script
-# Also set up permissions for user `1001`
-RUN microdnf install curl ca-certificates ${JAVA_PACKAGE} \
-    && microdnf update \
-    && microdnf clean all \
-    && mkdir /deployments \
-    && chown 1001 /deployments \
-    && chmod "g+rwX" /deployments \
-    && chown 1001:root /deployments \
-    && curl https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh -o /deployments/run-java.sh \
-    && chown 1001 /deployments/run-java.sh \
-    && chmod 540 /deployments/run-java.sh \
-    && echo "securerandom.source=file:/dev/urandom" >> /etc/alternatives/jre/lib/security/java.security
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends joystick \
+    && rm -rf /var/lib/apt/lists/* \
+    && command -v jstest >/dev/null
 
-# Configure the JAVA_OPTIONS, you can add -XshowSettings:vm to also display the heap size.
-ENV JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
-# We make four distinct layers so if there are application changes the library layers can be re-used
-COPY --chown=1001 target/quarkus-app/lib/ /deployments/lib/
-COPY --chown=1001 target/quarkus-app/*.jar /deployments/
-COPY --chown=1001 target/quarkus-app/app/ /deployments/app/
-COPY --chown=1001 target/quarkus-app/quarkus/ /deployments/quarkus/
+RUN groupadd --system --gid 10001 autonomy \
+    && useradd --system --uid 10001 --gid autonomy \
+        --home-dir /home/autonomy --no-create-home \
+        --shell /usr/sbin/nologin autonomy \
+    && mkdir -p /deployments \
+        /home/autonomy/.config/autonomy \
+        /home/autonomy/.config/jsonlink \
+    && chown -R autonomy:autonomy /deployments /home/autonomy \
+    && chmod 0755 /home/autonomy /home/autonomy/.config \
+        /home/autonomy/.config/autonomy /home/autonomy/.config/jsonlink \
+    && test -z "$(find /home/autonomy/.config -type f -print)"
 
+COPY --chown=autonomy:autonomy target/quarkus-app/lib/ /deployments/lib/
+COPY --chown=autonomy:autonomy target/quarkus-app/*.jar /deployments/
+COPY --chown=autonomy:autonomy target/quarkus-app/app/ /deployments/app/
+COPY --chown=autonomy:autonomy target/quarkus-app/quarkus/ /deployments/quarkus/
+
+# House config and key files must not ride in next to the fast-jar.
+RUN test -z "$(find /deployments /home/autonomy -type f \( \
+        -name 'mappings_v2.json' -o -name 'connectors.json' -o -name 'sensor_history.json' \
+        -o -name 'mqtt.pass' -o -name 'mqtt-password' -o -name '*.pem' -o -name '*.key' \
+        -o -name '*secret*' \
+    \) -print)"
+
+ENV HOME=/home/autonomy \
+    LANG=C.UTF-8
+
+WORKDIR /deployments
 EXPOSE 8080
-USER 1001
+USER autonomy
 
-ENTRYPOINT [ "/deployments/run-java.sh" ]
+ENTRYPOINT ["java", "-Duser.home=/home/autonomy", "-Dquarkus.http.host=0.0.0.0", "-Dquarkus.http.port=8080", "-jar", "/deployments/quarkus-run.jar"]
