@@ -55,6 +55,45 @@ jobs:
             pom.xml
             freedriver/pom.xml
 
+      # Maven 3.10 rejects a duplicate dependencyManagement import that older
+      # runners only warned about. The second freedriver-jakarta-bom import in
+      # inotify-cdi matches the first, which is the one Maven used to keep.
+      - name: Drop duplicate freedriver BOM import
+        working-directory: freedriver
+        run: |
+          set -euo pipefail
+          python3 - << 'PY'
+          from pathlib import Path
+          path = Path("inotify-cdi/pom.xml")
+          lines = path.read_text().splitlines(keepends=True)
+          blocks = []
+          i = 0
+          while i < len(lines):
+              if "<dependency>" in lines[i]:
+                  j = i
+                  while j < len(lines) and "</dependency>" not in lines[j]:
+                      j += 1
+                  if j >= len(lines):
+                      raise SystemExit("unclosed dependency in inotify-cdi/pom.xml")
+                  block = "".join(lines[i:j + 1])
+                  if "freedriver-jakarta-bom" in block:
+                      blocks.append((i, j, block))
+                  i = j + 1
+              else:
+                  i += 1
+          def norm(text):
+              return " ".join(text.split())
+          if len(blocks) < 2:
+              print("no duplicate freedriver-jakarta-bom import")
+          elif norm(blocks[0][2]) != norm(blocks[1][2]):
+              raise SystemExit("freedriver-jakarta-bom imports differ; not dropping")
+          else:
+              start, end, _ = blocks[1]
+              del lines[start:end + 1]
+              path.write_text("".join(lines))
+              print("dropped duplicate freedriver-jakarta-bom import from inotify-cdi")
+          PY
+
       - name: Install freedriver SNAPSHOT
         working-directory: freedriver
         run: mvn --batch-mode --no-transfer-progress install -DskipTests
