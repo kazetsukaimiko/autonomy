@@ -51,6 +51,7 @@ import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Default;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 @Slf4j
@@ -83,6 +84,10 @@ public class SimpleAliasService  {
 
     @Inject
     Event<SpeechEvent> speech;
+
+    @Inject
+    @ConfigProperty(name = "autonomy.mappings.file")
+    String mappingsFile;
 
     public void waitFor(Duration duration) throws InterruptedException {
         Thread.sleep(duration.toMillis());
@@ -184,12 +189,7 @@ public class SimpleAliasService  {
 
     public Mappings getMappings() throws IOException {
         return ObjectMapperContextResolver.getMapper().readValue(
-                DirectoryProviders.CONFIG
-                        .getProvider()
-                        .subdir(Autonomy.DEPLOYMENT)
-                        .file("mappings_v2.json")
-                        .get()
-                        .toFile(),
+                Path.of(mappingsFile).toFile(),
                 Mappings.class);
     }
 

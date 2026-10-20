@@ -1,13 +1,12 @@
 package io.freedriver.autonomy.service.crud;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
-import io.freedriver.base.util.file.DirectoryProviders;
 import io.freedriver.jsonlink.config.v2.Mappings;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -17,6 +16,7 @@ import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * This service enforces TTLs on all Event data.
@@ -31,6 +31,10 @@ public class TTLEnforcementService {
 
     @Inject @Any
     Instance<EventCrudService<?>> eventCrudServices;
+
+    @Inject
+    @ConfigProperty(name = "autonomy.mappings.file")
+    String mappingsFile;
 
     private boolean continueTTLEnforcement = true;
 
@@ -96,12 +100,7 @@ public class TTLEnforcementService {
      */
     public Mappings getMappings() throws IOException {
         return ObjectMapperContextResolver.getMapper().readValue(
-                DirectoryProviders.CONFIG
-                        .getProvider()
-                        .subdir(Autonomy.DEPLOYMENT)
-                        .file("mappings_v2.json")
-                        .get()
-                        .toFile(),
+                Path.of(mappingsFile).toFile(),
                 Mappings.class);
     }
 
