@@ -53,10 +53,10 @@ The Maven antrun plugin in the `quarkus` module copies the built application, th
   * These are overwritten on each `mvn install` of the `quarkus` module.
 
 * **Configuration and data** (`~/.config/autonomy/`):
-  * `mappings_v2.json`: appliance and connector mappings (relays, lights, water valves, pumps) and `eventTTL`.
+  * `mappings_v2.json`: appliance and connector mappings (relays, lights, water valves, pumps) and `eventTTL`. This build always reads that fixed path under `~/.config/autonomy/`. It does not read `autonomy.mappings.file`.
   * `sensor_history.json`: analog sensor history read by the alias service.
   * Other files that may already sit in the directory: `soc_calculations.json`, pin notes, backups.
-  * The process keeps appliance state in those files. The service starts with no JDBC datasource. Event writes are accepted and discarded.
+  * The process keeps appliance state in those files. The service starts with no JDBC datasource. Event writes are accepted and discarded. This build does not read or write `appliance-state.json`.
 
 * **Systemd user units** (`~/.local/share/systemd/user/`):
   * `autonomy.service`: the main daemon.
@@ -68,6 +68,22 @@ The Maven antrun plugin in the `quarkus` module copies the built application, th
 * **App config** (baked into the jar, overridable at runtime):
   * Inside `quarkus-app/`: `application.properties` carries no JDBC datasource. The HTTP server uses Quarkus' default port 8080.
   * Runtime overrides use `-Dquarkus...` or an external config file. The usual path is to edit the source and rebuild.
+
+## Appliance restore
+
+This build does not restore appliances. It does not read `autonomy.state.dir`, `autonomy.state.restore-window`, or `autonomy.mappings.file`. It does not create a state directory mode `0700` or a state file mode `0600`, and it does not refuse symlinks for those paths. The only autonomy setting in `application.properties` is `autonomy.mqtt.enabled=false`. Mappings stay the fixed file `~/.config/autonomy/mappings_v2.json`. This build does not write `appliance-state.json`. Quarkus tests use `MappingsTestResource`, which prepares that same mappings file. They do not set `%test.autonomy.state.dir`, and this build has no `ProxyBoardTestResource`.
+
+A systemd drop-in or a `-D` flag for those three properties does nothing here. This build does not log `No saved appliance state exists; leaving every appliance off`, and a missing state file is not what keeps appliances off.
+
+Those settings, the `0700` and `0600` modes, symlink refusal, and appliance restore belong to unmerged branch `uni/50-restore-appliance-state` (closed pull request #51). They are not operating instructions for the service this tree runs. On that branch only, the defaults are:
+
+| Property | Default on `uni/50-restore-appliance-state` | Environment variable on that branch | What that branch would control |
+|---|---|---|---|
+| `autonomy.state.dir` | `${user.home}/.local/share/autonomy` | `AUTONOMY_STATE_DIR` | Directory that would hold `appliance-state.json`, outside the deployed build. |
+| `autonomy.state.restore-window` | `30s` | `AUTONOMY_STATE_RESTORE_WINDOW` | How often that branch would restore one board. A duration such as `30s`. |
+| `autonomy.mappings.file` | `${user.home}/.config/autonomy/mappings_v2.json` | `AUTONOMY_MAPPINGS_FILE` | Mappings file that branch would read instead of the fixed path. |
+
+That branch would create the state directory mode `0700` and `appliance-state.json` mode `0600`, refuse symlinks, and on a first run with no saved file leave every appliance off and log `No saved appliance state exists; leaving every appliance off`. Its `%test` profile would set `autonomy.state.dir` to `${java.io.tmpdir}/autonomy-quarkus-test`, and `ProxyBoardTestResource` would point `autonomy.mappings.file` at a temporary mappings file. None of that runs in this build.
 
 ## Systemd Units
 
