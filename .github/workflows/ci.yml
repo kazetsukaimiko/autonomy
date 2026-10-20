@@ -64,5 +64,30 @@ jobs:
         working-directory: freedriver-web
         run: ./mvnw --batch-mode --no-transfer-progress -pl mqtt-contract -am install -DskipTests
 
+      # Full reactor, so quarkus tests run on every pull request and push to master.
+      # user.home and autonomy.state.dir are scratch dirs in this workspace, not the
+      # runner home. JAVA_TOOL_OPTIONS reaches Maven and forked Surefire JVMs.
+      # maven.repo.local stays on the setup-java cache path.
       - name: Build, test, and Spotless check
-        run: mvn --batch-mode --no-transfer-progress clean verify
+        run: |
+          set -euo pipefail
+          scratch_home="${GITHUB_WORKSPACE}/ci-scratch/home"
+          scratch_state="${GITHUB_WORKSPACE}/ci-scratch/state"
+          case "${scratch_home}" in
+            "${GITHUB_WORKSPACE}"/*) ;;
+            *) echo "user.home is outside the workspace"; exit 1 ;;
+          esac
+          case "${scratch_state}" in
+            "${GITHUB_WORKSPACE}"/*) ;;
+            *) echo "autonomy state directory is outside the workspace"; exit 1 ;;
+          esac
+          mkdir -p "${scratch_home}" "${scratch_state}"
+          chmod 0700 "${scratch_home}" "${scratch_state}"
+          export JAVA_TOOL_OPTIONS="-Duser.home=${scratch_home} -Dautonomy.state.dir=${scratch_state}"
+          export AUTONOMY_STATE_DIR="${scratch_state}"
+          export MAVEN_OPTS="-Dmaven.repo.local=${HOME}/.m2/repository"
+          echo "user.home=${scratch_home}"
+          echo "autonomy.state.dir=${scratch_state}"
+          mvn --batch-mode --no-transfer-progress clean verify \
+            -Duser.home="${scratch_home}" \
+            -Dautonomy.state.dir="${scratch_state}"
