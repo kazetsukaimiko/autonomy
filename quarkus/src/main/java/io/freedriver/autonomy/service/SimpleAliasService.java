@@ -519,6 +519,23 @@ public class SimpleAliasService  {
     }
 
     /**
+     * Switches every appliance in the group and stores the board's digital response
+     * in the connector cache, the same way {@link #setState} does for one appliance.
+     * Pins the board does not report keep their cached state.
+     */
+    public void setGroup(UUID boardId, String group, boolean desiredState) throws IOException {
+        Mapping mapping = getMapping(boardId);
+        Map<Identifier, Boolean> written = connectorService.writeDigital(boardId, mapping.appliances()
+                .stream()
+                .filter(appliance -> appliance.groups().contains(group))
+                .collect(Collectors.toMap(
+                        Appliance::identifier,
+                        app -> desiredState,
+                        (a, b) -> b)));
+        cacheBoardDigitalState(boardId, written);
+    }
+
+    /**
      * Empty board response, built the same way as {@link Request#empty()}.
      * The record supplies empty info, error, debug, digital, and analog collections.
      */

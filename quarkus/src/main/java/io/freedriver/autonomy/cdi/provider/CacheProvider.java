@@ -9,6 +9,7 @@ import io.freedriver.autonomy.cdi.qualifier.ConnectorCache;
 import io.freedriver.autonomy.cdi.qualifier.OneSecondCache;
 import io.freedriver.autonomy.cdi.qualifier.SensorCache;
 import io.freedriver.autonomy.cdi.qualifier.SpeechCache;
+import io.freedriver.autonomy.service.PinCoordinate;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 
@@ -27,9 +28,12 @@ public class CacheProvider {
         return new ConcurrentHashMap<>();
     }
 
+    // One map for the alias service and the MQTT publisher. Dependent scope would
+    // give each injection point its own map, so a group switch would not publish.
     @Produces
+    @ApplicationScoped
     @ConnectorCache
-    public <K, V> Map<K, V> connectorCache() {
+    public Map<PinCoordinate, Boolean> connectorCache() {
         return new ConcurrentHashMap<>();
     }
 

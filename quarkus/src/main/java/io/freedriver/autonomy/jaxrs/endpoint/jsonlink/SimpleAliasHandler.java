@@ -4,13 +4,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import io.freedriver.autonomy.jaxrs.endpoint.SimpleAliasApi;
 import io.freedriver.autonomy.jaxrs.view.AliasView;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.autonomy.service.SimpleAliasService;
-import io.freedriver.jsonlink.config.v2.Appliance;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -58,15 +56,7 @@ public class SimpleAliasHandler implements SimpleAliasApi {
 
     @Override
     public AliasView setGroup(UUID boardId, String group, boolean desiredState) throws IOException {
-        connectorService.writeDigital(boardId, simpleAliasService.getMapping(boardId)
-                .appliances()
-                .stream()
-                .filter(appliance -> appliance.groups().contains(group))
-                .collect(Collectors.toMap(
-                        Appliance::identifier,
-                        app -> desiredState,
-                        (a, b) -> b
-                )));
+        simpleAliasService.setGroup(boardId, group, desiredState);
         return getState(boardId);
     }
 
