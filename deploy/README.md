@@ -130,18 +130,19 @@ Publishing runs when `autonomy.mqtt.enabled=true` on `autonomy-next.service`. `a
 
 ## Container image
 
-`quarkus/src/main/docker/Dockerfile.jvm` builds an image of that fast-jar and installs the `joystick` package so `jstest` is on `PATH`. The process is the non-root user `autonomy` (uid 10001, home `/home/autonomy`). The image has no house config. Mount the two directories the process already reads, `~/.config/autonomy` and `~/.config/jsonlink`:
+`quarkus/src/main/docker/Dockerfile.jvm` builds an image of that fast-jar and installs the pinned `joystick` package (`1:1.8.1-2build1`) so `jstest` is on `PATH`. That package also installs `evdev-joystick`, `fftest`, `ffmvforce`, `ffcfstress`, `ffset`, `jscal`, `jscal-restore`, and `jscal-store`. It depends on `libsdl2`. `ffmvforce` links `libSDL2`. The other binaries in the package do not. `evtest` and `inputattach` stay out. Do not run the container `--privileged` and do not mount all of `/dev`. The process is the non-root user `autonomy` (uid 10001, home `/home/autonomy`). The fast-jar under `/deployments` is owned by root and is not writable by that user. The image has no house config. Mount the two directories the process already reads, `~/.config/autonomy` and `~/.config/jsonlink`, and keep the root filesystem read-only:
 
 ```
 mvn -pl quarkus -am package -DskipTests
 docker build -f quarkus/src/main/docker/Dockerfile.jvm -t autonomy quarkus
-docker run --rm -p 8080:8080 \
+docker run --rm --read-only --tmpfs /tmp \
+  -p 127.0.0.1:8080:8080 \
   -v "$HOME/.config/autonomy:/home/autonomy/.config/autonomy" \
   -v "$HOME/.config/jsonlink:/home/autonomy/.config/jsonlink" \
   autonomy
 ```
 
-`package` leaves the fast-jar in `quarkus/target/quarkus-app/` and does not copy it into `~/.local`. JDK 23 and the pinned MQTT contract from the deploy steps above are required before that Maven command. The image directories `/home/autonomy/.config/autonomy` and `/home/autonomy/.config/jsonlink` are empty mount points. The host directories must be readable by uid 10001, and writable if the process should update mappings or `connectors.json`. `GET /rest/simple/` is served on port 8080. MQTT stays off unless `autonomy.mqtt.enabled=true` is set at runtime. Leave the password file on the mount. Do not copy it into the image.
+Publish `127.0.0.1:8080:8080` until the HTTP API has an auth boundary. The process listens on `0.0.0.0` inside the container network namespace. `package` leaves the fast-jar in `quarkus/target/quarkus-app/` and does not copy it into `~/.local`. JDK 23 and the pinned MQTT contract from the deploy steps above are required before that Maven command. The runtime image is a digest-pinned Temurin 25 JRE, which runs that Java 23 bytecode. The image directories `/home/autonomy/.config/autonomy` and `/home/autonomy/.config/jsonlink` are empty mount points. Those directories must be traversable by uid 10001, and writable if the process should update mappings or `connectors.json`. `GET /rest/simple/` is served on port 8080. MQTT stays off unless `autonomy.mqtt.enabled=true` is set at runtime. Leave the password file on the mount. `chown` `mqtt-password` to `10001:10001` and keep mode `600` or `400`. Do not add group or other bits: `PasswordFiles` rejects the file when any of those bits are set. Do not copy the password into the image.
 
 ## Source of Truth
 

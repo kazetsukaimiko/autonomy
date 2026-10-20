@@ -1,8 +1,8 @@
 ####
 # Autonomy Quarkus fast-jar.
 #
-# The image contains the fast-jar and the joystick package (`jstest`). It does
-# not contain house config. Mount the two directories onto the container user's
+# The image contains the fast-jar and the joystick package. It does not
+# contain house config. Mount the two directories onto the container user's
 # home so the process reads ~/.config/autonomy and ~/.config/jsonlink:
 #
 #   ./scripts/install-freedriver-mqtt-contract.sh
@@ -14,25 +14,109 @@
 #
 #   docker build -f quarkus/src/main/docker/Dockerfile.jvm -t autonomy quarkus
 #
-#   docker run --rm -p 8080:8080 \
+#   docker run --rm --read-only --tmpfs /tmp \
+#     -p 127.0.0.1:8080:8080 \
 #     -v "$HOME/.config/autonomy:/home/autonomy/.config/autonomy" \
 #     -v "$HOME/.config/jsonlink:/home/autonomy/.config/jsonlink" \
 #     autonomy
 #
 # The process is the non-root user autonomy (uid 10001, home /home/autonomy).
-# Those mounts must be readable by that uid. Give them write access only when
-# the process should update mappings or connectors.json. Do not copy secrets
-# into this image. MQTT stays off unless autonomy.mqtt.enabled=true is set at
-# runtime, and the password file stays on the mount.
+# /deployments is root-owned and not writable by that user. The root filesystem
+# is read-only; the process can write only the two config mounts and the /tmp
+# tmpfs. Publish the HTTP port on 127.0.0.1 until the API has an auth boundary.
+# The container still listens on 0.0.0.0 inside its network namespace.
+#
+# Directories on the mount path must be traversable by uid 10001. If MQTT is
+# enabled, chown mqtt-password to 10001:10001 and keep mode 600 or 400. Do not
+# add group or other bits. Do not copy secrets into this image. MQTT stays off
+# unless autonomy.mqtt.enabled=true is set at runtime.
+#
+# joystick 1:1.8.1-2build1 also installs evdev-joystick, fftest, ffmvforce,
+# ffcfstress, ffset, jscal, jscal-restore, and jscal-store. ffmvforce links
+# libSDL2. The other binaries in that package do not. --no-install-recommends
+# keeps evtest and inputattach out. Do not run the container --privileged
+# and do not mount all of /dev.
 #
 ###
-# linux/amd64 manifest of eclipse-temurin:23-jre-noble. JDK 23 matches the build.
-FROM eclipse-temurin:23-jre-noble@sha256:dae8f3deeb48ba738c6ee0067db4b49a09683e613c63a235e34bf6b65efdc746
+# linux/amd64 manifest of eclipse-temurin:25-jre-noble. Java 23 bytecode
+# runs on this LTS JRE. Rebuild when the base is patched; this file does not
+# apt-get upgrade, so the base userspace stays at the pinned snapshot.
+FROM eclipse-temurin:25-jre-noble@sha256:e83986cd14ac20befebc997e5444eef25d954480000526a0b98b9471243bcce2
 
+# Versions are the noble set apt installs for joystick on this base digest.
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends joystick \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        joystick=1:1.8.1-2build1 \
+        libapparmor1=4.0.1really4.0.1-0ubuntu0.24.04.9 \
+        libasound2-data=1.2.11-1ubuntu0.3 \
+        libasound2t64=1.2.11-1ubuntu0.3 \
+        libasyncns0=0.8-6build4 \
+        libbsd0=0.12.1-1build1.1 \
+        libdbus-1-3=1.14.10-4ubuntu4.1 \
+        libdecor-0-0=0.2.2-1build2 \
+        libdrm-amdgpu1=2.4.125-1ubuntu0.1~24.04.2 \
+        libdrm-common=2.4.125-1ubuntu0.1~24.04.2 \
+        libdrm-intel1=2.4.125-1ubuntu0.1~24.04.2 \
+        libdrm2=2.4.125-1ubuntu0.1~24.04.2 \
+        libedit2=3.1-20230828-1build1 \
+        libelf1t64=0.190-1.1ubuntu0.1 \
+        libflac12t64=1.4.3+ds-2.1ubuntu2 \
+        libgbm1=25.2.8-0ubuntu0.24.04.4 \
+        libicu74=74.2-1ubuntu3.1 \
+        libllvm20=1:20.1.2-0ubuntu1~24.04.3 \
+        libmp3lame0=3.100-6build1 \
+        libmpg123-0t64=1.32.5-1ubuntu1.1 \
+        libogg0=1.3.5-3build1 \
+        libopus0=1.4-1build1 \
+        libpciaccess0=0.17-3ubuntu0.24.04.3 \
+        libpulse0=1:16.1+dfsg1-2ubuntu10.1 \
+        libsamplerate0=0.2.2-4build1 \
+        libsdl2-2.0-0=2.30.0+dfsg-1ubuntu3.1 \
+        libsensors-config=1:3.6.0-9build1 \
+        libsensors5=1:3.6.0-9build1 \
+        libsndfile1=1.2.2-1ubuntu5.24.04.1 \
+        libvorbis0a=1.3.7-1build3 \
+        libvorbisenc2=1.3.7-1build3 \
+        libwayland-client0=1.22.0-2.1build1 \
+        libwayland-cursor0=1.22.0-2.1build1 \
+        libwayland-egl1=1.22.0-2.1build1 \
+        libx11-6=2:1.8.7-1ubuntu0.1 \
+        libx11-data=2:1.8.7-1ubuntu0.1 \
+        libx11-xcb1=2:1.8.7-1ubuntu0.1 \
+        libxau6=1:1.0.9-1build6 \
+        libxcb-dri3-0=1.15-1ubuntu2 \
+        libxcb-present0=1.15-1ubuntu2 \
+        libxcb-randr0=1.15-1ubuntu2 \
+        libxcb-sync1=1.15-1ubuntu2 \
+        libxcb-xfixes0=1.15-1ubuntu2 \
+        libxcb1=1.15-1ubuntu2 \
+        libxcursor1=1:1.2.1-1build1 \
+        libxdmcp6=1:1.1.3-0ubuntu6 \
+        libxext6=2:1.3.4-1build2 \
+        libxfixes3=1:6.0.0-2build1 \
+        libxi6=2:1.8.1-1build1 \
+        libxkbcommon0=1.6.0-1build1 \
+        libxml2=2.9.14+dfsg-1.3ubuntu3.10 \
+        libxrandr2=2:1.5.2-2build1 \
+        libxrender1=1:0.9.10-1.1build1 \
+        libxshmfence1=1.3-1build5 \
+        libxss1=1:1.2.3-1build3 \
+        mesa-libgallium=25.2.8-0ubuntu0.24.04.4 \
+        x11-common=1:7.7+23ubuntu3 \
+        xkb-data=2.41-2ubuntu1.1 \
     && rm -rf /var/lib/apt/lists/* \
-    && command -v jstest >/dev/null
+    && dpkg-query -W joystick | grep -F '1:1.8.1-2build1' \
+    && command -v jstest >/dev/null \
+    && command -v jscal >/dev/null \
+    && command -v jscal-restore >/dev/null \
+    && command -v jscal-store >/dev/null \
+    && command -v fftest >/dev/null \
+    && command -v ffmvforce >/dev/null \
+    && command -v ffcfstress >/dev/null \
+    && command -v ffset >/dev/null \
+    && command -v evdev-joystick >/dev/null \
+    && ! command -v evtest >/dev/null \
+    && ! command -v inputattach >/dev/null
 
 RUN groupadd --system --gid 10001 autonomy \
     && useradd --system --uid 10001 --gid autonomy \
@@ -41,18 +125,23 @@ RUN groupadd --system --gid 10001 autonomy \
     && mkdir -p /deployments \
         /home/autonomy/.config/autonomy \
         /home/autonomy/.config/jsonlink \
-    && chown -R autonomy:autonomy /deployments /home/autonomy \
+    && chown -R autonomy:autonomy /home/autonomy \
     && chmod 0755 /home/autonomy /home/autonomy/.config \
         /home/autonomy/.config/autonomy /home/autonomy/.config/jsonlink \
     && test -z "$(find /home/autonomy/.config -type f -print)"
 
-COPY --chown=autonomy:autonomy target/quarkus-app/lib/ /deployments/lib/
-COPY --chown=autonomy:autonomy target/quarkus-app/*.jar /deployments/
-COPY --chown=autonomy:autonomy target/quarkus-app/app/ /deployments/app/
-COPY --chown=autonomy:autonomy target/quarkus-app/quarkus/ /deployments/quarkus/
+COPY target/quarkus-app/lib/ /deployments/lib/
+COPY target/quarkus-app/*.jar /deployments/
+COPY target/quarkus-app/app/ /deployments/app/
+COPY target/quarkus-app/quarkus/ /deployments/quarkus/
 
+# Root owns the fast-jar. uid 10001 can read it and cannot write it.
 # House config and key files must not ride in next to the fast-jar.
-RUN test -z "$(find /deployments /home/autonomy -type f \( \
+RUN chown -R root:root /deployments \
+    && find /deployments -type d -exec chmod 0755 {} + \
+    && find /deployments -type f -exec chmod 0644 {} + \
+    && test -z "$(find /deployments \( -user autonomy -o -perm -020 -o -perm -002 \) -print)" \
+    && test -z "$(find /deployments /home/autonomy -type f \( \
         -name 'mappings_v2.json' -o -name 'connectors.json' -o -name 'sensor_history.json' \
         -o -name 'mqtt.pass' -o -name 'mqtt-password' -o -name '*.pem' -o -name '*.key' \
         -o -name '*secret*' \
