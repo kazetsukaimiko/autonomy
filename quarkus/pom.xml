@@ -172,6 +172,43 @@
             </plugin>
 
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>generate-changelog</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${project.basedir}/build/generate-changelog.sh</executable>
+                            <arguments>
+                                <argument>generate</argument>
+                                <argument>${project.build.directory}/generated-changelog/CHANGELOG.md</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>package-changelog</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${project.basedir}/build/generate-changelog.sh</executable>
+                            <arguments>
+                                <argument>package</argument>
+                                <argument>${project.build.directory}/generated-changelog/CHANGELOG.md</argument>
+                                <argument>${project.build.directory}/classes/changelog/CHANGELOG.md</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.0.0</version>
                 <executions>
