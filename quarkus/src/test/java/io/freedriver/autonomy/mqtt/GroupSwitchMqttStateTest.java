@@ -58,7 +58,7 @@ class GroupSwitchMqttStateTest {
         setField(aliases, "connectorService", connector);
         setField(aliases, "digitalPinCache", cache);
         doReturn(mapping).when(aliases).getMapping(boardId);
-        doReturn(new Mappings(null, null, Set.of(mapping))).when(aliases).getMappings();
+        doReturn(new Mappings(null, null, Set.of(mapping), Map.of())).when(aliases).getMappings();
 
         SimpleAliasHandler handler = new SimpleAliasHandler();
         setField(handler, "connectorService", connector);

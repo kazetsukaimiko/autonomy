@@ -1,5 +1,6 @@
 package io.freedriver.autonomy.events;
 
+import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.inotify.cdi.InotifyFilesystemEvent;
 import io.freedriver.serial.api.connection.SerialConnectionManager;
 import io.freedriver.serial.connection.DefaultSerialConnectionManager;
@@ -22,10 +23,21 @@ public class SerialHotplugService {
     @Inject
     SerialConnectionManager connectionManager;
 
+    @Inject
+    ConnectorService connectorService;
+
     void onFilesystemEvent(@Observes InotifyFilesystemEvent event) {
         log.debug("Serial hotplug signal: {}", event);
         if (connectionManager instanceof DefaultSerialConnectionManager manager) {
             manager.refreshConnections();
+        }
+        if (connectorService == null) {
+            return;
+        }
+        try {
+            connectorService.refreshConnectedBoards();
+        } catch (RuntimeException e) {
+            log.warn("Couldn't enumerate boards after serial hotplug", e);
         }
     }
 }
