@@ -219,6 +219,14 @@ public class SimpleAliasService  {
         return digitalState;
     }
 
+    /** Drops one board's cached outputs when it enumerates again, so a later read asks the board. */
+    public void forgetCachedDigitalPins(UUID boardId) {
+        if (digitalPinCache == null || boardId == null) {
+            return;
+        }
+        digitalPinCache.keySet().removeIf(pin -> boardId.equals(pin.boardId()));
+    }
+
     public Response cacheBoardState(Mapping mapping, Response currentState) {
         // Cache Digital Pins
         currentState.digital().forEach((k, v) ->

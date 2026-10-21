@@ -77,7 +77,7 @@ class CacheApplianceStateSourceTest {
         Appliance first = new Appliance(Identifier.of(1), "fridge", Set.of());
         Appliance second = new Appliance(Identifier.of(2), "fridge", Set.of());
         Mapping mapping = new Mapping(board, "board", List.of(first, second), null, null, null);
-        Mappings mappings = new Mappings(null, null, Set.of(mapping));
+        Mappings mappings = new Mappings(null, null, Set.of(mapping), Map.of());
         SimpleAliasService aliases = mock(SimpleAliasService.class);
         when(aliases.getMappings()).thenReturn(mappings);
         Map<PinCoordinate, Boolean> cache = new ConcurrentHashMap<>();
@@ -104,7 +104,7 @@ class CacheApplianceStateSourceTest {
         Appliance otherFridge = new Appliance(Identifier.of(42), "fridge", Set.of());
         Mapping first = new Mapping(FIRST, "first", List.of(fridge, hallway), null, null, null);
         Mapping second = new Mapping(SECOND, "second", List.of(otherFridge), null, null, null);
-        return new Mappings(null, null, Set.of(first, second));
+        return new Mappings(null, null, Set.of(first, second), Map.of());
     }
 
     private static Path sourceFile() {
