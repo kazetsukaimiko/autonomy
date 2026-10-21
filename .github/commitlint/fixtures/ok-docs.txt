@@ -1,0 +1,3 @@
+docs(deploy): describe the release swap
+
+Refs: #45

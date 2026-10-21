@@ -1,0 +1,2 @@
+feat(quarkus): run startup actions
+Refs: #45

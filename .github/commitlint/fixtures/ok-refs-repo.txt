@@ -1,0 +1,3 @@
+docs(changelog): name the version tags
+
+Refs: kazetsukaimiko/autonomy#45

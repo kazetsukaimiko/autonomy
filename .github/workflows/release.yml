@@ -1,0 +1,134 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require a master ancestor and the version bump
+        run: |
+          set -euo pipefail
+          git fetch origin master
+          python3 .github/scripts/check_version_tag.py --tag "$GITHUB_REF_NAME" --require-master
+
+      - name: Require the version tag to be the changelog cutoff
+        run: |
+          set -euo pipefail
+          tag="$(bash quarkus/build/generate-changelog.sh print-tag "$GITHUB_WORKSPACE")"
+          if [[ "$tag" != "$GITHUB_REF_NAME" ]]; then
+            echo "changelog tag is ${tag}, expected ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+
+      - name: Check out freedriver at the pin and confirm it is on master
+        run: bash scripts/checkout-pinned-commit.sh freedriver.sha freedriver https://github.com/kazetsukaimiko/freedriver.git master
+
+      - name: Check out freedriver-web at the pin and confirm it is on main
+        run: bash scripts/checkout-pinned-commit.sh freedriver-web.sha freedriver-web https://github.com/kazetsukaimiko/freedriver-web.git main
+
+      - name: Set up JDK 23
+        uses: actions/setup-java@v4
+        with:
+          java-version: "23"
+          distribution: temurin
+          cache: maven
+          cache-dependency-path: |
+            pom.xml
+            freedriver/pom.xml
+
+      - name: Drop duplicate freedriver BOM import
+        working-directory: freedriver
+        run: python3 "$GITHUB_WORKSPACE/scripts/drop-duplicate-freedriver-bom.py" inotify-cdi/pom.xml
+
+      - name: Install freedriver SNAPSHOT
+        working-directory: freedriver
+        run: mvn --batch-mode --no-transfer-progress install -DskipTests
+
+      - name: Install freedriver-mqtt-contract from the pinned freedriver-web commit
+        working-directory: freedriver-web
+        run: ./mvnw --batch-mode --no-transfer-progress -pl mqtt-contract -am install -DskipTests
+
+      # The tagged commit already passed Maven verify on master. Package skips
+      # tests and the install phase, so the runner home is not a deploy target.
+      - name: Package the fast-jar
+        run: |
+          set -euo pipefail
+          scratch_home="${GITHUB_WORKSPACE}/ci-scratch/home"
+          scratch_state="${GITHUB_WORKSPACE}/ci-scratch/state"
+          mkdir -p "${scratch_home}" "${scratch_state}"
+          chmod 0700 "${scratch_home}" "${scratch_state}"
+          export JAVA_TOOL_OPTIONS="-Duser.home=${scratch_home} -Dautonomy.state.dir=${scratch_state}"
+          export AUTONOMY_STATE_DIR="${scratch_state}"
+          export MAVEN_OPTS="-Dmaven.repo.local=${HOME}/.m2/repository"
+          mvn --batch-mode --no-transfer-progress -pl quarkus -am package -DskipTests \
+            -Duser.home="${scratch_home}" \
+            -Dautonomy.state.dir="${scratch_state}"
+
+      - name: Archive the app directory and write its checksum
+        run: |
+          set -euo pipefail
+          app=quarkus/target/quarkus-app
+          test -f "${app}/quarkus-run.jar"
+          test -d "${app}/app"
+          test -d "${app}/lib"
+          mkdir -p dist
+          archive="dist/autonomy-${GITHUB_REF_NAME}-quarkus-app.tar.gz"
+          tar -C quarkus/target -czf "${archive}" quarkus-app
+          (
+            cd dist
+            sha256sum "autonomy-${GITHUB_REF_NAME}-quarkus-app.tar.gz" \
+              > "autonomy-${GITHUB_REF_NAME}-quarkus-app.tar.gz.sha256"
+          )
+
+      - name: Write release notes from the new changelog section
+        run: |
+          set -euo pipefail
+          sha="$(tr -d '[:space:]' < freedriver.sha)"
+          python3 .github/scripts/release_notes.py \
+            --changelog quarkus/target/generated-changelog/CHANGELOG.md \
+            --version "${GITHUB_REF_NAME#v}" \
+            --freedriver-sha "${sha}" \
+            --output dist/release-notes.md
+
+      # create-storage-record stays off. The attestation is the GitHub
+      # attestation API record that `gh attestation verify` checks.
+      - name: Attest the archive and checksum
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/autonomy-${{ github.ref_name }}-quarkus-app.tar.gz*
+          create-storage-record: false
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          gh release create "$tag" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --target "$GITHUB_SHA" \
+            --title "$tag" \
+            --latest \
+            --notes-file dist/release-notes.md \
+            "dist/autonomy-${tag}-quarkus-app.tar.gz" \
+            "dist/autonomy-${tag}-quarkus-app.tar.gz.sha256"

@@ -1,0 +1,38 @@
+name: commitlint
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: .github/commitlint/package-lock.json
+
+      - name: Install commitlint
+        working-directory: .github/commitlint
+        run: npm ci
+
+      - name: Check commitlint fixtures
+        working-directory: .github/commitlint
+        run: bash check-fixtures.sh
+
+      - name: Check the pull request title and body
+        working-directory: .github/commitlint
+        run: bash check-pr.sh

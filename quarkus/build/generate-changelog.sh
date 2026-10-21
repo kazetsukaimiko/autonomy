@@ -1,14 +1,47 @@
 #!/usr/bin/env bash
 # Runs a pinned git-cliff and, on package, copies the changelog into the app classpath.
 # Output stays under the module target/ directory and is never committed.
-# A checkout with no reachable YYYY-MM_rN tag (a shallow clone) leaves the file out.
+# A checkout with no reachable release tag (a shallow clone) leaves the file out.
+# A release tag is vMAJOR.MINOR.PATCH or the older YYYY-MM_rN build stamp.
 set -euo pipefail
 
 VERSION=2.14.2
 
 usage() {
-    echo "usage: generate-changelog.sh generate OUTPUT | package OUTPUT CLASSES" >&2
+    echo "usage: generate-changelog.sh generate OUTPUT | package OUTPUT CLASSES | print-tag REPO" >&2
     exit 2
+}
+
+# Nearest ancestor release tag. A version tag wins when it sits on the same commit
+# as a build stamp. Prints nothing and returns 1 when no release tag is reachable.
+current_release_tag() {
+    local root="$1"
+    local head="$2"
+    local tag count rank best_count="" best_rank="" best_tag=""
+    if ! git -C "$root" rev-parse --verify "${head}^{commit}" >/dev/null 2>&1; then
+        return 1
+    fi
+    while IFS= read -r tag; do
+        [[ -n "$tag" ]] || continue
+        if [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            rank=0
+        elif [[ "$tag" =~ ^[0-9]{4}-[0-9]{2}_r[0-9]+$ ]]; then
+            rank=1
+        else
+            continue
+        fi
+        if ! git -C "$root" merge-base --is-ancestor "$tag" "$head" 2>/dev/null; then
+            continue
+        fi
+        count=$(git -C "$root" rev-list --count "${tag}..${head}")
+        if [[ -z "$best_tag" ]] || ((count < best_count)) || { ((count == best_count)) && ((rank < best_rank)); }; then
+            best_count=$count
+            best_rank=$rank
+            best_tag=$tag
+        fi
+    done < <(git -C "$root" tag --merged "$head")
+    [[ -n "$best_tag" ]] || return 1
+    printf '%s\n' "$best_tag"
 }
 
 sha512_for() {
@@ -90,7 +123,7 @@ generate() {
         exit 1
     fi
 
-    if ! tag=$(git -C "$root" describe --tags --abbrev=0 --match '[0-9][0-9][0-9][0-9]-[0-9][0-9]_r[0-9]*' HEAD 2>/dev/null); then
+    if ! tag=$(current_release_tag "$root" HEAD); then
         echo "git-cliff: no release tag reachable from HEAD; changelog omitted"
         return 0
     fi
@@ -135,6 +168,10 @@ case "$1" in
     package)
         [[ $# -eq 3 ]] || usage
         package_resource "$2" "$3"
+        ;;
+    print-tag)
+        [[ $# -eq 2 ]] || usage
+        current_release_tag "$2" HEAD
         ;;
     *)
         usage

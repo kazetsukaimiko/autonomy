@@ -1,0 +1,5 @@
+feat(api)!: rename the pin path
+
+BREAKING CHANGE: clients must call the new path.
+
+Refs: #45
