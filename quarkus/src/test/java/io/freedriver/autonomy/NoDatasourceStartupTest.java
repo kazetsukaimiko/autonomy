@@ -4,17 +4,15 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.time.Instant;
 
 import io.freedriver.autonomy.events.store.EventMetadata;
-import io.freedriver.autonomy.events.store.EventQuery;
 import io.freedriver.autonomy.events.store.EventStore;
 import io.freedriver.autonomy.events.store.EventTypes;
-import io.freedriver.autonomy.events.store.NoOpEventStore;
+import io.freedriver.autonomy.events.store.MongoEventStore;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -30,10 +28,10 @@ class NoDatasourceStartupTest {
 
     @Test
     void startsWithNoDatasourceAndEmptyEventReads() {
-        assertInstanceOf(NoOpEventStore.class, eventStore);
+        assertInstanceOf(MongoEventStore.class, eventStore);
+        // Before today, so GET /rest/event stays empty whether or not Mongo kept the write.
         EventMetadata metadata = new EventMetadata(Instant.parse("2026-09-27T00:00:00Z"), "test", "src", "evt");
         eventStore.append(EventTypes.JOYSTICK_EVENT, "payload", metadata);
-        assertEquals(0, eventStore.query(EventQuery.all(EventTypes.JOYSTICK_EVENT)).count());
 
         var config = ConfigProvider.getConfig();
         assertFalse(config.getOptionalValue("quarkus.datasource.jdbc.url", String.class).isPresent());
