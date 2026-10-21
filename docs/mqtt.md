@@ -18,7 +18,7 @@ Per-publish lines are DEBUG. The default level is INFO. Set `quarkus.log.categor
 * `mqtt-impl` is the Eclipse Paho MQTT v3 1.2.5 client, TLS, reconnect, and logging. It is the module that references Paho and `io.freedriver:freedriver-mqtt-contract`.
 * `quarkus` depends on `mqtt-api` at compile scope and on `mqtt-impl` at runtime scope. Service sources call the `mqtt-api` interfaces. A later client swap stays inside `mqtt-impl`.
 
-The wire types are freedriver-web's `io.freedriver:freedriver-mqtt-contract` (`Appliance`, `ApplianceStateMessage`, `ApplianceJson`, `ApplianceSchemas`). Autonomy's `mqtt-contract` module is a different body shape. It stays in the reactor because CI still builds it. Retiring it is a follow-up.
+The wire types are freedriver-web's `io.freedriver:freedriver-mqtt-contract` (`Appliance`, `ApplianceStateMessage`, `ApplianceJson`, `ApplianceSchemas`).
 
 ## Contract pin
 
