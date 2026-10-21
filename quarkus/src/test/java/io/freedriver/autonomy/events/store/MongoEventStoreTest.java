@@ -74,7 +74,8 @@ class MongoEventStoreTest {
         assertEquals(speech.text(), read.text());
         assertEquals(speech.subject(), read.subject());
         assertEquals(speech.speechEventType(), read.speechEventType());
-        assertEquals(0, store.query(EventQuery.since(EventTypes.SPEECH_EVENT, Instant.now().plusSeconds(60), 10))
+        assertEquals(0, store.query(EventQuery.since(
+                        EventTypes.SPEECH_EVENT, speech.timestamp().plusSeconds(60), 10))
                 .filter(event -> written.id().equals(event.id()))
                 .count());
         assertEquals(1, store.query(EventQuery.bySource(
@@ -93,10 +94,10 @@ class MongoEventStoreTest {
                 new EventMetadata(kept.timestamp(), kept.sourceClass(), kept.sourceId(), kept.eventId()));
         assertNotNull(events().find(new Document("_id", written.id())).first());
 
-        store.purgeOlderThan(Instant.now().minusSeconds(60));
+        store.purgeOlderThan(kept.timestamp().minusSeconds(60));
         assertNotNull(events().find(new Document("_id", written.id())).first());
 
-        store.purgeOlderThan(Instant.now().plusSeconds(60));
+        store.purgeOlderThan(kept.timestamp().plusSeconds(60));
         assertNull(events().find(new Document("_id", written.id())).first());
     }
 
@@ -117,7 +118,7 @@ class MongoEventStoreTest {
     private static SpeechEvent speech(String text) {
         return new SpeechEvent(
                 UUID.randomUUID().toString(),
-                Instant.parse("2026-10-21T12:00:00Z"),
+                Instant.now(),
                 GenerationOrigin.NON_HUMAN,
                 "test.Source",
                 "speaker-" + UUID.randomUUID(),
