@@ -12,7 +12,7 @@
   <packaging>pom</packaging>
 
   <name>Autonomy BOM</name>
-  <description>Bill of Materials for Autonomy artifacts only (api, jpa, quarkus, mqtt-contract, model). Import autonomy-jakarta-bom and/or autonomy-3p-bom separately for APIs and third-party versions.</description>
+  <description>Bill of Materials for Autonomy artifacts only (api, jpa, quarkus, mqtt-api, mqtt-impl, model). Import autonomy-jakarta-bom and/or autonomy-3p-bom separately for APIs and third-party versions.</description>
 
   <dependencyManagement>
     <dependencies>
@@ -31,12 +31,6 @@
       <dependency>
         <groupId>io.freedriver.autonomy</groupId>
         <artifactId>autonomy-quarkus</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.freedriver.autonomy</groupId>
-        <artifactId>autonomy-mqtt-contract</artifactId>
         <version>${project.version}</version>
       </dependency>
 

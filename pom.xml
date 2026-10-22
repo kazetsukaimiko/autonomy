@@ -13,7 +13,6 @@
     <module>jakarta-bom</module>
     <module>3p-bom</module>
     <module>model</module>
-    <module>mqtt-contract</module>
     <module>mqtt-api</module>
     <module>mqtt-impl</module>
     <module>jpa</module>
