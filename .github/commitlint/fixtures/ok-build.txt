@@ -1,0 +1,3 @@
+build(quarkus): package the fast-jar
+
+Refs: #45

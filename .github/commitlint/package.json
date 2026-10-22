@@ -1,0 +1,9 @@
+{
+  "name": "autonomy-commitlint",
+  "private": true,
+  "description": "Commitlint for autonomy pull request titles. Not a published package.",
+  "dependencies": {
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4"
+  }
+}

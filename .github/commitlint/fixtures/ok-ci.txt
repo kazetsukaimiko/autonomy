@@ -1,0 +1,3 @@
+ci: publish attested releases on version tags
+
+Refs: #45

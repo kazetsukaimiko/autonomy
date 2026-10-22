@@ -3,6 +3,8 @@
 *~
 DEADJOE
 *.class
+*.pyc
+__pycache__/
 *.jar
 *.war
 *.ear

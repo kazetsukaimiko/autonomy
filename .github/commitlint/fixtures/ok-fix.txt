@@ -1,0 +1,5 @@
+fix(mqtt): keep booting when settings are malformed
+
+The service stays up.
+
+Refs: #12

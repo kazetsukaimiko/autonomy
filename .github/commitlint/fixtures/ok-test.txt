@@ -1,0 +1,3 @@
+test(changelog): cover a missing changelog
+
+Refs: #46

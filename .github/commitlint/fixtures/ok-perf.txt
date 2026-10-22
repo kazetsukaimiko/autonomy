@@ -1,0 +1,3 @@
+perf(mqtt): skip an unchanged publish
+
+Refs: #8

@@ -13,37 +13,23 @@ jobs:
   verify:
     name: Maven verify
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout autonomy
         uses: actions/checkout@v4
 
-      - name: Checkout freedriver
-        uses: actions/checkout@v4
-        with:
-          repository: kazetsukaimiko/freedriver
-          path: freedriver
-
-      # freedriver-web.sha holds the freedriver-web commit that autonomy builds the MQTT contract from.
-      - name: Read freedriver-web pin
-        if: hashFiles('freedriver-web.sha') != ''
+      - name: Test release tag rules and changelog tag selection
         run: |
-          SHA="$(tr -d '[:space:]' < freedriver-web.sha)"
-          if ! printf '%s' "$SHA" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "::error file=freedriver-web.sha::freedriver-web.sha must hold one full 40-character commit SHA"
-            exit 1
-          fi
-          echo "FREEDRIVER_WEB_SHA=${SHA}" >> "$GITHUB_ENV"
+          python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+          bash quarkus/build/generate-changelog-test.sh
+
+      # freedriver.sha is the jsonlink commit. freedriver-web.sha is the MQTT contract commit.
+      - name: Check out freedriver at the pin and confirm it is on master
+        run: bash scripts/checkout-pinned-commit.sh freedriver.sha freedriver https://github.com/kazetsukaimiko/freedriver.git master
 
       - name: Check out freedriver-web at the pin and confirm it is on main
-        if: env.FREEDRIVER_WEB_SHA != ''
-        run: |
-          git clone --filter=blob:none --no-checkout https://github.com/kazetsukaimiko/freedriver-web.git freedriver-web
-          git -C freedriver-web fetch origin main
-          if ! git -C freedriver-web merge-base --is-ancestor "$FREEDRIVER_WEB_SHA" origin/main; then
-            echo "::error file=freedriver-web.sha::${FREEDRIVER_WEB_SHA} is not on freedriver-web main"
-            exit 1
-          fi
-          git -C freedriver-web checkout --detach "$FREEDRIVER_WEB_SHA"
+        run: bash scripts/checkout-pinned-commit.sh freedriver-web.sha freedriver-web https://github.com/kazetsukaimiko/freedriver-web.git main
 
       - name: Set up JDK 23
         uses: actions/setup-java@v4
@@ -60,46 +46,13 @@ jobs:
       # inotify-cdi matches the first, which is the one Maven used to keep.
       - name: Drop duplicate freedriver BOM import
         working-directory: freedriver
-        run: |
-          set -euo pipefail
-          python3 - << 'PY'
-          from pathlib import Path
-          path = Path("inotify-cdi/pom.xml")
-          lines = path.read_text().splitlines(keepends=True)
-          blocks = []
-          i = 0
-          while i < len(lines):
-              if "<dependency>" in lines[i]:
-                  j = i
-                  while j < len(lines) and "</dependency>" not in lines[j]:
-                      j += 1
-                  if j >= len(lines):
-                      raise SystemExit("unclosed dependency in inotify-cdi/pom.xml")
-                  block = "".join(lines[i:j + 1])
-                  if "freedriver-jakarta-bom" in block:
-                      blocks.append((i, j, block))
-                  i = j + 1
-              else:
-                  i += 1
-          def norm(text):
-              return " ".join(text.split())
-          if len(blocks) < 2:
-              print("no duplicate freedriver-jakarta-bom import")
-          elif norm(blocks[0][2]) != norm(blocks[1][2]):
-              raise SystemExit("freedriver-jakarta-bom imports differ; not dropping")
-          else:
-              start, end, _ = blocks[1]
-              del lines[start:end + 1]
-              path.write_text("".join(lines))
-              print("dropped duplicate freedriver-jakarta-bom import from inotify-cdi")
-          PY
+        run: python3 "$GITHUB_WORKSPACE/scripts/drop-duplicate-freedriver-bom.py" inotify-cdi/pom.xml
 
       - name: Install freedriver SNAPSHOT
         working-directory: freedriver
         run: mvn --batch-mode --no-transfer-progress install -DskipTests
 
       - name: Install freedriver-mqtt-contract from the pinned freedriver-web commit
-        if: env.FREEDRIVER_WEB_SHA != ''
         working-directory: freedriver-web
         run: ./mvnw --batch-mode --no-transfer-progress -pl mqtt-contract -am install -DskipTests
 
