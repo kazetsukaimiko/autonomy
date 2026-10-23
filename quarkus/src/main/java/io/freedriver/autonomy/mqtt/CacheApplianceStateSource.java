@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -46,15 +47,42 @@ public class CacheApplianceStateSource implements ApplianceStateSource {
 
     @Override
     public Snapshot read() throws IOException {
+        List<Placed> appliances = mapped();
+        Map<String, Boolean> states = new LinkedHashMap<>();
+        for (Placed appliance : appliances) {
+            if (appliance.state() != null) {
+                states.put(appliance.name(), appliance.state());
+            }
+        }
+        return new Snapshot(states, appliances.size());
+    }
+
+    /**
+     * Board for the appliance name the state publish keeps. Boards are ordered
+     * by connector UUID, and the first listing of a name wins. Empty when the
+     * mappings do not contain that name.
+     */
+    public Optional<UUID> boardFor(String applianceName) throws IOException {
+        if (applianceName == null || applianceName.isBlank()) {
+            return Optional.empty();
+        }
+        for (Placed appliance : mapped()) {
+            if (applianceName.equals(appliance.name())) {
+                return Optional.of(appliance.boardId());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private List<Placed> mapped() throws IOException {
         Mappings mappings = aliases.getMappings();
         List<Mapping> boards = new ArrayList<>(mappings.getMappings());
         boards.sort(Comparator.comparing(Mapping::connectorId, Comparator.nullsLast(Comparator.naturalOrder())));
-        Map<String, Boolean> states = new LinkedHashMap<>();
+        List<Placed> placed = new ArrayList<>();
         Set<String> seen = new HashSet<>();
-        int mapped = 0;
         for (Mapping board : boards) {
             UUID boardId = board.connectorId();
-            if (boardId == null) {
+            if (boardId == null || board.appliances() == null) {
                 continue;
             }
             for (Appliance appliance : board.appliances()) {
@@ -67,14 +95,13 @@ public class CacheApplianceStateSource implements ApplianceStateSource {
                     logDuplicate(boardId, name);
                     continue;
                 }
-                mapped++;
-                Boolean state = cache.get(new PinCoordinate(boardId, pin));
-                if (state != null) {
-                    states.put(name, state);
-                }
+                placed.add(new Placed(boardId, name, cache.get(new PinCoordinate(boardId, pin))));
             }
         }
-        return new Snapshot(states, mapped);
+        return List.copyOf(placed);
+    }
+
+    private record Placed(UUID boardId, String name, Boolean state) {
     }
 
     private void logDuplicate(UUID boardId, String name) {

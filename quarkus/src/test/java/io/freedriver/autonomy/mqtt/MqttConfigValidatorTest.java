@@ -35,6 +35,14 @@ class MqttConfigValidatorTest {
     }
 
     @Test
+    void aBadCommandsValueDoesNotTurnMqttOff() {
+        Stub stub = complete();
+        stub.commandsEnabled = "banana";
+        stub.commandMaxBytes = "nope";
+        assertTrue(validator.validate(new MqttStartupConfig(stub)).isEmpty());
+    }
+
+    @Test
     void instanceIdMustBeAUuid() {
         Stub stub = complete();
         stub.instanceId = Optional.of("not-a-uuid");
@@ -153,6 +161,8 @@ class MqttConfigValidatorTest {
         private String publishInterval = "10s";
         private String keepalive = "60s";
         private String connectTimeout = "10s";
+        String commandsEnabled = "false";
+        String commandMaxBytes = "4096";
 
         @Override
         public String enabled() {
@@ -212,6 +222,16 @@ class MqttConfigValidatorTest {
         @Override
         public String connectTimeout() {
             return connectTimeout;
+        }
+
+        @Override
+        public String commandsEnabled() {
+            return commandsEnabled;
+        }
+
+        @Override
+        public String commandMaxBytes() {
+            return commandMaxBytes;
         }
     }
 }

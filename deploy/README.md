@@ -109,7 +109,7 @@ This is a local build. A version-tag deploy uses the release archive above.
 
 ## Appliance restore
 
-This build does not restore appliances. It does not read `autonomy.state.dir`, `autonomy.state.restore-window`, or `autonomy.mappings.file`. It does not create a state directory mode `0700` or a state file mode `0600`, and it does not refuse symlinks for those paths. The only autonomy setting in `application.properties` is `autonomy.mqtt.enabled=false`. Mappings stay the fixed file `~/.config/autonomy/mappings_v2.json`. This build does not write `appliance-state.json`. Quarkus tests use `MappingsTestResource`, which prepares that same mappings file. They do not set `%test.autonomy.state.dir`, and this build has no `ProxyBoardTestResource`.
+This build does not restore appliances. It does not read `autonomy.state.dir`, `autonomy.state.restore-window`, or `autonomy.mappings.file`. It does not create a state directory mode `0700` or a state file mode `0600`, and it does not refuse symlinks for those paths. MQTT publish stays off with `autonomy.mqtt.enabled=false`. Command subscribe stays off with `autonomy.mqtt.commands-enabled=false` and `autonomy.mqtt.command-max-bytes=4096`. This build does not set `autonomy.mqtt.commands-enabled` to true and does not set `freedriver.appliances.live-commands`. Mappings stay the fixed file `~/.config/autonomy/mappings_v2.json`. This build does not write `appliance-state.json`. Quarkus tests use `MappingsTestResource`, which prepares that same mappings file. They do not set `%test.autonomy.state.dir`, and this build has no `ProxyBoardTestResource`.
 
 A systemd drop-in or a `-D` flag for those three properties does nothing here. This build does not log `No saved appliance state exists; leaving every appliance off`, and a missing state file is not what keeps appliances off.
 
@@ -172,7 +172,7 @@ WantedBy=default.target
 
 ## MQTT
 
-Publishing runs when `autonomy.mqtt.enabled=true` on `autonomy-next.service`. `autonomy.service` stays disabled. The two units would otherwise share the client id `autonomy-<instanceId>`. Leave the unit files unchanged and put the keys in `~/.config/systemd/user/autonomy-next.service.d/mqtt.conf`. The password file is that user's `~/.config/autonomy/mqtt-password` (mode `600` or `400`); the unit stores the path. The password is never logged. Leave the CA file unset. The broker certificate is Let's Encrypt. The keys, a placeholder example, and `journalctl --user-unit autonomy-next.service | grep 'io.freedriver.autonomy.mqtt'` are in [docs/mqtt.md](../docs/mqtt.md).
+Publishing runs when `autonomy.mqtt.enabled=true` on `autonomy-next.service`. Command subscribe stays off unless `autonomy.mqtt.commands-enabled` is the value `true`. Any other value logs once, does not subscribe, and does not stop the process. This build does not turn that setting on and does not turn on `freedriver.appliances.live-commands`. `autonomy.service` stays disabled. The two units would otherwise share the client id `autonomy-<instanceId>`. Leave the unit files unchanged and put the keys in `~/.config/systemd/user/autonomy-next.service.d/mqtt.conf`. The password file is that user's `~/.config/autonomy/mqtt-password` (mode `600` or `400`); the unit stores the path. The password is never logged. Leave the CA file unset. The broker certificate is Let's Encrypt. The keys, a placeholder example, and `journalctl --user-unit autonomy-next.service | grep 'io.freedriver.autonomy.mqtt'` are in [docs/mqtt.md](../docs/mqtt.md).
 
 ## Other Notes
 

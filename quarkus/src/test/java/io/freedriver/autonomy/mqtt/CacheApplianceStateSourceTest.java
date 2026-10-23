@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -88,6 +89,18 @@ class CacheApplianceStateSourceTest {
 
         assertEquals(Map.of("fridge", false), snapshot.states());
         assertEquals(1, snapshot.mappedCount());
+    }
+
+    @Test
+    void boardForKeepsTheEarliestBoardAndRejectsAnUnknownName() throws Exception {
+        SimpleAliasService aliases = mock(SimpleAliasService.class);
+        when(aliases.getMappings()).thenReturn(mappings());
+        CacheApplianceStateSource source = new CacheApplianceStateSource(aliases, new ConcurrentHashMap<>());
+
+        assertEquals(Optional.of(FIRST), source.boardFor("fridge"));
+        assertEquals(Optional.of(FIRST), source.boardFor("hallway"));
+        assertTrue(source.boardFor("lamp").isEmpty());
+        assertTrue(source.boardFor(" ").isEmpty());
     }
 
     @Test

@@ -5,21 +5,26 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.freedriver.autonomy.mqtt.ApplianceCommandSink;
 import io.freedriver.autonomy.mqtt.ApplianceStateSource;
 import io.freedriver.autonomy.mqtt.MqttConnector;
 import io.freedriver.autonomy.mqtt.MqttLog;
 import io.freedriver.autonomy.mqtt.MqttSettings;
 import io.freedriver.mqtt.contract.Appliance;
+import io.freedriver.mqtt.contract.ApplianceCommandMessage;
 import io.freedriver.mqtt.contract.ApplianceJson;
 import io.freedriver.mqtt.contract.ApplianceSchemas;
 import io.freedriver.mqtt.contract.ApplianceStateMessage;
@@ -35,6 +40,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Paho publisher. Each connection is a new clean session, so a previous payload
  * is not replayed; the current snapshot is published after every connect.
+ * Command subscribe is a separate flag and uses the exact commands topic.
  */
 public final class PahoMqttConnector implements MqttConnector {
 
@@ -52,8 +58,14 @@ public final class PahoMqttConnector implements MqttConnector {
 
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final AtomicReference<Throwable> connectionLoss = new AtomicReference<>();
+    private final Object publishLock = new Object();
+    private final Object commandLock = new Object();
+    private final LinkedHashMap<String, PendingCommand> pending = new LinkedHashMap<>();
+    private final ArrayDeque<String> appliedCommandIds = new ArrayDeque<>();
     private volatile Thread worker;
+    private volatile Thread commandThread;
     private volatile MqttClient client;
+    private volatile boolean commandsPaused;
 
     private int acknowledged;
     private int failed;
@@ -77,6 +89,11 @@ public final class PahoMqttConnector implements MqttConnector {
 
     @Override
     public void start(MqttSettings settings, ApplianceStateSource states) {
+        start(settings, states, null);
+    }
+
+    @Override
+    public void start(MqttSettings settings, ApplianceStateSource states, ApplianceCommandSink commands) {
         Path passwordFile = settings.passwordFile();
         if (Files.isRegularFile(passwordFile) && !PasswordFiles.ownerOnly(passwordFile)) {
             refusePasswordFile(passwordFile);
@@ -85,6 +102,16 @@ public final class PahoMqttConnector implements MqttConnector {
         worker = Thread.currentThread();
         logSettings(settings);
         nextSummary = Instant.now().plus(summaryInterval);
+        if (settings.commandsEnabled()) {
+            if (commands == null) {
+                LOG.info("commands not subscribed; no command handler");
+            } else {
+                Thread applying = new Thread(() -> runCommands(settings, states, commands), "mqtt-commands");
+                applying.setDaemon(true);
+                commandThread = applying;
+                applying.start();
+            }
+        }
         int attempt = 0;
         while (!stopped.get()) {
             try {
@@ -110,17 +137,45 @@ public final class PahoMqttConnector implements MqttConnector {
                 retry(++attempt, failure.cause());
             }
         }
+        stopCommandThread();
         closeCurrentClient();
     }
 
     @Override
     public void close() {
         stopped.set(true);
+        synchronized (commandLock) {
+            commandLock.notifyAll();
+        }
         closeCurrentClient();
         Thread current = worker;
         if (current != null) {
             current.interrupt();
         }
+        Thread applying = commandThread;
+        if (applying != null) {
+            applying.interrupt();
+        }
+    }
+
+    /** Holds command applies so a test can queue more than one before the first runs. */
+    void pauseCommandApplies() {
+        commandsPaused = true;
+    }
+
+    void resumeCommandApplies() {
+        synchronized (commandLock) {
+            commandsPaused = false;
+            commandLock.notifyAll();
+        }
+    }
+
+    static String commandTopic(UUID instanceId) {
+        String topic = ApplianceSchemas.commandsTopic(instanceId);
+        if (topic.indexOf('+') >= 0 || topic.indexOf('#') >= 0) {
+            throw new IllegalStateException("command topic must not be a wildcard");
+        }
+        return topic;
     }
 
     private static void refusePasswordFile(Path path) {
@@ -151,9 +206,11 @@ public final class PahoMqttConnector implements MqttConnector {
     private void openSession(MqttSettings settings, char[] password) throws Exception {
         LOG.info("connecting host={} port={}", settings.host(), settings.port());
         connectionLoss.set(null);
-        lastSnapshot = null;
-        lastPublishedAt = Instant.EPOCH;
-        loggedEmptyCache = false;
+        synchronized (publishLock) {
+            lastSnapshot = null;
+            lastPublishedAt = Instant.EPOCH;
+            loggedEmptyCache = false;
+        }
         MqttClient created = new MqttClient(serverUri(settings), settings.clientId(), new MemoryPersistence());
         created.setTimeToWait(Math.max(1000L, settings.connectTimeout().toMillis()));
         created.setCallback(new MqttCallback() {
@@ -169,7 +226,7 @@ public final class PahoMqttConnector implements MqttConnector {
 
             @Override
             public void messageArrived(String topic, MqttMessage message) {
-                // Publish-only. Command subscription is a later card.
+                onCommand(settings, topic, message);
             }
 
             @Override
@@ -197,7 +254,17 @@ public final class PahoMqttConnector implements MqttConnector {
             closeCurrentClient();
             return;
         }
+        subscribeCommands(created, settings);
         LOG.info("connected host={} port={}", settings.host(), settings.port());
+    }
+
+    private void subscribeCommands(MqttClient created, MqttSettings settings) throws Exception {
+        if (!settings.commandsEnabled() || commandThread == null) {
+            return;
+        }
+        String topic = commandTopic(settings.instanceId());
+        created.subscribe(topic, ApplianceSchemas.QOS);
+        LOG.info("commands subscribed topic={} qos={} retain=false", topic, ApplianceSchemas.QOS);
     }
 
     private void runSession(MqttSettings settings, ApplianceStateSource states) throws Exception {
@@ -217,6 +284,25 @@ public final class PahoMqttConnector implements MqttConnector {
     }
 
     private void publishCurrent(MqttSettings settings, ApplianceStateSource states) throws ConnectionDropped {
+        synchronized (publishLock) {
+            publishUnderLock(settings, states);
+        }
+    }
+
+    private void publishApplied(MqttSettings settings, ApplianceStateSource states, String commandId) {
+        synchronized (publishLock) {
+            if (commandId != null) {
+                appliedCommandIds.addLast(commandId);
+            }
+            try {
+                publishUnderLock(settings, states);
+            } catch (ConnectionDropped dropped) {
+                // The id stays queued when the send did not complete.
+            }
+        }
+    }
+
+    private void publishUnderLock(MqttSettings settings, ApplianceStateSource states) throws ConnectionDropped {
         ApplianceStateSource.Snapshot snapshot;
         try {
             snapshot = states.read();
@@ -233,14 +319,16 @@ public final class PahoMqttConnector implements MqttConnector {
             return;
         }
         loggedEmptyCache = false;
-        boolean due = !Instant.now().isBefore(lastPublishedAt.plus(settings.publishInterval()));
+        boolean commandPending = !appliedCommandIds.isEmpty();
+        boolean due = commandPending || !Instant.now().isBefore(lastPublishedAt.plus(settings.publishInterval()));
         if (publishable.equals(lastSnapshot) && !due) {
             return;
         }
         String topic = ApplianceSchemas.appliancesTopic(settings.instanceId());
+        String commandId = appliedCommandIds.pollFirst();
         try {
             ApplianceStateMessage message = new ApplianceStateMessage(
-                    settings.instanceName(), null, appliances(publishable));
+                    settings.instanceName(), commandId, appliances(publishable));
             byte[] body = ApplianceJson.writeState(message).getBytes(StandardCharsets.UTF_8);
             MqttClient current = client;
             if (current == null || !current.isConnected()) {
@@ -253,9 +341,15 @@ public final class PahoMqttConnector implements MqttConnector {
             lastPublishedAt = Instant.now();
             LOG.debug("publish topic={} appliances={} bytes={}", topic, publishable.size(), body.length);
         } catch (ConnectionDropped dropped) {
+            if (commandId != null) {
+                appliedCommandIds.addFirst(commandId);
+            }
             failed++;
             throw dropped;
         } catch (Exception e) {
+            if (commandId != null) {
+                appliedCommandIds.addFirst(commandId);
+            }
             failed++;
             LOG.debug("publish failed topic={} causeClass={}", topic, e.getClass().getName());
             if (connectionLoss.get() != null || client == null || !client.isConnected()) {
@@ -300,9 +394,15 @@ public final class PahoMqttConnector implements MqttConnector {
         if (Instant.now().isBefore(nextSummary)) {
             return;
         }
-        LOG.info("publish summary acknowledged={} failed={}", acknowledged, failed);
-        acknowledged = 0;
-        failed = 0;
+        int acknowledgedCount;
+        int failedCount;
+        synchronized (publishLock) {
+            acknowledgedCount = acknowledged;
+            failedCount = failed;
+            acknowledged = 0;
+            failed = 0;
+        }
+        LOG.info("publish summary acknowledged={} failed={}", acknowledgedCount, failedCount);
         nextSummary = Instant.now().plus(summaryInterval);
     }
 
@@ -351,6 +451,128 @@ public final class PahoMqttConnector implements MqttConnector {
         }
     }
 
+    private void stopCommandThread() {
+        stopped.set(true);
+        synchronized (commandLock) {
+            commandLock.notifyAll();
+        }
+        Thread applying = commandThread;
+        if (applying == null) {
+            return;
+        }
+        applying.interrupt();
+        boolean interrupted = Thread.interrupted();
+        try {
+            applying.join(2_000);
+        } catch (InterruptedException e) {
+            interrupted = true;
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    void onCommand(MqttSettings settings, String topic, MqttMessage message) {
+        try {
+            acceptCommand(settings, topic, message);
+        } catch (RuntimeException e) {
+            LOG.info("command rejected topic={} reason=malformed", topic);
+        }
+    }
+
+    private void acceptCommand(MqttSettings settings, String topic, MqttMessage message) {
+        if (!settings.commandsEnabled() || commandThread == null) {
+            return;
+        }
+        String expected = commandTopic(settings.instanceId());
+        if (topic == null || !topic.equals(expected)) {
+            LOG.info("command rejected topic={} reason=unexpected topic", topic);
+            return;
+        }
+        if (message.isRetained()) {
+            LOG.info("command rejected topic={} reason=retained", topic);
+            return;
+        }
+        byte[] payload = message.getPayload();
+        int size = payload == null ? 0 : payload.length;
+        if (size > settings.commandMaxBytes()) {
+            LOG.info("command rejected topic={} reason=payload too large", topic);
+            return;
+        }
+        ApplianceCommandMessage parsed;
+        try {
+            byte[] body = payload == null ? new byte[0] : payload;
+            parsed = ApplianceJson.readCommand(new String(body, StandardCharsets.UTF_8));
+        } catch (RuntimeException e) {
+            LOG.info("command rejected topic={} reason=malformed", topic);
+            return;
+        }
+        LOG.info("command received topic={} reason=received", topic);
+        offer(topic, parsed);
+    }
+
+    private void offer(String topic, ApplianceCommandMessage parsed) {
+        synchronized (commandLock) {
+            PendingCommand previous = pending.put(parsed.applianceName(), new PendingCommand(topic, parsed));
+            if (previous != null) {
+                LOG.info("command rejected topic={} reason=superseded", previous.topic());
+            }
+            commandLock.notifyAll();
+        }
+    }
+
+    private void runCommands(MqttSettings settings, ApplianceStateSource states, ApplianceCommandSink sink) {
+        while (!stopped.get()) {
+            List<PendingCommand> batch = takeBatch();
+            if (batch == null) {
+                return;
+            }
+            for (PendingCommand command : batch) {
+                if (stopped.get()) {
+                    return;
+                }
+                applyOne(settings, states, sink, command);
+            }
+        }
+    }
+
+    private List<PendingCommand> takeBatch() {
+        synchronized (commandLock) {
+            while (!stopped.get() && (commandsPaused || pending.isEmpty())) {
+                try {
+                    commandLock.wait(500);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    stopped.set(true);
+                    return null;
+                }
+            }
+            if (stopped.get()) {
+                return null;
+            }
+            List<PendingCommand> batch = List.copyOf(pending.values());
+            pending.clear();
+            return batch;
+        }
+    }
+
+    private void applyOne(MqttSettings settings, ApplianceStateSource states, ApplianceCommandSink sink,
+            PendingCommand command) {
+        boolean applied;
+        try {
+            applied = sink.apply(command.message().applianceName(), command.message().state());
+        } catch (Exception e) {
+            LOG.info("command rejected topic={} reason=apply failed", command.topic());
+            return;
+        }
+        if (!applied) {
+            LOG.info("command rejected topic={} reason=unknown appliance", command.topic());
+            return;
+        }
+        LOG.info("command applied topic={} reason=applied", command.topic());
+        publishApplied(settings, states, command.message().commandId());
+    }
+
     private static String serverUri(MqttSettings settings) {
         return "ssl://" + settings.host() + ":" + settings.port();
     }
@@ -364,6 +586,9 @@ public final class PahoMqttConnector implements MqttConnector {
             return Integer.MAX_VALUE;
         }
         return (int) seconds;
+    }
+
+    private record PendingCommand(String topic, ApplianceCommandMessage message) {
     }
 
     private static final class ConnectionDropped extends Exception {

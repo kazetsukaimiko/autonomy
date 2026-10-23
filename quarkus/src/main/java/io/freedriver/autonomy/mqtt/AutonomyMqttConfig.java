@@ -42,4 +42,15 @@ public interface AutonomyMqttConfig {
 
     @WithDefault("10s")
     String connectTimeout();
+
+    /**
+     * Separate from {@link #enabled()}. Only the value {@code true} subscribes
+     * to commands. The default stays off.
+     */
+    @WithDefault("false")
+    String commandsEnabled();
+
+    /** Maximum command payload in bytes. Larger payloads are rejected before parse. */
+    @WithDefault("4096")
+    String commandMaxBytes();
 }
