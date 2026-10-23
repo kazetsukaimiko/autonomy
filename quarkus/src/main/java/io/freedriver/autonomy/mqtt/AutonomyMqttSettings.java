@@ -13,10 +13,18 @@ public final class AutonomyMqttSettings implements MqttSettings {
 
     private final AutonomyMqttConfig config;
     private final UUID instanceId;
+    private final boolean commandsEnabled;
+    private final int commandMaxBytes;
 
     public AutonomyMqttSettings(AutonomyMqttConfig config) {
+        this(config, false, 4096);
+    }
+
+    public AutonomyMqttSettings(AutonomyMqttConfig config, boolean commandsEnabled, int commandMaxBytes) {
         this.config = config;
         this.instanceId = UUID.fromString(config.instanceId().orElseThrow());
+        this.commandsEnabled = commandsEnabled;
+        this.commandMaxBytes = commandMaxBytes;
     }
 
     @Override
@@ -77,5 +85,15 @@ public final class AutonomyMqttSettings implements MqttSettings {
     @Override
     public Duration connectTimeout() {
         return MqttConfigValues.duration(config.connectTimeout());
+    }
+
+    @Override
+    public boolean commandsEnabled() {
+        return commandsEnabled;
+    }
+
+    @Override
+    public int commandMaxBytes() {
+        return commandMaxBytes;
     }
 }

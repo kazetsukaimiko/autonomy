@@ -34,4 +34,19 @@ public interface MqttSettings {
     Duration keepalive();
 
     Duration connectTimeout();
+
+    /**
+     * Only the configuration value {@code true} is on. Anything else leaves the
+     * commands topic unsubscribed.
+     */
+    default boolean commandsEnabled() {
+        return false;
+    }
+
+    /**
+     * Maximum command payload in bytes. A larger payload is rejected before parse.
+     */
+    default int commandMaxBytes() {
+        return 4096;
+    }
 }

@@ -59,7 +59,7 @@ Run it before any build that includes `mqtt-impl` or `quarkus` (`mvn -pl quarkus
 
 Topic: `freedriver/v1/{instanceId}/appliances` (`ApplianceSchemas.appliancesTopic`). QoS 1, retain false. `instanceId` is the topic segment.
 
-Body, periodic map (`appliedCommandId` is null until a later command card):
+Body. Every state publish lists every appliance. `appliedCommandId` is set only on the publish right after a command is applied, to that command id. A periodic publish leaves it null:
 
 ```json
 {
@@ -88,6 +88,16 @@ Duplicate names: boards are ordered by connector UUID. Within a board, mapping l
 The published map includes pins that are already in the cache. When the mappings name appliances and the cache is still empty, the publisher skips that cycle. An empty appliance list goes out when the mappings list zero appliances.
 
 `SimpleAliasHandler.setGroup` writes the board through `ConnectorService.writeDigital` and stores that digital response in the connector cache, the same way `setState` does. The next publish, including the one that follows the local change, includes every appliance the group switched. Appliances the board response does not mention keep their cached state.
+
+## Commands
+
+Subscribe stays off unless `autonomy.mqtt.commands-enabled` is the value `true`. That flag is separate from `autonomy.mqtt.enabled`. Any other value, including the default `false`, logs once on `io.freedriver.autonomy.mqtt`, does not subscribe, and does not stop the process. This build does not set the flag to `true` and does not set `freedriver.appliances.live-commands`.
+
+When it is `true` and MQTT is on, the only subscribe is `freedriver/v1/{instanceId}/commands` (`ApplianceSchemas.commandsTopic`), QoS 1, retain false, with no wildcard. The body is the pinned contract's `ApplianceCommandMessage` (`commandId`, `applianceName`, `state`), read with `ApplianceJson.readCommand`. Retained command messages are ignored. A payload larger than `command-max-bytes` (default 4096) is rejected before parse. An unknown appliance or a malformed message is dropped and logged with the topic and a short reason. It does not call `setState`.
+
+Received, applied, and rejected commands are logged on `io.freedriver.autonomy.mqtt` with the topic and a short reason. The line does not contain the payload or the broker password.
+
+A queued backlog keeps the latest command per appliance name and does not apply an older one after it. After a command is applied, the next state publish on `freedriver/v1/{instanceId}/appliances` lists every appliance and sets `appliedCommandId` to that command id. The next periodic publish leaves `appliedCommandId` null.
 
 ## Configuration
 
@@ -121,6 +131,8 @@ The reader removes one trailing `\n` or `\r\n`. A trailing space, a leading spac
 | `publish-interval` | `10s` | positive |
 | `keepalive` | `60s` | positive; Paho receives whole seconds, minimum 1 |
 | `connect-timeout` | `10s` | positive; Paho receives whole seconds, minimum 1 |
+| `commands-enabled` | `false` | only `true` subscribes; any other value logs once, does not subscribe, and does not stop the process |
+| `command-max-bytes` | `4096` | positive byte limit; a larger command payload is rejected before parse |
 
 Startup INFO lists host, port, client id, instance id, instance name, trust source (`jvm-cacerts` or `ca-file`), and publish interval. The broker username stays off that line. The password is never logged.
 
@@ -138,6 +150,8 @@ autonomy.mqtt.instance-id=00000000-0000-4000-8000-000000000000
 autonomy.mqtt.instance-name=example
 autonomy.mqtt.publish-interval=10s
 ```
+
+Leave `autonomy.mqtt.commands-enabled` unset or `false`. Do not set `freedriver.appliances.live-commands` here.
 
 Equivalent environment variables: `AUTONOMY_MQTT_ENABLED`, `AUTONOMY_MQTT_USERNAME`, `AUTONOMY_MQTT_PASSWORD_FILE`, `AUTONOMY_MQTT_INSTANCE_ID`, `AUTONOMY_MQTT_INSTANCE_NAME`, and the same pattern for the other keys.
 

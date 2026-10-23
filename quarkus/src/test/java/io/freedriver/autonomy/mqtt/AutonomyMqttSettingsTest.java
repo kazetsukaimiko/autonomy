@@ -87,6 +87,16 @@ class AutonomyMqttSettingsTest {
             public String connectTimeout() {
                 return "10s";
             }
+
+            @Override
+            public String commandsEnabled() {
+                return "false";
+            }
+
+            @Override
+            public String commandMaxBytes() {
+                return "4096";
+            }
         };
     }
 }

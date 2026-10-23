@@ -33,6 +33,8 @@ class MqttStatePublisherTest {
             Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
             MqttStatePublisher publisher = new MqttStatePublisher(stub, validator, () -> {
                 throw new AssertionError("state source read");
+            }, (name, on) -> {
+                throw new AssertionError("command applied");
             });
             publisher.onStart(null);
             List<ExtLogRecord> errors = capture.records.stream()
@@ -45,6 +47,37 @@ class MqttStatePublisherTest {
             assertTrue(message.contains("autonomy.mqtt.instanceId"));
             assertTrue(message.contains("autonomy.mqtt.passwordFile"));
             assertFalse(message.contains(SECRET));
+            assertTrue(capture.records.stream().noneMatch(record ->
+                    record.getFormattedMessage().contains("connecting host=")));
+        } finally {
+            logger.removeHandler(capture);
+            logger.setLevel(previous);
+        }
+    }
+
+    @Test
+    void aBadCommandsValueLogsOnceAndDoesNotApply() {
+        Logger logger = Logger.getLogger(MqttLog.CATEGORY);
+        java.util.logging.Level previous = logger.getLevel();
+        Capture capture = new Capture();
+        logger.setLevel(Level.ALL);
+        logger.addHandler(capture);
+        try {
+            MqttConfigValidatorTest.Stub stub = new MqttConfigValidatorTest.Stub();
+            stub.commandsEnabled = "banana";
+            Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+            MqttStatePublisher publisher = new MqttStatePublisher(stub, validator, () -> {
+                throw new AssertionError("state source read");
+            }, (name, on) -> {
+                throw new AssertionError("command applied");
+            });
+            publisher.onStart(null);
+            List<ExtLogRecord> lines = capture.records.stream()
+                    .filter(record -> record.getFormattedMessage().contains("commands not subscribed"))
+                    .toList();
+            assertEquals(1, lines.size());
+            assertTrue(lines.get(0).getFormattedMessage().contains("autonomy.mqtt.commands-enabled is not true"));
+            assertFalse(lines.get(0).getFormattedMessage().contains("banana"));
             assertTrue(capture.records.stream().noneMatch(record ->
                     record.getFormattedMessage().contains("connecting host=")));
         } finally {

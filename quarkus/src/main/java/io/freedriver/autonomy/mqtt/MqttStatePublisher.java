@@ -28,32 +28,41 @@ public class MqttStatePublisher {
     private final AutonomyMqttConfig config;
     private final Validator validator;
     private final ApplianceStateSource states;
+    private final ApplianceCommandSink commands;
 
     private MqttConnector connector;
     private Thread thread;
 
     @Inject
-    public MqttStatePublisher(AutonomyMqttConfig config, Validator validator, ApplianceStateSource states) {
+    public MqttStatePublisher(AutonomyMqttConfig config, Validator validator, ApplianceStateSource states,
+            ApplianceCommandSink commands) {
         this.config = config;
         this.validator = validator;
         this.states = states;
+        this.commands = commands;
     }
 
     void onStart(@Observes @Priority(Interceptor.Priority.APPLICATION) StartupEvent event) {
         Set<ConstraintViolation<MqttStartupConfig>> violations = validator.validate(new MqttStartupConfig(config));
+        boolean mqttOn = violations.isEmpty() && Boolean.TRUE.equals(MqttConfigValues.enabled(config.enabled()));
+        CommandSubscription subscription = CommandSubscription.decide(
+                config.commandsEnabled(), config.commandMaxBytes(), mqttOn);
+        if (!subscription.subscribe()) {
+            LOG.info("commands not subscribed; {}", subscription.reason());
+        }
         if (!violations.isEmpty()) {
             LOG.error("MQTT off; invalid configuration keys={}", invalidKeys(violations));
             return;
         }
-        if (!Boolean.TRUE.equals(MqttConfigValues.enabled(config.enabled()))) {
+        if (!mqttOn) {
             LOG.info("MQTT off");
             return;
         }
-        MqttSettings settings = new AutonomyMqttSettings(config);
+        MqttSettings settings = new AutonomyMqttSettings(config, subscription.subscribe(), subscription.maxBytes());
         connector = MqttConnectors.load();
         thread = new Thread(() -> {
             try {
-                connector.start(settings, states);
+                connector.start(settings, states, commands);
             } catch (Exception e) {
                 LOG.warn("MQTT connector stopped causeClass={}", e.getClass().getName());
             }
