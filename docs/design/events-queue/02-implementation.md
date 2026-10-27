@@ -10,7 +10,7 @@ The code that builds the first document is a later change. This document names t
 
 `model/src/main/java/io/freedriver/autonomy/event/input/joystick/JoystickEvent.java` is the `JoystickEvent` contract. Nothing in this file changes.
 
-`model/src/main/java/io/freedriver/autonomy/events/store/EventTypes.java` holds `JOYSTICK_EVENT`, the string `joystick.event`. Nothing in this file changes. `GenericEventMessage` does not exist yet. It will sit beside this file and beside `EventRecord.java`, at `model/src/main/java/io/freedriver/autonomy/events/store/GenericEventMessage.java`. No body here.
+`model/src/main/java/io/freedriver/autonomy/events/store/EventTypes.java` holds `JOYSTICK_EVENT`, the string `joystick.event`. Nothing in this file changes. `QueuedEventMessage` does not exist yet. It will sit beside this file and beside `EventRecord.java`, at `model/src/main/java/io/freedriver/autonomy/events/store/QueuedEventMessage.java`. No body here.
 
 `quarkus/src/main/java/io/freedriver/autonomy/service/JoystickEventCrudService.java` observes the listener's unqualified `JoystickEvent` and stores it. Nothing in this file changes. It is not a stage, and it does not move onto the queue.
 
@@ -52,19 +52,19 @@ The same `JoystickEventSource` fire realizes this stage. The type is `JoystickEv
 
 ### MQTT publish
 
-`EventsQueuePublisher` realizes this stage. It observes only the unqualified `JoystickEvent`. For each one it builds a `GenericEventMessage` with `type` `joystick.event` and that event as `payload`, and it publishes through `EventsQueueClient`. `PahoEventsQueueClient` is that client. `MoquetteEventsQueue` is the broker that accepts the topic `events`.
+`EventsQueuePublisher` realizes this stage. It observes only the unqualified `JoystickEvent`. For each one it builds a `QueuedEventMessage` with `type` `joystick.event` and that event as `payload`, and it publishes through `EventsQueueClient`. `PahoEventsQueueClient` is that client. `MoquetteEventsQueue` is the broker that accepts the topic `events`.
 
-The handoff from the CDI event is direct and carries `JoystickEvent`. The message to MQTT receive is `GenericEventMessage`. When the step is done, Moquette has accepted that message and `EventsQueuePublisher` has returned to the listener's fire, or acceptance failed, the failure was logged, and the recipient was not called. There is no second publish from an `EventsQueue` fire.
+The handoff from the CDI event is direct and carries `JoystickEvent`. The message to MQTT receive is `QueuedEventMessage`. When the step is done, Moquette has accepted that message and `EventsQueuePublisher` has returned to the listener's fire, or acceptance failed, the failure was logged, and the recipient was not called. There is no second publish from an `EventsQueue` fire.
 
 ### MQTT receive
 
 `MoquetteEventsQueue` and `EventsQueueReceiver` realize this stage. `MoquetteEventsQueue` is up for the life of the process, including when `MqttStatePublisher` leaves the house broker off. `EventsQueueReceiver` subscribes only to `events`, at QoS 1, with retain false. `PahoEventsQueueClient` delivers that subscription off the `JoystickEventSource` fire, and only after publish has returned.
 
-The handoff from publish is the `GenericEventMessage` message. When the step is done, that message has been handed to `EventsQueueRouter`, or the message was not on `events` and was ignored. Receive does not read `type`.
+The handoff from publish is the `QueuedEventMessage` message. When the step is done, that message has been handed to `EventsQueueRouter`, or the message was not on `events` and was ignored. Receive does not read `type`.
 
 ### Router
 
-`EventsQueueRouter` realizes this stage. The handoff from receive is direct and carries `GenericEventMessage`. The router fires `JoystickEvent` with the `EventsQueue` qualifier only when `type` is `joystick.event`, the payload is a `JoystickEvent`, `id` is non-blank, and that `id` has not yet been handed to the recipient during this process. It remembers those ids. It drops every other message, including a second delivery of the same `id`.
+`EventsQueueRouter` realizes this stage. The handoff from receive is direct and carries `QueuedEventMessage`. The router fires `JoystickEvent` with the `EventsQueue` qualifier only when `type` is `joystick.event`, the payload is a `JoystickEvent`, `id` is non-blank, and that `id` has not yet been handed to the recipient during this process. It remembers those ids. It drops every other message, including a second delivery of the same `id`.
 
 When the step is done, `SimpleAliasService` has been given that one `JoystickEvent` through the qualifier, or the message was dropped. `EventsQueuePublisher` did not observe the fire. `JoystickEventCrudService` did not observe it either.
 
@@ -82,4 +82,4 @@ When the step is done, each named appliance on that `connectorId` has been writt
 
 ### Types and the qualifier
 
-`JoystickEvent.java` realizes `JoystickEvent`. `GenericEventMessage.java` realizes `GenericEventMessage` with the two fields `type` and `payload`. `EventsQueue.java` realizes the qualifier with no fields. `io.freedriver.jsonlink.config.v2.Mapping` realizes `Mapping`. None of these four gains a method in this design. The later change adds the two new files and the qualifier on the existing observer, and it does not edit `Mapping`.
+`JoystickEvent.java` realizes `JoystickEvent`. `QueuedEventMessage.java` realizes `QueuedEventMessage` with the two fields `type` and `payload`. `EventsQueue.java` realizes the qualifier with no fields. `io.freedriver.jsonlink.config.v2.Mapping` realizes `Mapping`. None of these four gains a method in this design. The later change adds the two new files and the qualifier on the existing observer, and it does not edit `Mapping`.

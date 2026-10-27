@@ -14,11 +14,11 @@ Owns in-process delivery of the listener's `JoystickEvent` to observers of that 
 
 ### 3. MQTT publish
 
-Owns one `GenericEventMessage` on the generic events queue for each listener fire. Does not own the action, and does not observe a fire it did not publish from.
+Owns one `QueuedEventMessage` on the generic events queue for each listener fire. Does not own the action, and does not observe a fire it did not publish from.
 
 ### 4. MQTT receive
 
-Owns taking a `GenericEventMessage` off that same queue. Does not choose a recipient and does not read mappings.
+Owns taking a `QueuedEventMessage` off that same queue. Does not choose a recipient and does not read mappings.
 
 ### 5. Router
 
@@ -36,7 +36,7 @@ Owns toggling the appliances named by that `controlMap` entry on that mapping's 
 
 ### JoystickEvent
 
-Existing type `io.freedriver.autonomy.event.input.joystick.JoystickEvent`. It crosses from the listener to the CDI event. It is the payload of `GenericEventMessage` when `type` is `joystick.event`. It crosses from the router to the recipient.
+Existing type `io.freedriver.autonomy.event.input.joystick.JoystickEvent`. It crosses from the listener to the CDI event. It is the payload of `QueuedEventMessage` when `type` is `joystick.event`. It crosses from the router to the recipient.
 
 Fields:
 
@@ -53,7 +53,7 @@ Fields:
 
 No methods are part of this contract.
 
-### GenericEventMessage
+### QueuedEventMessage
 
 New type. It crosses from MQTT publish to MQTT receive, and from MQTT receive to the router.
 
@@ -86,9 +86,9 @@ Listener to CDI event. Nothing is sent on a broker. The handoff is direct. The t
 
 CDI event to MQTT publish. Nothing is sent on a broker. The handoff is direct. The type is `JoystickEvent`. Publish observes the listener's fire. That fire is not qualified with `EventsQueue`.
 
-MQTT publish to MQTT receive. The message name is `GenericEventMessage`. Direction is publish to receive, one way. The payload type is `GenericEventMessage`. The sender is MQTT publish. The receiver is MQTT receive. The broker is Moquette. The topic is the single exact topic `events`. Delivery is QoS 1. Retain is false. This is not `freedriver/v1/{instanceId}/appliances` and not `freedriver/v1/{instanceId}/commands`. It is not a topic on the house broker, and the topic has no instance segment.
+MQTT publish to MQTT receive. The message name is `QueuedEventMessage`. Direction is publish to receive, one way. The payload type is `QueuedEventMessage`. The sender is MQTT publish. The receiver is MQTT receive. The broker is Moquette. The topic is the single exact topic `events`. Delivery is QoS 1. Retain is false. This is not `freedriver/v1/{instanceId}/appliances` and not `freedriver/v1/{instanceId}/commands`. It is not a topic on the house broker, and the topic has no instance segment.
 
-MQTT receive to the router. Nothing further is sent. The handoff is direct. The type is `GenericEventMessage`.
+MQTT receive to the router. Nothing further is sent. The handoff is direct. The type is `QueuedEventMessage`.
 
 Router to the CDI recipient. Nothing is sent on a broker. The handoff is direct. The type is `JoystickEvent`, qualified with `EventsQueue`.
 
@@ -110,13 +110,13 @@ The handoff advances for every `JoystickEvent` on that fire, including an initia
 
 ### MQTT publish to MQTT receive
 
-What moves is one `GenericEventMessage` whose `type` is `joystick.event` and whose `payload` is that `JoystickEvent`. The carrier is the `events` topic on Moquette.
+What moves is one `QueuedEventMessage` whose `type` is `joystick.event` and whose `payload` is that `JoystickEvent`. The carrier is the `events` topic on Moquette.
 
 The handoff advances when Moquette has accepted the message and publish has returned to the listener's fire. Receive starts after that return, and not on the listener's stack. It does not advance when acceptance fails. A failed publish is not retried on that fire, and publish does not call the recipient.
 
 ### MQTT receive to the router
 
-What moves is that `GenericEventMessage`. The carrier is a direct handoff.
+What moves is that `QueuedEventMessage`. The carrier is a direct handoff.
 
 The handoff advances when the message arrived on the topic `events`. It does not advance for a message on any other topic.
 
