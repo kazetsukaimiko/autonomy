@@ -23,10 +23,10 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Button 11's mapped key is {@code 11:0}, so the hallway action runs on release.
- * The reader thread fires the press line and does not read the release until
- * {@link JoystickEventCrudService#actOnJoystickEvent} returns. A refused Mongo
- * write waits out {@code quarkus.mongodb.server-selection-timeout} (1s) before
- * the backoff starts, which holds that release.
+ * Persist is a no-op when Mongo is absent: {@link MongoEventStore#append} does
+ * not wait on {@code quarkus.mongodb.server-selection-timeout}. The reader
+ * fires {@code JoystickEvent} with {@code fireAsync}, so appliance control
+ * and persist run off that thread.
  */
 class HallwayReleaseStallTest {
 

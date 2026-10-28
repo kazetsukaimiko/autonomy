@@ -67,11 +67,12 @@ public class JoystickEventSource implements EventSource {
             log.warn("JSTestEvent ignored as it contains no subject: {}", jsTestEvent);
             return;
         }
-        try {
-            log.trace("Firing JSTestEvent {}", jsTestEvent);
-            joystickEvents.fire(JoystickEventConverter.INSTANCE.apply(Instant.now(), jsTestEvent));
-        } catch (Exception e) {
-            log.warn("Failed to fire JoystickEvent: {}", jsTestEvent, e);
-        }
+        JoystickEvent event = JoystickEventConverter.INSTANCE.apply(Instant.now(), jsTestEvent);
+        log.trace("Firing JSTestEvent {}", jsTestEvent);
+        joystickEvents.fireAsync(event).whenComplete((ignored, error) -> {
+            if (error != null) {
+                log.warn("Failed to fire JoystickEvent: {}", jsTestEvent, error);
+            }
+        });
     }
 }

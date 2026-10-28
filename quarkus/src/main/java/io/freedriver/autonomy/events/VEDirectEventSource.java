@@ -124,10 +124,10 @@ public class VEDirectEventSource implements EventSource {
     }
 
     private void publish(VEDirectMessage message) {
-        try {
-            veDirectEvents.fire(message);
-        } catch (Exception e) {
-            log.warn("Failed to fire VEDirectMessage: {}", message, e);
-        }
+        veDirectEvents.fireAsync(message).whenComplete((ignored, error) -> {
+            if (error != null) {
+                log.warn("Failed to fire VEDirectMessage: {}", message, error);
+            }
+        });
     }
 }

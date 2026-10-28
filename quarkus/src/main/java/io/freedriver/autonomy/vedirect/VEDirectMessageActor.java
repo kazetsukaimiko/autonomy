@@ -15,7 +15,7 @@ import io.freedriver.victron.VEDirectMessage;
 import io.freedriver.victron.VictronDevice;
 import io.freedriver.victron.VictronProduct;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.ObservesAsync;
 import jakarta.enterprise.inject.Default;
 import jakarta.enterprise.inject.Produces;
 import jakarta.enterprise.inject.spi.InjectionPoint;
@@ -49,7 +49,8 @@ public class VEDirectMessageActor {
     /*
      * EVENT HANDLERS
      */
-    public synchronized void actOnVEDirectMessage(@Observes @Default VEDirectMessage veDirectMessage) throws IOException {
+    public synchronized void actOnVEDirectMessage(@ObservesAsync @Default VEDirectMessage veDirectMessage)
+            throws IOException {
         report(veDirectMessage);
         VictronDevice.of(veDirectMessage)
                 .ifPresent(product -> handleProductMessage(product, veDirectMessage));

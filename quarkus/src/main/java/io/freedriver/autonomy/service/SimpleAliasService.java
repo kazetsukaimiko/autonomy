@@ -47,7 +47,7 @@ import io.freedriver.jsonlink.jackson.schema.v1.Request;
 import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
-import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.ObservesAsync;
 import jakarta.enterprise.inject.Default;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -567,7 +567,7 @@ public class SimpleAliasService  {
      * @param joystickEvent
      * @throws IOException
      */
-    public void handleJoystickEvent(@Observes @Default JoystickEvent joystickEvent) throws IOException {
+    public void handleJoystickEvent(@ObservesAsync @Default JoystickEvent joystickEvent) throws IOException {
         if (!joystickEvent.initial()
                 && joystickEvent.joystickEventType() != null
                 && joystickEvent.joystickEventType().isButton()) {
