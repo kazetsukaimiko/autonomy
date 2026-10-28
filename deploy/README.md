@@ -198,6 +198,25 @@ docker run --rm --read-only --tmpfs /tmp \
 
 Publish `127.0.0.1:8080:8080` until the HTTP API has an auth boundary. The process listens on `0.0.0.0` inside the container network namespace. `package` leaves the fast-jar in `quarkus/target/quarkus-app/` and does not copy it into `~/.local`. JDK 23 and the pinned MQTT contract from the deploy steps above are required before that Maven command. The runtime image is a digest-pinned Temurin 25 JRE, which runs that Java 23 bytecode. The image directories `/home/autonomy/.config/autonomy` and `/home/autonomy/.config/jsonlink` are empty mount points. Those directories must be traversable by uid 10001, and writable if the process should update mappings or `connectors.json`. `GET /rest/simple/` is served on port 8080. MQTT stays off unless `autonomy.mqtt.enabled=true` is set at runtime. Leave the password file on the mount. `chown` `mqtt-password` to `10001:10001` and keep mode `600` or `400`. Do not add group or other bits: `PasswordFiles` rejects the file when any of those bits are set. Do not copy the password into the image.
 
+## Events GUI
+
+`deploy/compose.mongo-express.yaml` adds mongo-express for the `events` collection in database `autonomy`. The image is `mongo-express:1.0.2-20`, pinned by digest `sha256:30fc6333779340217c6a2bc0bc3cd53aa46028ab8fc6caef41bd00bf0faacf53`. The only published port is `127.0.0.1:8081`.
+
+The browser password and the `events-reader` password are host environment values. Copy `deploy/mongo-express.env.example` outside the repo, fill it, and pass that path with `docker compose --env-file`. Do not commit the filled file. The container entrypoint refuses an empty password and the image defaults `admin` / `pass`, cookie secret `cookiesecret`, and session secret `secret`. It also refuses Mongo admin mode. The image default `ME_CONFIG_MONGODB_ENABLE_ADMIN=true` and the unauthenticated URL `mongodb://mongo:27017` are overridden at start. The connection user is `events-reader` on database `autonomy`.
+
+`deploy/mongo-express-user.sh` creates that user, or pins it back to the `read` role on `autonomy`. It needs `MONGO_ADMIN_URL` with credentials and `MONGO_EXPRESS_DB_PASSWORD`. It does not start MongoDB and does not turn authentication off. The admin URL stays out of the GUI env file. `events-reader` is not the Mongo root user. If `MONGO_WRITER_USERNAME` is `events-reader`, the script stops.
+
+Bring the GUI up only beside the compose service named `mongo`, on the same compose project, after that service has authentication on:
+
+```
+docker compose --env-file /path/outside/the/repo/mongo-express.env \
+  -f deploy/compose.yaml \
+  -f deploy/compose.mongo-express.yaml \
+  up -d mongo-express
+```
+
+`compose.yaml` is the autonomy compose unit. This overlay does not add it. Kaze opens `127.0.0.1:8081` through an SSH tunnel. This file does not change `autonomy.mqtt.commands-enabled` or `freedriver.appliances.live-commands`.
+
 ## Source of Truth
 
 * The files in `deploy/systemd/` and this README are canonical.

@@ -1,0 +1,24 @@
+# Loopback GUI for the autonomy events collection.
+# Image tag 1.0.2-20, index digest pinned. Do not float the tag.
+# Published host port is 127.0.0.1 only. No host network, no privilege, no Docker socket.
+# Passwords are host environment values. They are not in this file.
+# This file does not define mongo and does not turn Mongo authentication off.
+services:
+  mongo-express:
+    image: mongo-express:1.0.2-20@sha256:30fc6333779340217c6a2bc0bc3cd53aa46028ab8fc6caef41bd00bf0faacf53
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8081"
+    environment:
+      ME_CONFIG_BASICAUTH: "true"
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME:?set MONGO_EXPRESS_USERNAME in the host env file}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:?set MONGO_EXPRESS_PASSWORD in the host env file}
+      MONGO_EXPRESS_DB_PASSWORD: ${MONGO_EXPRESS_DB_PASSWORD:?set MONGO_EXPRESS_DB_PASSWORD in the host env file}
+      ME_CONFIG_SITE_COOKIESECRET: ${MONGO_EXPRESS_COOKIE_SECRET:?set MONGO_EXPRESS_COOKIE_SECRET in the host env file}
+      ME_CONFIG_SITE_SESSIONSECRET: ${MONGO_EXPRESS_SESSION_SECRET:?set MONGO_EXPRESS_SESSION_SECRET in the host env file}
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "false"
+      ME_CONFIG_OPTIONS_READONLY: "true"
+      ME_CONFIG_OPTIONS_NO_DELETE: "true"
+    volumes:
+      - ./mongo-express-entrypoint.sh:/mongo-express-entrypoint.sh:ro
+    command: ["bash", "/mongo-express-entrypoint.sh"]
