@@ -7,10 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
@@ -36,7 +36,7 @@ class MongoEventStoreFailureTest {
     private MongoEventStore store;
     private Logger logger;
     private Handler handler;
-    private final List<String> messages = new ArrayList<>();
+    private final List<String> messages = new CopyOnWriteArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -94,28 +94,21 @@ class MongoEventStoreFailureTest {
     }
 
     @Test
-    void failedWriteIsLoggedAndDoesNotThrow() {
-        EventMetadata metadata = metadata("src-1", "evt-1");
-        EventRecord<String> written = store.append("speech.event", "secret-text", metadata);
-
-        assertNotNull(written.id());
-        assertEquals("speech.event", written.eventType());
-        assertEquals("secret-text", written.payload());
-        assertTrue(messages.stream().anyMatch(message -> message.startsWith("Mongo event write failed:")));
-        assertTrue(messages.stream().noneMatch(message -> message != null && message.contains("secret-text")));
-        assertEquals(0, store.query(EventQuery.all("speech.event")).count());
-        assertEquals(0, store.purgeOlderThan(Instant.now()));
-        assertEquals(0, store.query(null).count());
-        assertEquals(0, store.purgeOlderThan(null));
-    }
-
-    @Test
-    void laterCallDoesNotWaitOnADownDatabase() {
-        store.append("speech.event", "first", metadata("src-1", "evt-1"));
+    void absentMongoWriteIsANoOp() {
         assertTimeoutPreemptively(Duration.ofMillis(150), () -> {
+            EventMetadata metadata = metadata("src-1", "evt-1");
+            EventRecord<String> written = store.append("speech.event", "secret-text", metadata);
+
+            assertNotNull(written.id());
+            assertEquals("speech.event", written.eventType());
+            assertEquals("secret-text", written.payload());
+            assertEquals(0, store.query(EventQuery.all("speech.event")).count());
+            assertEquals(0, store.purgeOlderThan(Instant.now()));
+            assertEquals(0, store.query(null).count());
+            assertEquals(0, store.purgeOlderThan(null));
             store.append("vedirect.message", "second", metadata("serial", "frame-1"));
-            store.query(EventQuery.all("vedirect.message")).count();
         });
+        assertTrue(messages.stream().noneMatch(message -> message != null && message.contains("secret-text")));
     }
 
     private static EventMetadata metadata(String sourceId, String eventId) {

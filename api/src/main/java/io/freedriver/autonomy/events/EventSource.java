@@ -4,9 +4,15 @@ import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
 /**
- * Modular producer of CDI events. Each implementation owns one domain (VEDirect, joystick, etc.).
+ * Modular producer of one event payload type on the CDI event bus.
  *
- * <p>Register providers via {@code META-INF/services/} and discover them with {@link #load()}.
+ * <p>Each implementation owns one domain (joystick, VEDirect, and later types). The source
+ * fires that payload with {@code Event.fireAsync} so handlers run off the reader thread.
+ * Persist, appliance control, and metrics are separate {@code @ObservesAsync} handlers of
+ * that fire. Events stay in-process. They are not published to MQTT.
+ *
+ * <p>The running process discovers sources as CDI beans. Register test providers via
+ * {@code META-INF/services/} and discover them with {@link #load()}.
  */
 public interface EventSource extends AutoCloseable {
     String name();

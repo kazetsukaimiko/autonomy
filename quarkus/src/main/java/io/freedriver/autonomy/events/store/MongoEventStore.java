@@ -7,16 +7,22 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +31,9 @@ import org.bson.conversions.Bson;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
- * MongoDB {@link EventStore}. A refused call is logged and does not escape to the caller.
- * One failure backs off so a down database does not stall every sensor, speech, and VE.Direct write.
+ * MongoDB {@link EventStore}. When Mongo is absent, every call is a no-op: it does not wait
+ * on server selection. A refused call is logged and does not escape to the caller. One failure
+ * backs off so a down database does not stall every sensor, speech, and VE.Direct write.
  */
 @ApplicationScoped
 @Slf4j
@@ -40,6 +47,13 @@ public class MongoEventStore implements EventStore {
     private final MongoClient mongoClient;
     private final String databaseName;
     private final AtomicLong skipUntilMillis = new AtomicLong();
+    private final AtomicBoolean present = new AtomicBoolean();
+    private final AtomicBoolean probing = new AtomicBoolean();
+    private final ScheduledExecutorService probes = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread thread = new Thread(r, "mongo-event-store-probe");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     @Inject
     public MongoEventStore(
@@ -47,26 +61,34 @@ public class MongoEventStore implements EventStore {
             @ConfigProperty(name = "quarkus.mongodb.database", defaultValue = "autonomy") String databaseName) {
         this.mongoClient = mongoClient;
         this.databaseName = databaseName;
+        probe();
+    }
+
+    @PreDestroy
+    void stopProbing() {
+        probes.shutdownNow();
     }
 
     @Override
     public <T> EventRecord<T> append(String eventType, T payload, EventMetadata metadata) {
         EventRecord<T> record = EventRecord.of(eventType, payload, metadata);
-        if (!accepting()) {
+        if (!available()) {
             return record;
         }
         try {
             collection().insertOne(document(record));
             resume();
         } catch (RuntimeException e) {
+            present.set(false);
             pauseAfter(e, "write");
+            scheduleProbe();
         }
         return record;
     }
 
     @Override
     public Stream<StoredEvent> query(EventQuery query) {
-        if (query == null || query.limit() <= 0 || !accepting()) {
+        if (query == null || query.limit() <= 0 || !available()) {
             return Stream.empty();
         }
         try {
@@ -89,14 +111,16 @@ public class MongoEventStore implements EventStore {
             resume();
             return events.stream();
         } catch (RuntimeException e) {
+            present.set(false);
             pauseAfter(e, "read");
+            scheduleProbe();
             return Stream.empty();
         }
     }
 
     @Override
     public int purgeOlderThan(Instant cutoff) {
-        if (cutoff == null || !accepting()) {
+        if (cutoff == null || !available()) {
             return 0;
         }
         try {
@@ -109,13 +133,56 @@ public class MongoEventStore implements EventStore {
             }
             return (int) deleted;
         } catch (RuntimeException e) {
+            present.set(false);
             pauseAfter(e, "purge");
+            scheduleProbe();
             return 0;
         }
     }
 
     private MongoCollection<Document> collection() {
         return mongoClient.getDatabase(databaseName).getCollection(COLLECTION);
+    }
+
+    private boolean available() {
+        if (!present.get() || !accepting()) {
+            return false;
+        }
+        if (readable()) {
+            return true;
+        }
+        present.set(false);
+        scheduleProbe();
+        return false;
+    }
+
+    private boolean readable() {
+        try {
+            return mongoClient.getClusterDescription().hasReadableServer(ReadPreference.primaryPreferred());
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    private void probe() {
+        if (!probing.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            mongoClient.getDatabase(databaseName).runCommand(new Document("ping", 1));
+            present.set(true);
+            resume();
+        } catch (RuntimeException e) {
+            present.set(false);
+            pauseAfter(e, "probe");
+            scheduleProbe();
+        } finally {
+            probing.set(false);
+        }
+    }
+
+    private void scheduleProbe() {
+        probes.schedule(this::probe, FAILURE_BACKOFF.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     private boolean accepting() {

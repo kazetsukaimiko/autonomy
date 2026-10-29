@@ -1,46 +1,44 @@
 # Interfaces, contracts, and code flow
 
-One design. A joystick mapping today goes from the joystick listener, to a CDI event, to a CDI recipient, to the action. The listener and the recipient stay. A queue sits between them. The broker for that queue is Moquette, which this repository already has. The house broker and its appliance and command topics are not this queue.
+One design. A joystick mapping goes from the joystick listener, to a CDI event, to many asynchronous handlers. The listener and the appliance recipient stay. Events stay in-process on the CDI bus. They are not published to MQTT.
+
+The house broker and its appliance and command topics are unchanged. An MQTT events queue (QueuedEventMessage, Moquette `events` topic, EventsQueue qualifier) is withdrawn: the house broker is remote, and a local MQTT queue is not justified over the CDI bus.
 
 ## Stages
 
-### 1. Joystick listener
+### 1. Event source (SPI)
 
-Owns the device read and the conversion of one reading into one `JoystickEvent`. Does not own mappings, the queue, or appliance writes.
+Owns the device read and the conversion of one reading into one typed payload. Each `EventSource` owns one domain. Joystick is one implementation. VEDirect is another. Does not own mappings, persist, or appliance writes.
 
-### 2. CDI event
+### 2. CDI fireAsync
 
-Owns in-process delivery of the listener's `JoystickEvent` to observers of that fire. Does not own the recipient that runs the action. Observers of this fire other than MQTT publish are outside this flow and are not routed.
+Owns in-process delivery of that payload. The source returns before handlers run. The type is the payload itself (`JoystickEvent`, `VEDirectMessage`). There is no envelope and no broker.
 
-### 3. MQTT publish
+### 3. Handlers (async fan-out)
 
-Owns one `QueuedEventMessage` on the generic events queue for each listener fire. Does not own the action, and does not observe a fire it did not publish from.
+Each handler observes with `@ObservesAsync` and runs off the source thread. Handlers of one fire do not wait on each other.
 
-### 4. MQTT receive
+- Persist: `EventStore.append`. `MongoEventStore` is the store. When Mongo is absent, append is a no-op and does not wait on server selection.
+- Joystick appliance control: `SimpleAliasService` looks up `controlMap` and toggles appliances.
+- Metrics emission is a later handler. It is not part of this change.
 
-Owns taking a `QueuedEventMessage` off that same queue. Does not choose a recipient and does not read mappings.
+### 4. Action
 
-### 5. Router
-
-Owns accepting or dropping that message, and firing the CDI event the recipient observes. Does not read mappings and does not write a board.
-
-### 6. CDI recipient
-
-Owns the decision that this `JoystickEvent` is a mapped button, and the `controlMap` lookup. This is the existing recipient.
-
-### 7. Action
-
-Owns toggling the appliances named by that `controlMap` entry on that mapping's board.
+Owns toggling the appliances named by a `controlMap` entry on that mapping's board. Unchanged.
 
 ## Types
 
+### EventSource
+
+Existing SPI `io.freedriver.autonomy.events.EventSource`. Modular event types. Each implementation fires one payload type with `Event.fireAsync`. CDI discovers running sources. `EventSource.load()` discovers test providers.
+
 ### JoystickEvent
 
-Existing type `io.freedriver.autonomy.event.input.joystick.JoystickEvent`. It crosses from the listener to the CDI event. It is the payload of `QueuedEventMessage` when `type` is `joystick.event`. It crosses from the router to the recipient.
+Existing type `io.freedriver.autonomy.event.input.joystick.JoystickEvent`. It crosses from the listener to every joystick handler.
 
 Fields:
 
-- `id`, string. The router delivers only a non-blank `id`. The listener assigns it. The queue does not replace it.
+- `id`, string. The listener assigns it.
 - `timestamp`, instant.
 - `generationOrigin`, `HUMAN` or `NON_HUMAN`. The listener sets `NON_HUMAN`.
 - `sourceClass`, string.
@@ -53,24 +51,13 @@ Fields:
 
 No methods are part of this contract.
 
-### QueuedEventMessage
+### EventStore
 
-New type. It crosses from MQTT publish to MQTT receive, and from MQTT receive to the router.
-
-Fields:
-
-- `type`, string. This flow sends `joystick.event`, the existing `EventTypes.JOYSTICK_EVENT` value. This flow sends no other type.
-- `payload`, a `JoystickEvent`, when `type` is `joystick.event`. The payload fields are the `JoystickEvent` fields above, unchanged.
-
-No methods are part of this contract.
-
-### EventsQueue
-
-New qualifier. It has no fields. It is present only on the `JoystickEvent` the router fires. It is absent on the listener's fire.
+Existing SPI `io.freedriver.autonomy.events.store.EventStore`. Persist is one handler. `MongoEventStore` implements it. Absent Mongo does not fail the fire.
 
 ### Mapping
 
-Existing type `io.freedriver.jsonlink.config.v2.Mapping`. It crosses from the recipient to the action, together with the `controlMap` value.
+Existing type `io.freedriver.jsonlink.config.v2.Mapping`. It crosses from the joystick appliance handler to the action, together with the `controlMap` value.
 
 Fields this handoff uses:
 
@@ -82,58 +69,38 @@ Fields this handoff uses:
 
 ## Messages
 
-Listener to CDI event. Nothing is sent on a broker. The handoff is direct. The type is `JoystickEvent`.
+Listener to CDI event. Nothing is sent on a broker. The handoff is `Event.fireAsync` of `JoystickEvent`.
 
-CDI event to MQTT publish. Nothing is sent on a broker. The handoff is direct. The type is `JoystickEvent`. Publish observes the listener's fire. That fire is not qualified with `EventsQueue`.
+CDI event to persist. Nothing is sent on a broker. The handoff is `@ObservesAsync JoystickEvent`. Persist calls `EventStore.append` with `EventTypes.JOYSTICK_EVENT`.
 
-MQTT publish to MQTT receive. The message name is `QueuedEventMessage`. Direction is publish to receive, one way. The payload type is `QueuedEventMessage`. The sender is MQTT publish. The receiver is MQTT receive. The broker is Moquette. The topic is the single exact topic `events`. Delivery is QoS 1. Retain is false. This is not `freedriver/v1/{instanceId}/appliances` and not `freedriver/v1/{instanceId}/commands`. It is not a topic on the house broker, and the topic has no instance segment.
+CDI event to appliance control. Nothing is sent on a broker. The handoff is `@ObservesAsync JoystickEvent` on `SimpleAliasService`.
 
-MQTT receive to the router. Nothing further is sent. The handoff is direct. The type is `QueuedEventMessage`.
-
-Router to the CDI recipient. Nothing is sent on a broker. The handoff is direct. The type is `JoystickEvent`, qualified with `EventsQueue`.
-
-CDI recipient to the action. Nothing is sent on a broker. The handoff is direct. The types are `Mapping` and the list of appliance names from `controlMap`.
+CDI recipient to the action. Nothing is sent on a broker. The types are `Mapping` and the list of appliance names from `controlMap`.
 
 ## Handoffs
 
 ### Listener to CDI event
 
-What moves is one `JoystickEvent`. The carrier is a direct fire of that type.
+What moves is one `JoystickEvent`. The carrier is `fireAsync` of that type.
 
-The handoff advances when the listener has a reading whose subject title is present, and conversion produces a `JoystickEvent`. It does not advance when the title is absent, or when the fire fails. Those cases stay in the listener.
+The handoff advances when the listener has a reading whose subject title is present, and conversion produces a `JoystickEvent`. It does not advance when the title is absent. A failed handler is logged on the completion stage and does not return to the listener's stack.
 
-### CDI event to MQTT publish
+### CDI event to persist
 
-What moves is that same `JoystickEvent`. The carrier is direct observation of the listener's fire.
+What moves is that same `JoystickEvent`. The carrier is asynchronous observation of the listener's fire.
 
-The handoff advances for every `JoystickEvent` on that fire, including an initial event and an `AXIS` event. It does not advance for an `EventsQueue` fire. Publish does not observe those.
+The handoff advances for every `JoystickEvent` on that fire, including an initial event and an `AXIS` event. When Mongo is absent, `append` returns the record and writes nothing. Persist does not call the appliance recipient.
 
-### MQTT publish to MQTT receive
+### CDI event to appliance control
 
-What moves is one `QueuedEventMessage` whose `type` is `joystick.event` and whose `payload` is that `JoystickEvent`. The carrier is the `events` topic on Moquette.
+What moves is that same `JoystickEvent`. The carrier is a second asynchronous observation of the same fire.
 
-The handoff advances when Moquette has accepted the message and publish has returned to the listener's fire. Receive starts after that return, and not on the listener's stack. It does not advance when acceptance fails. A failed publish is not retried on that fire, and publish does not call the recipient.
+The handoff advances when `initial` is false, `joystickEventType` is a button, and the key `number`, a colon, and `eventValue` is present in a mapping's `controlMap`. One event advances once for each mapping that has the key. It does not advance when `initial` is true, when `joystickEventType` is absent, when `joystickEventType` is `AXIS`, or when the key is absent.
 
-### MQTT receive to the router
-
-What moves is that `QueuedEventMessage`. The carrier is a direct handoff.
-
-The handoff advances when the message arrived on the topic `events`. It does not advance for a message on any other topic.
-
-### Router to the CDI recipient
-
-What moves is the payload `JoystickEvent`. The carrier is a direct CDI fire qualified with `EventsQueue`.
-
-The handoff advances when `type` is `joystick.event`, the payload is a `JoystickEvent`, `id` is non-blank, and this process has not already handed that `id` to the recipient. It does not advance for any other `type`, for a payload that is not a `JoystickEvent`, for a blank `id`, or for an `id` already handed off. A second delivery of the same `id` does not advance.
-
-That `EventsQueue` fire is not published again. Storing the listener's event is not this handoff.
+The step is done when the action has returned for each matching mapping. A failed board write stays inside the recipient. It does not put the recipient back on the listener's fire.
 
 ### Recipient to the action
 
-What moves is the `Mapping` that holds the key, and the list of appliance names at that key. The carrier is a direct call. The key is `number`, a colon, and `eventValue`.
-
-The handoff advances when `initial` is false, `joystickEventType` is a button, and that key is present in the mapping's `controlMap`. One event advances once for each mapping that has the key. It does not advance when `initial` is true, when `joystickEventType` is absent, when `joystickEventType` is `AXIS`, or when the key is absent.
-
-The step is done when the action has returned for each matching mapping. A failed board write stays inside the recipient. It does not put the recipient back on the listener's fire.
+What moves is the `Mapping` that holds the key, and the list of appliance names at that key. The carrier is a direct call.
 
 When the action is done, each named appliance on that board has been written to the opposite of the digital state the action read.
