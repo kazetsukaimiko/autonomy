@@ -16,6 +16,7 @@ import java.util.HexFormat;
 public final class TestMappings {
 
     static final String CONFIG_KEY = "autonomy.mappings.file";
+    static final String CONNECTIONS_DIR_KEY = "autonomy.connections.dir";
     static final String EMPTY_MAPPINGS = """
             {"eventTTL":7,"eventTTLUnit":"DAYS","mappings":[]}
             """;

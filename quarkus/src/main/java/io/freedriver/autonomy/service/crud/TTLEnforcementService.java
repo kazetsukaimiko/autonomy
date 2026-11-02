@@ -6,6 +6,8 @@ import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.freedriver.autonomy.config.ConfigFileTrust;
+import io.freedriver.autonomy.config.MappingsDirectoryLoader;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
 import io.freedriver.jsonlink.config.v2.Mappings;
 import io.quarkus.runtime.ShutdownEvent;
@@ -36,6 +38,7 @@ public class TTLEnforcementService {
     @ConfigProperty(name = "autonomy.mappings.file")
     String mappingsFile;
 
+    private Mappings mappingsDirectorySnapshot;
     private boolean continueTTLEnforcement = true;
 
     /**
@@ -99,9 +102,15 @@ public class TTLEnforcementService {
      * @throws IOException
      */
     public Mappings getMappings() throws IOException {
-        return ObjectMapperContextResolver.getMapper().readValue(
-                Path.of(mappingsFile).toFile(),
-                Mappings.class);
+        Path path = Path.of(mappingsFile);
+        if (MappingsDirectoryLoader.directoryPresent(path)) {
+            if (mappingsDirectorySnapshot == null) {
+                mappingsDirectorySnapshot = MappingsDirectoryLoader.load(path, ConfigFileTrust.processUid())
+                        .mappings();
+            }
+            return mappingsDirectorySnapshot;
+        }
+        return ObjectMapperContextResolver.getMapper().readValue(path.toFile(), Mappings.class);
     }
 
     /**

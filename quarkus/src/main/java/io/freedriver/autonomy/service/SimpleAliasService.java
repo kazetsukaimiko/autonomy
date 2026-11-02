@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 import io.freedriver.autonomy.Autonomy;
 import io.freedriver.autonomy.cdi.qualifier.ConnectorCache;
 import io.freedriver.autonomy.cdi.qualifier.SensorCache;
+import io.freedriver.autonomy.config.ConfigFileTrust;
+import io.freedriver.autonomy.config.MappingsDirectoryLoader;
 import io.freedriver.autonomy.event.GenerationOrigin;
 import io.freedriver.autonomy.event.input.joystick.JoystickEvent;
 import io.freedriver.autonomy.event.input.sensors.DoubleValueSensorEvent;
@@ -88,6 +90,8 @@ public class SimpleAliasService  {
     @Inject
     @ConfigProperty(name = "autonomy.mappings.file")
     String mappingsFile;
+
+    private Mappings mappingsDirectorySnapshot;
 
     public void waitFor(Duration duration) throws InterruptedException {
         Thread.sleep(duration.toMillis());
@@ -188,9 +192,15 @@ public class SimpleAliasService  {
     }
 
     public Mappings getMappings() throws IOException {
-        return ObjectMapperContextResolver.getMapper().readValue(
-                Path.of(mappingsFile).toFile(),
-                Mappings.class);
+        Path path = Path.of(mappingsFile);
+        if (MappingsDirectoryLoader.directoryPresent(path)) {
+            if (mappingsDirectorySnapshot == null) {
+                mappingsDirectorySnapshot = MappingsDirectoryLoader.load(path, ConfigFileTrust.processUid())
+                        .mappings();
+            }
+            return mappingsDirectorySnapshot;
+        }
+        return ObjectMapperContextResolver.getMapper().readValue(path.toFile(), Mappings.class);
     }
 
     public Map<Identifier, Boolean> currentState(UUID boardId, Mapping mapping) {

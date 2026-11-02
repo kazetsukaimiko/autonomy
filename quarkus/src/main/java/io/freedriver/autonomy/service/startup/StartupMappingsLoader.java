@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.freedriver.autonomy.config.MappingsDirectoryLoader;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
 import io.freedriver.jsonlink.config.v2.Mappings;
 import io.freedriver.jsonlink.config.v2.MappingsAction;
@@ -56,6 +57,14 @@ public class StartupMappingsLoader {
     }
 
     public Loaded load(Path mappingsFile, long processUid) {
+        if (MappingsDirectoryLoader.directoryPresent(mappingsFile)) {
+            MappingsDirectoryLoader.Result result = MappingsDirectoryLoader.load(mappingsFile, processUid);
+            if (result.directoryRefused()) {
+                last = new Loaded(Map.of(), true, result.errors());
+                return last;
+            }
+            return finish(result.mappings(), new ArrayList<>(result.errors()));
+        }
         List<String> problems = problems(mappingsFile, processUid);
         if (!problems.isEmpty()) {
             return refuse("startupActions refused: " + String.join("; ", problems));
@@ -66,6 +75,10 @@ public class StartupMappingsLoader {
         } catch (IOException e) {
             return refuse("startupActions refused: " + e.getMessage());
         }
+        return finish(mappings, new ArrayList<>());
+    }
+
+    private Loaded finish(Mappings mappings, List<String> errors) {
         Map<String, List<MappingsAction>> actions = new LinkedHashMap<>();
         mappings.getStartupActions().forEach(actions::put);
         Map<String, List<String>> byBoard = new LinkedHashMap<>();
@@ -84,7 +97,6 @@ public class StartupMappingsLoader {
                 byBoard.computeIfAbsent(board, ignored -> new ArrayList<>()).add(detail);
             }
         }
-        List<String> errors = new ArrayList<>();
         if (refuseAll) {
             String message = "startupActions refused: " + String.join("; ", byBoard.getOrDefault("", List.of()));
             log.error(message);

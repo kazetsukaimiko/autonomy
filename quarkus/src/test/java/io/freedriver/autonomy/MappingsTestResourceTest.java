@@ -22,8 +22,11 @@ class MappingsTestResourceTest {
         Map<String, String> config = resource.start();
         Path written = Path.of(config.get(TestMappings.CONFIG_KEY)).toAbsolutePath().normalize();
         try {
-            assertEquals(1, config.size());
-            assertEquals(TestMappings.CONFIG_KEY, config.keySet().iterator().next());
+            assertEquals(2, config.size());
+            assertEquals(written, Path.of(config.get(TestMappings.CONFIG_KEY)).toAbsolutePath().normalize());
+            Path connections = Path.of(config.get(TestMappings.CONNECTIONS_DIR_KEY)).toAbsolutePath().normalize();
+            assertEquals(written.getParent().resolve("connections.d"), connections);
+            assertTrue(Files.notExists(connections));
             assertNotEquals(defaults, written);
             assertTrue(Files.isRegularFile(written));
             assertEquals(TestMappings.EMPTY_MAPPINGS, Files.readString(written));
