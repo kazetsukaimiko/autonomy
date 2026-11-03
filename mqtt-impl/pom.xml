@@ -13,6 +13,14 @@
     <description>Eclipse Paho publisher for appliance state. Swapping clients stays in this module.</description>
     <packaging>jar</packaging>
 
+    <!-- Test-only: moquette 0.18.1 is not on Maven Central (io.moquette:0.18.1 404). -->
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
