@@ -1,5 +1,6 @@
 package io.freedriver.autonomy;
 
+import java.nio.file.Path;
 import java.util.Map;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
@@ -12,7 +13,11 @@ public class MappingsTestResource implements QuarkusTestResourceLifecycleManager
 
     @Override
     public Map<String, String> start() {
-        return Map.of(TestMappings.CONFIG_KEY, TestMappings.writeTemporary().toString());
+        Path mappings = TestMappings.writeTemporary();
+        Path connections = mappings.getParent().resolve("connections.d");
+        return Map.of(
+                TestMappings.CONFIG_KEY, mappings.toString(),
+                TestMappings.CONNECTIONS_DIR_KEY, connections.toString());
     }
 
     @Override
