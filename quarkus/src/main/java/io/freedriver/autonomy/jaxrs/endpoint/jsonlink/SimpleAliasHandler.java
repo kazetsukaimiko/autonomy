@@ -12,9 +12,12 @@ import io.freedriver.autonomy.service.SimpleAliasService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.SecurityContext;
 import lombok.extern.slf4j.Slf4j;
 
 @RequestScoped
@@ -29,6 +32,9 @@ public class SimpleAliasHandler implements SimpleAliasApi {
 
     @Inject
     SimpleAliasService simpleAliasService;
+
+    @Context
+    SecurityContext securityContext;
 
     @Override
     public List<UUID> getBoards() {
@@ -50,6 +56,9 @@ public class SimpleAliasHandler implements SimpleAliasApi {
 
     @Override
     public AliasView setState(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
+        if (securityContext == null || securityContext.getUserPrincipal() == null) {
+            throw new NotAuthorizedException("setState");
+        }
         simpleAliasService.setState(boardId, desiredState);
         return getState(boardId);
     }
