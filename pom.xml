@@ -42,6 +42,11 @@
       <id>oss.sonatype.org-snapshot</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
+    <!-- moquette-broker 0.18.1 is not on Maven Central yet; GitHub tag v0.18.1. -->
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
   </repositories>
 
   <dependencyManagement>

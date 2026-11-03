@@ -72,8 +72,9 @@
         </dependency>
 
         <dependency>
-            <groupId>io.moquette</groupId>
+            <groupId>com.github.moquette-io.moquette</groupId>
             <artifactId>moquette-broker</artifactId>
+            <version>v0.18.1</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
