@@ -6,10 +6,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 import io.freedriver.autonomy.event.input.joystick.JoystickEvent;
+import io.freedriver.autonomy.event.input.sensors.DoubleValueSensorEvent;
+import io.freedriver.autonomy.event.speech.SpeechEvent;
+import io.freedriver.autonomy.metrics.EventMetricsObserver;
 import io.freedriver.autonomy.service.JoystickEventCrudService;
 import io.freedriver.autonomy.service.SimpleAliasService;
 import io.freedriver.autonomy.vedirect.VEDirectMessageActor;
 import io.freedriver.victron.VEDirectMessage;
+import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +24,10 @@ class EventFanOutContractTest {
         assertObservesAsync(JoystickEventCrudService.class, "actOnJoystickEvent", JoystickEvent.class);
         assertObservesAsync(SimpleAliasService.class, "handleJoystickEvent", JoystickEvent.class);
         assertObservesAsync(VEDirectMessageActor.class, "actOnVEDirectMessage", VEDirectMessage.class);
+        assertObservesAsync(EventMetricsObserver.class, "onJoystick", JoystickEvent.class);
+        assertObservesAsync(EventMetricsObserver.class, "onVeDirect", VEDirectMessage.class);
+        assertObservesAsync(EventMetricsObserver.class, "onSensor", DoubleValueSensorEvent.class);
+        assertObserves(EventMetricsObserver.class, "onSpeech", SpeechEvent.class);
     }
 
     private static void assertObservesAsync(Class<?> type, String methodName, Class<?> payload) throws Exception {
@@ -28,5 +36,13 @@ class EventFanOutContractTest {
         assertNotNull(
                 parameter.getAnnotation(ObservesAsync.class),
                 type.getSimpleName() + "." + methodName + " must observe fireAsync");
+    }
+
+    private static void assertObserves(Class<?> type, String methodName, Class<?> payload) throws Exception {
+        Method method = type.getMethod(methodName, payload);
+        Parameter parameter = method.getParameters()[0];
+        assertNotNull(
+                parameter.getAnnotation(Observes.class),
+                type.getSimpleName() + "." + methodName + " must observe fire");
     }
 }

@@ -2,6 +2,7 @@ package io.freedriver.autonomy.mqtt.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -167,6 +168,26 @@ class PahoMqttConnectorTest {
             mqttLogger.detachAppender(appender);
         }
         assertSecretAbsent();
+    }
+
+    @Test
+    void publishExactThrowsWhenNotConnected() {
+        PahoMqttConnector idle = new PahoMqttConnector();
+        assertThrows(
+                IllegalStateException.class,
+                () -> idle.publishExact(
+                        "freedriver/v1/" + INSTANCE_ID + "/metrics", new byte[] {1}, 1, false));
+    }
+
+    @Test
+    void publishExactRejectsWildcardTopics() {
+        PahoMqttConnector idle = new PahoMqttConnector();
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> idle.publishExact("freedriver/v1/+/metrics", new byte[] {1}, 1, false));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> idle.publishExact("freedriver/v1/#", new byte[] {1}, 1, false));
     }
 
     @Test

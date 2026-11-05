@@ -142,6 +142,24 @@ public final class PahoMqttConnector implements MqttConnector {
     }
 
     @Override
+    public void publishExact(String topic, byte[] payload, int qos, boolean retain) {
+        if (topic == null || topic.isBlank() || topic.indexOf('+') >= 0 || topic.indexOf('#') >= 0) {
+            throw new IllegalArgumentException("exact topic only");
+        }
+        synchronized (publishLock) {
+            MqttClient current = client;
+            if (stopped.get() || current == null || !current.isConnected()) {
+                throw new IllegalStateException("MQTT not connected");
+            }
+            try {
+                current.publish(topic, payload == null ? new byte[0] : payload, qos, retain);
+            } catch (Exception e) {
+                throw new IllegalStateException("MQTT publish failed", e);
+            }
+        }
+    }
+
+    @Override
     public void close() {
         stopped.set(true);
         synchronized (commandLock) {
