@@ -2,6 +2,7 @@ package io.freedriver.autonomy.mqtt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -84,6 +85,21 @@ class MqttStatePublisherTest {
             logger.removeHandler(capture);
             logger.setLevel(previous);
         }
+    }
+
+    @Test
+    void publishExactThrowsWhenMqttIsOff() {
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        MqttStatePublisher publisher = new MqttStatePublisher(
+                MqttConfigValidatorTest.enabledStub(), validator, () -> {
+                    throw new AssertionError("state source read");
+                }, (name, on) -> {
+                    throw new AssertionError("command applied");
+                });
+        publisher.onStart(null);
+        assertThrows(
+                IllegalStateException.class,
+                () -> publisher.publishExact("freedriver/v1/x/metrics", new byte[] {1}, 1, false));
     }
 
     @Test

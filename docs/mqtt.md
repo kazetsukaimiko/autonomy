@@ -59,6 +59,8 @@ Run it before any build that includes `mqtt-impl` or `quarkus` (`mvn -pl quarkus
 
 Topic: `freedriver/v1/{instanceId}/appliances` (`ApplianceSchemas.appliancesTopic`). QoS 1, retain false. `instanceId` is the topic segment.
 
+When MQTT is on, CDI event observers also publish a `MetricsPoint` JSON body to `freedriver/v1/{instanceId}/metrics` (`MqttMetricsEmitter.topic`). QoS 1, retain false. A down broker is queued and resent on the next emit. GPIO handlers do not call the emitter.
+
 Body. Every state publish lists every appliance. `appliedCommandId` is set only on the publish right after a command is applied, to that command id. A periodic publish leaves it null:
 
 ```json

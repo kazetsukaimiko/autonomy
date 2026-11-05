@@ -81,6 +81,18 @@ public class MqttStatePublisher {
                 .collect(Collectors.joining(","));
     }
 
+    /**
+     * Host publisher for {@code MqttMetricsEmitter}. Throws when MQTT is off or
+     * the session is not connected so {@code QueueingMetricsEmitter} can queue.
+     */
+    public void publishExact(String topic, byte[] payload, int qos, boolean retain) {
+        MqttConnector current = connector;
+        if (current == null) {
+            throw new IllegalStateException("MQTT not connected");
+        }
+        current.publishExact(topic, payload, qos, retain);
+    }
+
     void onStop(@Observes ShutdownEvent event) {
         if (connector != null) {
             connector.close();

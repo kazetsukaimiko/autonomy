@@ -16,6 +16,14 @@ public interface MqttConnector extends AutoCloseable {
      */
     void start(MqttSettings settings, ApplianceStateSource states, ApplianceCommandSink commands);
 
+    /**
+     * Publish to an exact topic (no {@code +} or {@code #}). Throws if this
+     * connector is not connected. Appliance state publishing stays on the start
+     * loop. Metrics uses this with a queueing emitter so a down broker does not
+     * throw into GPIO handlers.
+     */
+    void publishExact(String topic, byte[] payload, int qos, boolean retain);
+
     @Override
     void close();
 }
