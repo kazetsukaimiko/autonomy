@@ -4,13 +4,22 @@ import unittest
 from pathlib import Path
 
 import jssc_classpath_check
-from jssc_classpath_check import ClasspathPinError, check_entries, parse_list
+from jssc_classpath_check import ClasspathPinError, check_entries, parse_list, settings_arguments
 
 
 def jar(directory: Path, name: str, payload: bytes) -> Path:
     path = directory / name
     path.write_bytes(payload)
     return path
+
+
+class SettingsArgumentsTest(unittest.TestCase):
+    def test_uses_a_settings_file_when_it_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            settings = Path(directory) / "settings.xml"
+            self.assertEqual(settings_arguments(settings), [])
+            settings.write_text("<settings/>")
+            self.assertEqual(settings_arguments(settings), ["--settings", str(settings)])
 
 
 class ParseListTest(unittest.TestCase):

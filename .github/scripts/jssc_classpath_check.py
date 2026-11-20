@@ -104,11 +104,25 @@ def check_entries(entries: list[tuple[str, str]]) -> dict[str, str]:
     return chosen
 
 
+def settings_arguments(settings: Path | None = None) -> list[str]:
+    """Point Maven at the real settings file.
+
+    CI sets user.home to a scratch directory so a build cannot install into
+    the runner home. Maven then ignores the settings.xml that setup-java
+    wrote under the real home, and GitHub Packages answers 401.
+    """
+    path = settings if settings is not None else Path.home() / ".m2" / "settings.xml"
+    if path.is_file():
+        return ["--settings", str(path)]
+    return []
+
+
 def maven_args(goal: str, output: Path) -> list[str]:
     args = [
         "mvn",
         "--batch-mode",
         "--no-transfer-progress",
+        *settings_arguments(),
         "-pl",
         "quarkus",
         "-am",
