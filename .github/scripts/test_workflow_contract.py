@@ -33,6 +33,10 @@ class WorkflowContractTest(unittest.TestCase):
     def test_verify_workflow_stays_read_only(self) -> None:
         text = workflow("ci.yml")
         self.assertIn("contents: read", text)
+        self.assertIn("packages: read", text)
+        self.assertIn("server-id: github", text)
+        self.assertIn("jssc_classpath_check.py", text)
+        self.assertNotIn("Install freedriver SNAPSHOT", text)
         self.assertNotIn("contents: write", text)
         self.assertNotIn("id-token:", text)
         self.assertNotIn("attestations:", text)
