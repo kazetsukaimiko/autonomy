@@ -21,7 +21,7 @@
   </modules>
   <properties>
     <failOnMissingWebXml>false</failOnMissingWebXml>
-    <io.freedriver.version>1.0.0-SNAPSHOT</io.freedriver.version>
+    <io.freedriver.version>1.0.0</io.freedriver.version>
     <lombok.version>1.18.38</lombok.version>
     <slf4j.version>2.0.16</slf4j.version>
     <maven.compiler.source>23</maven.compiler.source>
@@ -32,6 +32,17 @@
   </properties>
 
   <repositories>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>github</id>
+      <name>GitHub Packages kazetsukaimiko/freedriver</name>
+      <url>https://maven.pkg.github.com/kazetsukaimiko/freedriver</url>
+    </repository>
     <repository>
       <releases>
         <enabled>false</enabled>

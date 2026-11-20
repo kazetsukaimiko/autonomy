@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: read
     steps:
       - name: Checkout autonomy
         uses: actions/checkout@v4
@@ -24,10 +25,8 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_*.py'
           bash quarkus/build/generate-changelog-test.sh
 
-      # freedriver.sha is the jsonlink commit. freedriver-web.sha is the MQTT contract commit.
-      - name: Check out freedriver at the pin and confirm it is on master
-        run: bash scripts/checkout-pinned-commit.sh freedriver.sha freedriver https://github.com/kazetsukaimiko/freedriver.git master
-
+      # jsonlink and serial-impl come from the published 1.0.0 packages.
+      # freedriver-web.sha is still the MQTT contract commit. That jar is not published.
       - name: Check out freedriver-web at the pin and confirm it is on main
         run: bash scripts/checkout-pinned-commit.sh freedriver-web.sha freedriver-web https://github.com/kazetsukaimiko/freedriver-web.git main
 
@@ -39,22 +38,35 @@ jobs:
           cache: maven
           cache-dependency-path: |
             pom.xml
-            freedriver/pom.xml
-
-      # Maven 3.10 rejects a duplicate dependencyManagement import that older
-      # runners only warned about. The second freedriver-jakarta-bom import in
-      # inotify-cdi matches the first, which is the one Maven used to keep.
-      - name: Drop duplicate freedriver BOM import
-        working-directory: freedriver
-        run: python3 "$GITHUB_WORKSPACE/scripts/drop-duplicate-freedriver-bom.py" inotify-cdi/pom.xml
-
-      - name: Install freedriver SNAPSHOT
-        working-directory: freedriver
-        run: mvn --batch-mode --no-transfer-progress install -DskipTests
+            freedriver-web/pom.xml
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
 
       - name: Install freedriver-mqtt-contract from the pinned freedriver-web commit
         working-directory: freedriver-web
         run: ./mvnw --batch-mode --no-transfer-progress -pl mqtt-contract -am install -DskipTests
+
+      # Resolves the quarkus runtime classpath and hashes jssc. Does not compile quarkus.
+      - name: Check the quarkus runtime jars for jssc 2.10.4
+        run: |
+          set -euo pipefail
+          scratch_home="${GITHUB_WORKSPACE}/ci-scratch/home"
+          scratch_state="${GITHUB_WORKSPACE}/ci-scratch/state"
+          case "${scratch_home}" in
+            "${GITHUB_WORKSPACE}"/*) ;;
+            *) echo "user.home is outside the workspace"; exit 1 ;;
+          esac
+          case "${scratch_state}" in
+            "${GITHUB_WORKSPACE}"/*) ;;
+            *) echo "autonomy state directory is outside the workspace"; exit 1 ;;
+          esac
+          mkdir -p "${scratch_home}" "${scratch_state}"
+          chmod 0700 "${scratch_home}" "${scratch_state}"
+          export JAVA_TOOL_OPTIONS="-Duser.home=${scratch_home} -Dautonomy.state.dir=${scratch_state}"
+          export AUTONOMY_STATE_DIR="${scratch_state}"
+          export MAVEN_OPTS="-Dmaven.repo.local=${HOME}/.m2/repository"
+          python3 .github/scripts/jssc_classpath_check.py
 
       # Full reactor, so quarkus tests run on every pull request and push to master.
       # user.home and autonomy.state.dir are scratch dirs in this workspace, not the
