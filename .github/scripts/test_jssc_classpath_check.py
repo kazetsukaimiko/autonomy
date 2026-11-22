@@ -22,6 +22,15 @@ class SettingsArgumentsTest(unittest.TestCase):
             self.assertEqual(settings_arguments(settings), ["--settings", str(settings)])
 
 
+class UpstreamInstallTest(unittest.TestCase):
+    def test_installs_quarkus_upstream_without_quarkus(self) -> None:
+        args = jssc_classpath_check.upstream_install_args()
+        self.assertEqual(args[args.index("-pl") + 1], "quarkus,!quarkus")
+        self.assertIn("-am", args)
+        self.assertIn("install", args)
+        self.assertIn("-DskipTests", args)
+
+
 class ParseListTest(unittest.TestCase):
     def test_reads_info_lines_and_plain_lines(self) -> None:
         text = "\n".join(

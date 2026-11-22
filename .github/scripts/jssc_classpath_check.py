@@ -148,11 +148,38 @@ def maven_args(goal: str, output: Path) -> list[str]:
     return args
 
 
+def upstream_install_args() -> list[str]:
+    """Install the modules quarkus depends on, without building quarkus.
+
+    dependency:list needs each sibling's jar. Nothing in this run has packaged
+    them, so without this Maven looks for the SNAPSHOT jars in remote
+    repositories and fails. "quarkus,!quarkus" with -am selects only
+    quarkus's upstream modules, so the quarkus sources are never compiled.
+    """
+    return [
+        "mvn",
+        "--batch-mode",
+        "--no-transfer-progress",
+        *settings_arguments(),
+        "-pl",
+        "quarkus,!quarkus",
+        "-am",
+        "install",
+        "-DskipTests",
+        *[
+            piece
+            for piece in os.environ.get("JAVA_TOOL_OPTIONS", "").split()
+            if piece.startswith(("-Duser.home=", "-Dautonomy.state.dir="))
+        ],
+    ]
+
+
 def run_maven(repo: Path) -> tuple[str, str]:
     target = repo / "quarkus" / "target"
     target.mkdir(parents=True, exist_ok=True)
     tree = target / "jssc-runtime-tree.txt"
     listing = target / "jssc-runtime-list.txt"
+    subprocess.run(upstream_install_args(), cwd=repo, check=True)
     for goal, output in (("tree", tree), ("list", listing)):
         subprocess.run(maven_args(goal, output), cwd=repo, check=True)
     return tree.read_text(), listing.read_text()
