@@ -69,6 +69,9 @@ def parse_list(text: str) -> list[tuple[str, str]]:
         if len(parts) < 6:
             continue
         path = ":".join(parts[5:])
+        # On JDK 9+ dependency:list appends " -- module <name>" (sometimes with
+        # " [auto]") after the file name. Keep only the path.
+        path = path.split(" -- module ", 1)[0].strip()
         if not path.startswith("/"):
             continue
         group, artifact, kind, version = parts[:4]

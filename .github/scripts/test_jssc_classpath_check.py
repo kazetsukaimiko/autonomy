@@ -49,6 +49,22 @@ class ParseListTest(unittest.TestCase):
             ],
         )
 
+    def test_drops_the_module_suffix(self) -> None:
+        text = "\n".join(
+            [
+                "[INFO]    io.github.java-native:jssc:jar:2.10.4:compile:/repo/jssc.jar -- module jssc",
+                "[INFO]    org.scijava:native-lib-loader:jar:2.5.0:compile:/repo/loader.jar"
+                " -- module native.lib.loader [auto]",
+            ]
+        )
+        self.assertEqual(
+            parse_list(text),
+            [
+                ("io.github.java-native:jssc:jar:2.10.4", "/repo/jssc.jar"),
+                ("org.scijava:native-lib-loader:jar:2.5.0", "/repo/loader.jar"),
+            ],
+        )
+
 
 class CheckEntriesTest(unittest.TestCase):
     def test_accepts_the_recorded_jars(self) -> None:
