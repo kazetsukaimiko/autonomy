@@ -188,11 +188,24 @@ def run_maven(repo: Path) -> tuple[str, str]:
     return tree.read_text(), listing.read_text()
 
 
-def load_native(jssc_jar: str, loader_jar: str) -> None:
+def slf4j_api_jar(entries: list[tuple[str, str]]) -> str:
+    """Return the slf4j-api jar the quarkus runtime resolves.
+
+    native-lib-loader logs through slf4j, so loading jssc fails with
+    NoClassDefFoundError: org/slf4j/LoggerFactory without it. It is not pinned
+    by hash; only jssc and native-lib-loader are.
+    """
+    for coordinate, path in entries:
+        if coordinate.startswith("org.slf4j:slf4j-api:jar:"):
+            return path
+    raise ClasspathPinError("org.slf4j:slf4j-api is not on the quarkus runtime classpath")
+
+
+def load_native(jssc_jar: str, loader_jar: str, slf4j_jar: str) -> None:
     with tempfile.TemporaryDirectory() as directory:
         source = Path(directory) / "JsscNativeLoad.java"
         source.write_text(NATIVE_SOURCE)
-        classpath = os.pathsep.join((jssc_jar, loader_jar))
+        classpath = os.pathsep.join((jssc_jar, loader_jar, slf4j_jar))
         subprocess.run(
             ["javac", "--class-path", classpath, str(source)],
             cwd=directory,
@@ -210,13 +223,17 @@ def main() -> int:
     tree, listing = run_maven(repo)
     print(tree)
     try:
-        chosen = check_entries(parse_list(listing))
+        entries = parse_list(listing)
+        chosen = check_entries(entries)
+        slf4j = slf4j_api_jar(entries)
     except ClasspathPinError as error:
         print(f"jssc classpath check failed: {error}", file=sys.stderr)
         return 1
+    sys.stdout.flush()
     load_native(
         chosen["io.github.java-native:jssc:jar:2.10.4"],
         chosen["org.scijava:native-lib-loader:jar:2.5.0"],
+        slf4j,
     )
     return 0
 

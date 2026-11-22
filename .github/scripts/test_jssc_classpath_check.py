@@ -13,6 +13,17 @@ def jar(directory: Path, name: str, payload: bytes) -> Path:
     return path
 
 
+class Slf4jApiJarTest(unittest.TestCase):
+    def test_picks_slf4j_api_and_fails_without_it(self) -> None:
+        entries = [
+            ("io.github.java-native:jssc:jar:2.10.4", "/repo/jssc.jar"),
+            ("org.slf4j:slf4j-api:jar:2.0.16", "/repo/slf4j-api.jar"),
+        ]
+        self.assertEqual(jssc_classpath_check.slf4j_api_jar(entries), "/repo/slf4j-api.jar")
+        with self.assertRaises(ClasspathPinError):
+            jssc_classpath_check.slf4j_api_jar(entries[:1])
+
+
 class SettingsArgumentsTest(unittest.TestCase):
     def test_uses_a_settings_file_when_it_exists(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
