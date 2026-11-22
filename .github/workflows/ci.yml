@@ -43,6 +43,54 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
+      # Maven on GitHub Packages is repository-scoped, so this repository's GITHUB_TOKEN
+      # cannot read freedriver's packages. FREEDRIVER_PACKAGES_TOKEN can, and it has a wider
+      # scope than this read, so it is used in this step only. The step runs from
+      # runner.temp, outside the checkout, so no pom, plugin, extension or script from this
+      # branch runs while the token is set. Maven reads it from the environment through
+      # ${env.FREEDRIVER_PACKAGES_TOKEN} in a temporary settings file; the token itself is
+      # never written to disk. Later steps resolve these artifacts from the local
+      # repository with no token, and a freedriver artifact missing from this list fails
+      # there instead of being fetched.
+      - name: Fetch the freedriver release artifacts from GitHub Packages
+        working-directory: ${{ runner.temp }}
+        env:
+          FREEDRIVER_PACKAGES_TOKEN: ${{ secrets.FREEDRIVER_PACKAGES_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FREEDRIVER_PACKAGES_TOKEN}" ]; then
+            echo "FREEDRIVER_PACKAGES_TOKEN is not available to this run (fork pull requests get no secrets)."
+            exit 1
+          fi
+          version="$(sed -n 's:.*<io.freedriver.version>\(.*\)</io.freedriver.version>.*:\1:p' "${GITHUB_WORKSPACE}/pom.xml")"
+          case "${version}" in
+            ''|*SNAPSHOT*) echo "io.freedriver.version must be a release, got '${version}'"; exit 1 ;;
+          esac
+          settings="$(mktemp "${RUNNER_TEMP}/freedriver-settings.XXXXXX")"
+          trap 'rm -f "${settings}"' EXIT
+          cat > "${settings}" <<'XML'
+          <settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>kazetsukaimiko</username>
+                <password>${env.FREEDRIVER_PACKAGES_TOKEN}</password>
+              </server>
+            </servers>
+          </settings>
+          XML
+          for coordinate in \
+            freedriver-bom:pom freedriver-3p-bom:pom \
+            jsonlink:jar serial-impl:jar victron:jar victron-jpa:jar \
+            math-jpa:jar inotify-cdi:jar metrics:jar; do
+            mvn --batch-mode --no-transfer-progress --settings "${settings}" \
+              -Dmaven.repo.local="${HOME}/.m2/repository" \
+              org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
+              -DremoteRepositories=github::default::https://maven.pkg.github.com/kazetsukaimiko/freedriver \
+              -Dartifact="io.freedriver:${coordinate%%:*}:${version}:${coordinate##*:}" \
+              -Dtransitive=true
+          done
+
       - name: Install freedriver-mqtt-contract from the pinned freedriver-web commit
         working-directory: freedriver-web
         run: ./mvnw --batch-mode --no-transfer-progress -pl mqtt-contract -am install -DskipTests

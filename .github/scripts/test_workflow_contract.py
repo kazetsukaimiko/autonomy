@@ -41,6 +41,18 @@ class WorkflowContractTest(unittest.TestCase):
         self.assertNotIn("id-token:", text)
         self.assertNotIn("attestations:", text)
 
+    def test_packages_token_stays_in_the_fetch_step(self) -> None:
+        text = workflow("ci.yml")
+        # One secret reference, in the step that runs outside the checkout.
+        self.assertEqual(text.count("secrets.FREEDRIVER_PACKAGES_TOKEN"), 1)
+        step = text.split("- name: Fetch the freedriver release artifacts from GitHub Packages", 1)[1]
+        step = step.split("\n      - name:", 1)[0]
+        self.assertIn("secrets.FREEDRIVER_PACKAGES_TOKEN", step)
+        self.assertIn("working-directory: ${{ runner.temp }}", step)
+        self.assertIn("${env.FREEDRIVER_PACKAGES_TOKEN}", step)
+        self.assertNotIn("echo \"${FREEDRIVER_PACKAGES_TOKEN}", step)
+        self.assertNotIn("set -x", step)
+
 
 if __name__ == "__main__":
     unittest.main()
