@@ -12,9 +12,23 @@ public interface MqttConnector extends AutoCloseable {
     /**
      * Same loop as {@link #start(MqttSettings, ApplianceStateSource)}. When
      * command handling is on, parsed commands are applied through {@code commands}.
-     * A null sink does not subscribe.
+     * A null sink leaves the commands topic unsubscribed.
      */
     void start(MqttSettings settings, ApplianceStateSource states, ApplianceCommandSink commands);
+
+    /**
+     * Same loop as {@link #start(MqttSettings, ApplianceStateSource, ApplianceCommandSink)}.
+     * A null {@code lists} leaves the command-lists topic unsubscribed.
+     * {@code pending} supplies the scheduled snapshot.
+     */
+    void start(MqttSettings settings, ApplianceStateSource states, ApplianceCommandSink commands,
+            CommandListSink lists, PendingSource pending);
+
+    /**
+     * Listener the house calls after a delayed entry fires. Before {@link #start},
+     * the house keeps its own no-op listener and skips the acknowledgement.
+     */
+    ScheduledListener scheduledListener();
 
     /**
      * Publish to an exact topic (no {@code +} or {@code #}). Throws if this
