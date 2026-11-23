@@ -30,6 +30,7 @@ const scopes = [
     "mqtt-contract",
     "quarkus",
     "release",
+    "serial-api",
     "ui",
     "websocket",
 ];

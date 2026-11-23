@@ -49,6 +49,7 @@ Currently there are several modules:
 * jpa - the JPA entities specific to Autonomy, generates a static metamodel used for typesafe CriteriaQueries
 * quarkus - Quarkus deployment and all Java EE Service code.
 * mqtt-api / mqtt-impl - optional publish of appliance state to the freedriver.io MQTT broker. See [docs/mqtt.md](docs/mqtt.md).
+* serial-api - the JAX-RS contract between the serial gateway and the controller.
 * ui - is an ongoing attempt to experiment with FE technologies to formalize UI development and testing
 
 Autonomy makes heavy use of my upstream freedriver project, tools which are not specific to the Autonomy use case.
