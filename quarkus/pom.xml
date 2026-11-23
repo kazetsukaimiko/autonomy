@@ -18,6 +18,8 @@
         <quarkus.platform.version>3.37.0</quarkus.platform.version>
         <quarkus-plugin.version>${quarkus.platform.version}</quarkus-plugin.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
+        <!-- Install copies the fast-jar into ~/.local/autonomy. CI resolve sets this true. -->
+        <skipAutonomyHomeInstall>false</skipAutonomyHomeInstall>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -226,6 +228,9 @@
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.0.0</version>
+                <configuration>
+                    <skip>${skipAutonomyHomeInstall}</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>copy</id>

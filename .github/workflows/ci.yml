@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: read
     steps:
       - name: Checkout autonomy
         uses: actions/checkout@v4
@@ -24,10 +25,8 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_*.py'
           bash quarkus/build/generate-changelog-test.sh
 
-      # freedriver.sha is the jsonlink commit. freedriver-web.sha is the MQTT contract commit.
-      - name: Check out freedriver at the pin and confirm it is on master
-        run: bash scripts/checkout-pinned-commit.sh freedriver.sha freedriver https://github.com/kazetsukaimiko/freedriver.git master
-
+      # jsonlink and serial-impl come from the published 1.0.0 packages.
+      # freedriver-web.sha is still the MQTT contract commit. That jar is not published.
       - name: Check out freedriver-web at the pin and confirm it is on main
         run: bash scripts/checkout-pinned-commit.sh freedriver-web.sha freedriver-web https://github.com/kazetsukaimiko/freedriver-web.git main
 
@@ -39,22 +38,83 @@ jobs:
           cache: maven
           cache-dependency-path: |
             pom.xml
-            freedriver/pom.xml
+            freedriver-web/pom.xml
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
 
-      # Maven 3.10 rejects a duplicate dependencyManagement import that older
-      # runners only warned about. The second freedriver-jakarta-bom import in
-      # inotify-cdi matches the first, which is the one Maven used to keep.
-      - name: Drop duplicate freedriver BOM import
-        working-directory: freedriver
-        run: python3 "$GITHUB_WORKSPACE/scripts/drop-duplicate-freedriver-bom.py" inotify-cdi/pom.xml
-
-      - name: Install freedriver SNAPSHOT
-        working-directory: freedriver
-        run: mvn --batch-mode --no-transfer-progress install -DskipTests
+      # Maven on GitHub Packages is repository-scoped, so this repository's GITHUB_TOKEN
+      # cannot read freedriver's packages. FREEDRIVER_PACKAGES_TOKEN can, and it has a wider
+      # scope than this read, so it is used in this step only. The step runs from
+      # runner.temp, outside the checkout, so no pom, plugin, extension or script from this
+      # branch runs while the token is set. Maven reads it from the environment through
+      # ${env.FREEDRIVER_PACKAGES_TOKEN} in a temporary settings file; the token itself is
+      # never written to disk. Later steps resolve these artifacts from the local
+      # repository with no token, and a freedriver artifact missing from this list fails
+      # there instead of being fetched.
+      - name: Fetch the freedriver release artifacts from GitHub Packages
+        working-directory: ${{ runner.temp }}
+        env:
+          FREEDRIVER_PACKAGES_TOKEN: ${{ secrets.FREEDRIVER_PACKAGES_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FREEDRIVER_PACKAGES_TOKEN}" ]; then
+            echo "FREEDRIVER_PACKAGES_TOKEN is not available to this run (fork pull requests get no secrets)."
+            exit 1
+          fi
+          version="$(sed -n 's:.*<io.freedriver.version>\(.*\)</io.freedriver.version>.*:\1:p' "${GITHUB_WORKSPACE}/pom.xml")"
+          case "${version}" in
+            ''|*SNAPSHOT*) echo "io.freedriver.version must be a release, got '${version}'"; exit 1 ;;
+          esac
+          settings="$(mktemp "${RUNNER_TEMP}/freedriver-settings.XXXXXX")"
+          trap 'rm -f "${settings}"' EXIT
+          cat > "${settings}" <<'XML'
+          <settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>kazetsukaimiko</username>
+                <password>${env.FREEDRIVER_PACKAGES_TOKEN}</password>
+              </server>
+            </servers>
+          </settings>
+          XML
+          for coordinate in \
+            freedriver-bom:pom freedriver-3p-bom:pom \
+            jsonlink:jar serial-impl:jar victron:jar victron-jpa:jar \
+            math-jpa:jar inotify-cdi:jar metrics:jar; do
+            mvn --batch-mode --no-transfer-progress --settings "${settings}" \
+              -Dmaven.repo.local="${HOME}/.m2/repository" \
+              org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
+              -DremoteRepositories=github::default::https://maven.pkg.github.com/kazetsukaimiko/freedriver \
+              -Dartifact="io.freedriver:${coordinate%%:*}:${version}:${coordinate##*:}" \
+              -Dtransitive=true
+          done
 
       - name: Install freedriver-mqtt-contract from the pinned freedriver-web commit
         working-directory: freedriver-web
         run: ./mvnw --batch-mode --no-transfer-progress -pl mqtt-contract -am install -DskipTests
+
+      # Resolves the quarkus runtime classpath and hashes jssc. Does not compile quarkus.
+      - name: Check the quarkus runtime jars for jssc 2.10.4
+        run: |
+          set -euo pipefail
+          scratch_home="${GITHUB_WORKSPACE}/ci-scratch/home"
+          scratch_state="${GITHUB_WORKSPACE}/ci-scratch/state"
+          case "${scratch_home}" in
+            "${GITHUB_WORKSPACE}"/*) ;;
+            *) echo "user.home is outside the workspace"; exit 1 ;;
+          esac
+          case "${scratch_state}" in
+            "${GITHUB_WORKSPACE}"/*) ;;
+            *) echo "autonomy state directory is outside the workspace"; exit 1 ;;
+          esac
+          mkdir -p "${scratch_home}" "${scratch_state}"
+          chmod 0700 "${scratch_home}" "${scratch_state}"
+          export JAVA_TOOL_OPTIONS="-Duser.home=${scratch_home} -Dautonomy.state.dir=${scratch_state}"
+          export AUTONOMY_STATE_DIR="${scratch_state}"
+          export MAVEN_OPTS="-Dmaven.repo.local=${HOME}/.m2/repository"
+          python3 .github/scripts/jssc_classpath_check.py
 
       # Full reactor, so quarkus tests run on every pull request and push to master.
       # user.home and autonomy.state.dir are scratch dirs in this workspace, not the
@@ -80,6 +140,6 @@ jobs:
           export MAVEN_OPTS="-Dmaven.repo.local=${HOME}/.m2/repository"
           echo "user.home=${scratch_home}"
           echo "autonomy.state.dir=${scratch_state}"
-          mvn --batch-mode --no-transfer-progress clean verify \
+          mvn --batch-mode --no-transfer-progress --settings "${HOME}/.m2/settings.xml" clean verify \
             -Duser.home="${scratch_home}" \
             -Dautonomy.state.dir="${scratch_state}"
