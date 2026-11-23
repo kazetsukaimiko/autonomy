@@ -19,16 +19,26 @@ public interface MqttConnector extends AutoCloseable {
     /**
      * Same loop as {@link #start(MqttSettings, ApplianceStateSource, ApplianceCommandSink)}.
      * A null {@code lists} leaves the command-lists topic unsubscribed.
-     * {@code pending} supplies the scheduled snapshot.
+     * {@code pending} supplies the scheduled snapshot. The default calls the
+     * three-argument start, so a connector overrides this when it subscribes.
      */
-    void start(MqttSettings settings, ApplianceStateSource states, ApplianceCommandSink commands,
-            CommandListSink lists, PendingSource pending);
+    default void start(MqttSettings settings, ApplianceStateSource states, ApplianceCommandSink commands,
+            CommandListSink lists, PendingSource pending) {
+        start(settings, states, commands);
+    }
 
     /**
      * Listener the house calls after a delayed entry fires. Before {@link #start},
      * the house keeps its own no-op listener and skips the acknowledgement.
+     * The default rejects a null id. A connector overrides this to enqueue the id.
      */
-    ScheduledListener scheduledListener();
+    default ScheduledListener scheduledListener() {
+        return entryId -> {
+            if (entryId == null) {
+                throw new IllegalArgumentException("entryId");
+            }
+        };
+    }
 
     /**
      * Publish to an exact topic (no {@code +} or {@code #}). Throws if this
