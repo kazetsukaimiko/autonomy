@@ -18,7 +18,7 @@ Per-publish lines are DEBUG. The default level is INFO. Set `quarkus.log.categor
 * `mqtt-impl` is the Eclipse Paho MQTT v3 1.2.5 client, TLS, reconnect, and logging. It references Paho and `io.freedriver:freedriver-mqtt-contract`.
 * `quarkus` depends on `mqtt-api` at compile scope and on `mqtt-impl` at runtime scope. Service sources call the `mqtt-api` interfaces. A later client swap stays inside `mqtt-impl`.
 
-The wire types are freedriver-web's `io.freedriver:freedriver-mqtt-contract` (`Appliance`, `ApplianceStateMessage`, `ApplianceJson`, `ApplianceSchemas`, `ApplianceCommandList`, `PendingCommand`).
+The wire types are freedriver-web's `io.freedriver:freedriver-mqtt-contract` (`Appliance`, `ApplianceStateMessage`, `ApplianceJson`, `ApplianceSchemas`, `ApplianceCommandList`, `PendingCommand`, `ScheduledCommandsMessage`).
 
 ## Contract pin
 
@@ -93,13 +93,15 @@ The published map includes pins that are already in the cache. When the mappings
 
 ## Commands
 
-Subscribe stays off unless `autonomy.mqtt.commands-enabled` is the value `true`. That flag is separate from `autonomy.mqtt.enabled`. Any other value, including the default `false`, logs once on `io.freedriver.autonomy.mqtt`, does not subscribe, and does not stop the process. This build does not set the flag to `true` and does not set `freedriver.appliances.live-commands`.
+Subscribe stays off unless `autonomy.mqtt.commands-enabled` is the value `true`. That flag is separate from `autonomy.mqtt.enabled`. Any other value, including the default `false`, logs once on `io.freedriver.autonomy.mqtt` and leaves the process running. This build leaves the flag `false` and leaves `freedriver.appliances.live-commands` unset. Deploy order keeps the command-lists and scheduled topics off the live broker until the freedriver-web#636 grants are on that broker. The hakobune check is a later pass.
 
-When it is `true` and MQTT is on, the only subscribe is `freedriver/v1/{instanceId}/commands` (`ApplianceSchemas.commandsTopic`), QoS 1, retain false, with no wildcard. The body is the pinned contract's `ApplianceCommandMessage` (`commandId`, `applianceName`, `state`), read with `ApplianceJson.readCommand`. Retained command messages are ignored. A payload larger than `command-max-bytes` (default 4096) is rejected before parse. An unknown appliance or a malformed message is dropped and logged with the topic and a short reason. It does not call `setState`.
+When the flag is `true` and MQTT is on, the connector subscribes to the exact topics `freedriver/v1/{instanceId}/commands` (`ApplianceSchemas.commandsTopic`) and `freedriver/v1/{instanceId}/command-lists` (`ApplianceSchemas.commandListsTopic`). Both are QoS 1, retain false, with no wildcard. A command body is the pinned contract's `ApplianceCommandMessage` (`commandId`, `applianceName`, `state`), read with `ApplianceJson.readCommand`. A command list is `ApplianceCommandList`, read with `ApplianceJson.readCommandList`. Retained messages are ignored. A payload larger than `command-max-bytes` (default 4096) is rejected before parse. An unknown appliance, a malformed message, or a list the sink returns as refused or dropped is logged with the topic and a short reason. The sink's `Applied` list id is the next state publish's `appliedCommandId`.
 
-Received, applied, and rejected commands are logged on `io.freedriver.autonomy.mqtt` with the topic and a short reason. The line does not contain the payload or the broker password.
+The connector publishes `freedriver/v1/{instanceId}/scheduled` (`ApplianceSchemas.scheduledTopic`) at QoS 1 with retain false at the start of every connected session, after every applied list, and after every fired entry. The body is `ScheduledCommandsMessage`. An empty `pending` array is a real publish. The publish is independent of the state-publish interval and of an empty appliance cache. A refused command-lists SUBACK, or a refused scheduled publish while the client is still connected, is logged and retried on its own. The commands subscription and the command apply path stay up.
 
-A queued backlog keeps the latest command per appliance name and does not apply an older one after it. After a command is applied, the next state publish on `freedriver/v1/{instanceId}/appliances` lists every appliance and sets `appliedCommandId` to that command id. The next periodic publish leaves `appliedCommandId` null.
+Received, applied, and rejected commands are logged on `io.freedriver.autonomy.mqtt` with the topic and a short reason. The line leaves out the payload and the broker password.
+
+A queued backlog keeps the latest command per appliance name and leaves an older one unapplied. Command lists keep arrival order and run on the same apply thread. After a command or an applied list, the next state publish on `freedriver/v1/{instanceId}/appliances` lists every appliance and sets `appliedCommandId` to that command id or list id. The next periodic publish leaves `appliedCommandId` null.
 
 ## Configuration
 
