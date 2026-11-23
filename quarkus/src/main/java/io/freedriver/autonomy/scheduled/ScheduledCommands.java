@@ -31,10 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Opens the scheduled store on startup and runs the list engine. Command-lists
- * subscribe and the scheduled publish stay off until the broker grants are live.
- * A firing still switches when the connector has not started; the acknowledgement
- * is skipped in that case.
+ * Opens the scheduled store on startup and runs the list engine. When the store
+ * is open and commands are enabled, the publisher subscribes to command lists
+ * and publishes the scheduled snapshot. A refused subscribe or snapshot is
+ * retried by the connector while commands stay up. A firing still switches when
+ * the connector has not started; the acknowledgement is skipped in that case.
  */
 @ApplicationScoped
 public class ScheduledCommands implements CommandListSink, PendingSource {
