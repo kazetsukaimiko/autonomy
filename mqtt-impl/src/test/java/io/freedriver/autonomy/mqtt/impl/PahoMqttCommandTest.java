@@ -12,12 +12,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 
@@ -26,12 +28,21 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import io.freedriver.autonomy.mqtt.ApplianceCommandSink;
 import io.freedriver.autonomy.mqtt.ApplianceStateSource;
+import io.freedriver.autonomy.mqtt.CommandListResult;
+import io.freedriver.autonomy.mqtt.CommandListSink;
 import io.freedriver.autonomy.mqtt.MqttLog;
 import io.freedriver.autonomy.mqtt.MqttSettings;
+import io.freedriver.autonomy.mqtt.PendingSource;
+import io.freedriver.mqtt.contract.ApplianceCommandEntry;
+import io.freedriver.mqtt.contract.ApplianceCommandList;
 import io.freedriver.mqtt.contract.ApplianceCommandMessage;
 import io.freedriver.mqtt.contract.ApplianceJson;
 import io.freedriver.mqtt.contract.ApplianceSchemas;
 import io.freedriver.mqtt.contract.ApplianceStateMessage;
+import io.freedriver.mqtt.contract.PendingCommand;
+import io.freedriver.mqtt.contract.ScheduledCommandsMessage;
+import io.moquette.broker.security.IAuthorizatorPolicy;
+import io.moquette.broker.subscriptions.Topic;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -53,6 +64,8 @@ class PahoMqttCommandTest {
     private static final UUID INSTANCE_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
     private static final String STATE_TOPIC = ApplianceSchemas.appliancesTopic(INSTANCE_ID);
     private static final String COMMAND_TOPIC = ApplianceSchemas.commandsTopic(INSTANCE_ID);
+    private static final String LIST_TOPIC = ApplianceSchemas.commandListsTopic(INSTANCE_ID);
+    private static final String SCHEDULED_TOPIC = ApplianceSchemas.scheduledTopic(INSTANCE_ID);
 
     private static Path certDir;
     private static Path keystore;
@@ -67,10 +80,17 @@ class PahoMqttCommandTest {
     private PahoMqttConnector connector;
     private Thread worker;
     private boolean commandsOn;
+    private boolean watchScheduled;
     private int maxBytes = 4096;
+    private Duration publishEvery = Duration.ofMillis(150);
+    private IAuthorizatorPolicy authorizer;
+    private CommandListSink listSink;
+    private PendingSource scheduledPending;
     private ApplianceCommandSink sink = (name, on) -> false;
     private final List<Toggle> toggles = new CopyOnWriteArrayList<>();
     private final List<Captured> messages = new CopyOnWriteArrayList<>();
+    private final List<PendingCommand> pendingRows = new CopyOnWriteArrayList<>();
+    private final AtomicInteger appliedLists = new AtomicInteger();
 
     @BeforeAll
     static void certificates() throws Exception {
@@ -109,10 +129,17 @@ class PahoMqttCommandTest {
         appender.start();
         mqttLogger.addAppender(appender);
         commandsOn = false;
+        watchScheduled = false;
         maxBytes = 4096;
+        publishEvery = Duration.ofMillis(150);
+        authorizer = null;
+        listSink = null;
+        scheduledPending = null;
         sink = (name, on) -> false;
         toggles.clear();
         messages.clear();
+        pendingRows.clear();
+        appliedLists.set(0);
     }
 
     @AfterEach
@@ -140,6 +167,8 @@ class PahoMqttCommandTest {
     @Test
     void commandTopicIsTheExactCommandsTopic() {
         assertEquals("freedriver/v1/" + INSTANCE_ID + "/commands", PahoMqttConnector.commandTopic(INSTANCE_ID));
+        assertEquals("freedriver/v1/" + INSTANCE_ID + "/command-lists", PahoMqttConnector.commandListsTopic(INSTANCE_ID));
+        assertEquals("freedriver/v1/" + INSTANCE_ID + "/scheduled", PahoMqttConnector.scheduledTopic(INSTANCE_ID));
         assertEquals(COMMAND_TOPIC, ApplianceSchemas.COMMANDS_TOPIC_TEMPLATE.replace("{instanceId}", INSTANCE_ID.toString()));
         assertFalse(COMMAND_TOPIC.contains("+"));
         assertFalse(COMMAND_TOPIC.contains("#"));
@@ -307,6 +336,98 @@ class PahoMqttCommandTest {
     }
 
     @Test
+    void brokerAclDenyingCommandListsKeepsCommandsWorking() throws Exception {
+        authorizer = new DenyCommandLists();
+        commandsOn = true;
+        acceptFridge();
+        listSink = (list, receivedAt) -> new CommandListResult.Dropped("unused");
+        scheduledPending = List::of;
+        start(new MutableSource(Map.of("fridge", false), 1));
+        awaitSubscribed();
+        awaitLog(line -> line.contains("command-lists subscribe refused topic=" + LIST_TOPIC)
+                && line.contains("reasonCode="));
+        publish(COMMAND_TOPIC, command("acl-cmd", "fridge", true), false);
+        await(() -> toggles.equals(List.of(new Toggle("fridge", true))));
+        awaitState(message -> "acl-cmd".equals(message.appliedCommandId()));
+        await(() -> lines().stream().filter(line -> line.contains("command-lists subscribe refused")).count() >= 2);
+        long subscribed = lines().stream().filter(line -> line.contains("commands subscribed topic=" + COMMAND_TOPIC)).count();
+        assertEquals(1, subscribed);
+        assertTrue(lines().stream().noneMatch(line -> line.contains("connection lost")));
+    }
+
+    @Test
+    void scheduledIsPublishedOnConnectAndAgainAfterReconnectWithoutAStatePublish() throws Exception {
+        commandsOn = true;
+        watchScheduled = true;
+        publishEvery = Duration.ofHours(1);
+        listSink = (list, receivedAt) -> new CommandListResult.Dropped("unused");
+        scheduledPending = List::of;
+        connector = new PahoMqttConnector(
+                new ReconnectPolicy(Duration.ofSeconds(3), Duration.ofSeconds(60), 0.0, () -> 0),
+                Duration.ofMillis(40), Duration.ofMinutes(1), 5);
+        start(new MutableSource(Map.of(), 1));
+        await(() -> scheduledMessages().stream().anyMatch(message -> message.pending().isEmpty()));
+        assertTrue(stateMessages().isEmpty());
+        int before = scheduledMessages().size();
+        close(publisher);
+        publisher = null;
+        broker.stop();
+        awaitLog(line -> line.contains("reconnect attempt"));
+        broker.start();
+        close(subscriber);
+        subscriber = client("sub");
+        subscriber.setCallback(new StateCatcher());
+        subscriber.subscribe(STATE_TOPIC, ApplianceSchemas.QOS);
+        subscriber.subscribe(SCHEDULED_TOPIC, ApplianceSchemas.QOS);
+        await(() -> scheduledMessages().size() > before);
+        assertTrue(scheduledMessages().stream().allMatch(message -> message.pending().isEmpty()));
+        assertTrue(stateMessages().isEmpty());
+        awaitLog(line -> line.contains("scheduled published topic=" + SCHEDULED_TOPIC)
+                && line.contains("pending=0")
+                && line.contains("retain=false"));
+    }
+
+    @Test
+    void malformedRetainedNonCanonicalAndListIdMatchingAnEntryAreNotApplied() throws Exception {
+        commandsOn = true;
+        watchScheduled = true;
+        String goodList = UUID.randomUUID().toString();
+        String goodEntry = UUID.randomUUID().toString();
+        String shared = UUID.randomUUID().toString();
+        listSink = (list, receivedAt) -> {
+            if (!goodList.equals(list.listId())) {
+                return new CommandListResult.Dropped("non-canonical id");
+            }
+            appliedLists.incrementAndGet();
+            pendingRows.add(new PendingCommand(goodEntry, "fridge", true, Instant.now().plusSeconds(30)));
+            return new CommandListResult.Applied(list.listId());
+        };
+        scheduledPending = () -> List.copyOf(pendingRows);
+        start(new MutableSource(Map.of("fridge", false), 1));
+        awaitLog(line -> line.contains("command-lists subscribed topic=" + LIST_TOPIC) && line.contains("retain=false"));
+
+        MqttMessage retained = new MqttMessage(commandList(goodList, goodEntry).getBytes(StandardCharsets.UTF_8));
+        retained.setQos(ApplianceSchemas.QOS);
+        retained.setRetained(true);
+        connector.onCommand(settings(), LIST_TOPIC, retained);
+        awaitLog(line -> line.contains("command list rejected topic=" + LIST_TOPIC) && line.contains("reason=retained"));
+
+        publish(LIST_TOPIC, "{", false);
+        publish(LIST_TOPIC, commandList("not-a-uuid", UUID.randomUUID().toString()), false);
+        publish(LIST_TOPIC, commandList(shared, shared), false);
+        await(() -> lines().stream().filter(line -> line.contains("command list rejected topic=" + LIST_TOPIC)).count() >= 4);
+        awaitLog(line -> line.contains("command list rejected topic=" + LIST_TOPIC) && line.contains("reason=malformed"));
+        assertEquals(0, appliedLists.get());
+        assertTrue(stateMessages().stream().noneMatch(message -> goodList.equals(message.appliedCommandId())));
+
+        publish(LIST_TOPIC, commandList(goodList, goodEntry), false);
+        awaitState(message -> goodList.equals(message.appliedCommandId()));
+        await(() -> scheduledMessages().stream().anyMatch(message -> message.pending().stream()
+                .anyMatch(pending -> goodEntry.equals(pending.id()))));
+        assertEquals(1, appliedLists.get());
+    }
+
+    @Test
     void aCommandOnAnotherTopicIsIgnored() throws Exception {
         commandsOn = true;
         acceptFridge();
@@ -340,11 +461,15 @@ class PahoMqttCommandTest {
         subscriber = client("sub");
         subscriber.setCallback(new StateCatcher());
         subscriber.subscribe(STATE_TOPIC, ApplianceSchemas.QOS);
+        if (watchScheduled) {
+            subscriber.subscribe(SCHEDULED_TOPIC, ApplianceSchemas.QOS);
+        }
         armPublisher();
     }
 
     private void startConnector(ApplianceStateSource source) {
-        worker = new Thread(() -> connector.start(settings(), source, sink), "test-mqtt-commands");
+        worker = new Thread(() -> connector.start(settings(), source, sink, listSink, scheduledPending),
+                "test-mqtt-commands");
         worker.setDaemon(true);
         worker.start();
     }
@@ -367,6 +492,7 @@ class PahoMqttCommandTest {
 
     private EmbeddedMqttBroker startBroker() throws Exception {
         EmbeddedMqttBroker started = new EmbeddedMqttBroker(freePort(), keystore, STORE_PASS, USER, SECRET);
+        started.authorizer(authorizer);
         started.start();
         return started;
     }
@@ -395,6 +521,12 @@ class PahoMqttCommandTest {
 
     private static String command(String commandId, String applianceName, boolean state) {
         return ApplianceJson.writeCommand(new ApplianceCommandMessage(commandId, applianceName, state));
+    }
+
+    private static String commandList(String listId, String entryId) {
+        ApplianceCommandList list = new ApplianceCommandList(listId, Instant.now(),
+                List.of(new ApplianceCommandEntry(entryId, "fridge", true, null)));
+        return ApplianceJson.writeCommandList(list);
     }
 
     private MqttSettings settings() {
@@ -449,7 +581,7 @@ class PahoMqttCommandTest {
 
             @Override
             public Duration publishInterval() {
-                return Duration.ofMillis(150);
+                return publishEvery;
             }
 
             @Override
@@ -484,6 +616,21 @@ class PahoMqttCommandTest {
 
     private void awaitState(java.util.function.Predicate<ApplianceStateMessage> match) {
         await(() -> stateMessages().stream().anyMatch(match));
+    }
+
+    private List<ScheduledCommandsMessage> scheduledMessages() {
+        List<ScheduledCommandsMessage> parsed = new ArrayList<>();
+        for (Captured captured : messages) {
+            if (!SCHEDULED_TOPIC.equals(captured.topic())) {
+                continue;
+            }
+            try {
+                parsed.add(ApplianceJson.readScheduled(new String(captured.payload(), StandardCharsets.UTF_8)));
+            } catch (RuntimeException ignored) {
+                // A partial payload is not a scheduled message yet.
+            }
+        }
+        return parsed;
     }
 
     private List<ApplianceStateMessage> stateMessages() {
@@ -593,5 +740,19 @@ class PahoMqttCommandTest {
     }
 
     private record Toggle(String name, boolean on) {
+    }
+
+    /** Read access to the command-lists topic is refused. Commands and scheduled stay allowed. */
+    private static final class DenyCommandLists implements IAuthorizatorPolicy {
+        @Override
+        public boolean canWrite(Topic topic, String user, String client) {
+            return true;
+        }
+
+        @Override
+        public boolean canRead(Topic topic, String user, String client) {
+            String name = topic == null ? "" : topic.toString();
+            return !name.endsWith("/command-lists");
+        }
     }
 }

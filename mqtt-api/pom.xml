@@ -10,6 +10,41 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>autonomy-mqtt-api</artifactId>
     <name>Autonomy MQTT API</name>
-    <description>Client-agnostic MQTT publish API. No broker client and no wire DTOs.</description>
+    <description>Client-agnostic MQTT publish API. No broker client. Command-list ports name the freedriver MQTT contract records.</description>
     <packaging>jar</packaging>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.10.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.freedriver</groupId>
+            <artifactId>freedriver-mqtt-contract</artifactId>
+            <version>${freedriver-mqtt-contract.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>

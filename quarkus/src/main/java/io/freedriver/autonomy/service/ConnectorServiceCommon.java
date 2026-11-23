@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -50,6 +51,9 @@ public class ConnectorServiceCommon {
     private final ThreadLocal<Queue<UUID>> enumeratedAfterUnlock =
             ThreadLocal.withInitial(ConcurrentLinkedQueue::new);
     private final ThreadLocal<Boolean> runningStartup = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private final ThreadLocal<Boolean> sendPrecededStartup = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private final ConcurrentHashMap<UUID, Long> connectionGeneration = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Long> startupFinishedGeneration = new ConcurrentHashMap<>();
 
     protected ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
@@ -76,6 +80,29 @@ public class ConnectorServiceCommon {
 
     public int boardLockHoldCount() {
         return boardLock.getHoldCount();
+    }
+
+    /**
+     * False from the handshake until {@code onBoardEnumerated} returns for this connection.
+     * A board that has not connected yet is not finished.
+     */
+    public boolean startupActionsFinished(UUID boardId) {
+        if (boardId == null) {
+            return false;
+        }
+        long generation = connectionGeneration.getOrDefault(boardId, 0L);
+        if (generation == 0L) {
+            return false;
+        }
+        return startupFinishedGeneration.getOrDefault(boardId, 0L) == generation;
+    }
+
+    /**
+     * True when this thread's latest {@link #send} read the board before that
+     * connection's startup actions had finished.
+     */
+    public boolean lastSendPrecededStartupActions() {
+        return Boolean.TRUE.equals(sendPrecededStartup.get());
     }
 
     /**
@@ -151,6 +178,7 @@ public class ConnectorServiceCommon {
         UUID boardId = uuidOrNull(connector);
         if (boardId != null) {
             newlyConnected.add(boardId);
+            connectionGeneration.merge(boardId, 1L, Long::sum);
         }
         ACTIVE_CONNECTORS.add(connector);
     }
@@ -160,21 +188,34 @@ public class ConnectorServiceCommon {
     }
 
     private void runStartupActions(List<UUID> boards) {
-        if (startupActions == null || boards.isEmpty() || runningStartup.get()) {
+        if (boards.isEmpty()) {
+            return;
+        }
+        if (startupActions == null || runningStartup.get()) {
+            boards.forEach(this::markStartupFinished);
             return;
         }
         runningStartup.set(Boolean.TRUE);
         try {
             for (UUID boardId : boards) {
+                // The generation this pass belongs to. A later reconnect must not
+                // look finished just because this pass returned.
+                long generation = connectionGeneration.getOrDefault(boardId, 0L);
                 try {
                     startupActions.onBoardEnumerated(boardId);
                 } catch (RuntimeException e) {
                     log.error("startupActions failed for board {}", boardId, e);
+                } finally {
+                    startupFinishedGeneration.put(boardId, generation);
                 }
             }
         } finally {
             runningStartup.remove();
         }
+    }
+
+    private void markStartupFinished(UUID boardId) {
+        startupFinishedGeneration.put(boardId, connectionGeneration.getOrDefault(boardId, 0L));
     }
 
     private static List<UUID> drain(Queue<UUID> pending) {
@@ -229,20 +270,29 @@ public class ConnectorServiceCommon {
     }
 
     public Response send(UUID uuid, Request request) {
-        return withBoardLock(() -> {
-            Optional<Connector> connector = findOpen(uuid);
-            if (connector.isEmpty()) {
-                openNewBoards();
-                connector = findOpen(uuid);
+        sendPrecededStartup.set(Boolean.FALSE);
+        try {
+            return withBoardLock(() -> {
+                Optional<Connector> connector = findOpen(uuid);
+                if (connector.isEmpty()) {
+                    openNewBoards();
+                    connector = findOpen(uuid);
+                }
+                // Captured inside the lock, before startup actions run after unlock.
+                sendPrecededStartup.set(!startupActionsFinished(uuid));
+                return connector
+                        .map(found -> found.send(request))
+                        .orElseThrow(() -> new WebApplicationException(
+                                "Board not found, present devices: " + ACTIVE_CONNECTORS.stream()
+                                        .map(Connector::device)
+                                        .collect(Collectors.joining(",")),
+                                404));
+            });
+        } finally {
+            if (!startupActionsFinished(uuid)) {
+                sendPrecededStartup.set(Boolean.TRUE);
             }
-            return connector
-                    .map(found -> found.send(request))
-                    .orElseThrow(() -> new WebApplicationException(
-                            "Board not found, present devices: " + ACTIVE_CONNECTORS.stream()
-                                    .map(Connector::device)
-                                    .collect(Collectors.joining(",")),
-                            404));
-        });
+        }
     }
 
     @FunctionalInterface
