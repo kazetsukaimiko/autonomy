@@ -3,6 +3,7 @@ package io.freedriver.autonomy.mqtt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.freedriver.autonomy.scheduled.ScheduledCommands;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.Priority;
@@ -29,17 +30,28 @@ public class MqttStatePublisher {
     private final Validator validator;
     private final ApplianceStateSource states;
     private final ApplianceCommandSink commands;
+    private final ScheduledCommands scheduled;
 
     private MqttConnector connector;
     private Thread thread;
 
     @Inject
     public MqttStatePublisher(AutonomyMqttConfig config, Validator validator, ApplianceStateSource states,
-            ApplianceCommandSink commands) {
+            ApplianceCommandSink commands, ScheduledCommands scheduled) {
         this.config = config;
         this.validator = validator;
         this.states = states;
         this.commands = commands;
+        this.scheduled = scheduled;
+    }
+
+    MqttStatePublisher(AutonomyMqttConfig config, Validator validator, ApplianceStateSource states,
+            ApplianceCommandSink commands) {
+        this(config, validator, states, commands, null);
+    }
+
+    public MqttConnector connector() {
+        return connector;
     }
 
     void onStart(@Observes @Priority(Interceptor.Priority.APPLICATION) StartupEvent event) {
@@ -62,7 +74,9 @@ public class MqttStatePublisher {
         connector = MqttConnectors.load();
         thread = new Thread(() -> {
             try {
-                connector.start(settings, states, commands);
+                CommandListSink lists = scheduled != null && scheduled.available() ? scheduled : null;
+                PendingSource pending = lists == null ? null : scheduled;
+                connector.start(settings, states, commands, lists, pending);
             } catch (Exception e) {
                 LOG.warn("MQTT connector stopped causeClass={}", e.getClass().getName());
             }

@@ -167,9 +167,6 @@ public final class PahoMqttConnector implements MqttConnector {
             appliedCommandIds.addLast(entryId.toString());
             commandLock.notifyAll();
         }
-        if (pendingSource != null && client != null && client.isConnected()) {
-            LOG.info("scheduled publish skipped reason=snapshot publish follows the list applier");
-        }
     }
 
     @Override
@@ -321,7 +318,7 @@ public final class PahoMqttConnector implements MqttConnector {
         if (created == null || !created.isConnected() || !settings.commandsEnabled() || commandLists == null) {
             return;
         }
-        LOG.info("command-lists not subscribed reason=list subscribe follows the list applier");
+        LOG.info("command-lists not subscribed reason=broker grants are not live");
     }
 
     private void runSession(MqttSettings settings, ApplianceStateSource states) throws Exception {
