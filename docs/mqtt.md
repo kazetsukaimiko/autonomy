@@ -14,11 +14,11 @@ Per-publish lines are DEBUG. The default level is INFO. Set `quarkus.log.categor
 
 ## Modules
 
-* `mqtt-api` is the client-agnostic API: `MqttConnector`, `MqttSettings`, `ApplianceStateSource`, and the logger category. Wire messages and the MQTT client live in `mqtt-impl`.
-* `mqtt-impl` is the Eclipse Paho MQTT v3 1.2.5 client, TLS, reconnect, and logging. It is the module that references Paho and `io.freedriver:freedriver-mqtt-contract`.
+* `mqtt-api` is the client-agnostic API: `MqttConnector`, `MqttSettings`, `ApplianceStateSource`, `ApplianceCommandSink`, and the logger category. The command-list ports `CommandListSink`, `PendingSource`, and `ScheduledListener` name the contract records `ApplianceCommandList` and `PendingCommand`. The MQTT client stays in `mqtt-impl`.
+* `mqtt-impl` is the Eclipse Paho MQTT v3 1.2.5 client, TLS, reconnect, and logging. It references Paho and `io.freedriver:freedriver-mqtt-contract`.
 * `quarkus` depends on `mqtt-api` at compile scope and on `mqtt-impl` at runtime scope. Service sources call the `mqtt-api` interfaces. A later client swap stays inside `mqtt-impl`.
 
-The wire types are freedriver-web's `io.freedriver:freedriver-mqtt-contract` (`Appliance`, `ApplianceStateMessage`, `ApplianceJson`, `ApplianceSchemas`).
+The wire types are freedriver-web's `io.freedriver:freedriver-mqtt-contract` (`Appliance`, `ApplianceStateMessage`, `ApplianceJson`, `ApplianceSchemas`, `ApplianceCommandList`, `PendingCommand`).
 
 ## Contract pin
 
