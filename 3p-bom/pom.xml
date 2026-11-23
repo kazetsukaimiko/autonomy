@@ -56,12 +56,6 @@
         <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
         <version>1.2.5</version>
       </dependency>
-
-      <dependency>
-        <groupId>io.moquette</groupId>
-        <artifactId>moquette-broker</artifactId>
-        <version>0.17</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
