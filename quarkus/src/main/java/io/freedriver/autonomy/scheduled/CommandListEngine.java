@@ -226,7 +226,8 @@ public final class CommandListEngine {
         PendingRow row = found.get();
         Optional<UUID> board = targets.boardFor(row.target());
         if (board.isEmpty()) {
-            LOG.info("command list skipped target={} reason=unknown appliance", row.target());
+            store.delete(row.id());
+            LOG.info("command list dropped target={} reason=unknown appliance", row.target());
             return;
         }
         WriteResult result = boards.write(board.get(), Map.of(row.target(), row.on()));

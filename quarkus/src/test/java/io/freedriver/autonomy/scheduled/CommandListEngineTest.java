@@ -172,6 +172,17 @@ class CommandListEngineTest {
     }
 
     @Test
+    void anUnknownTargetAtFireTimeIsDeleted() {
+        Harness harness = harness(Map.of("lamp", BOARD_A));
+        harness.store.rows.put(UUID.fromString(id(2)),
+                new PendingRow(UUID.fromString(id(2)), "gone", false, NOW.minusSeconds(1)));
+        harness.engine.onFire(UUID.fromString(id(2)), NOW.minusSeconds(1));
+        assertTrue(harness.engine.pending().isEmpty());
+        assertTrue(harness.writes.isEmpty());
+        assertTrue(harness.acked.isEmpty());
+    }
+
+    @Test
     void anOffWriteFailureIsRetriedAndAnOnWriteFailureIsDropped() {
         Harness harness = harness(Map.of("lamp", BOARD_A, "fan", BOARD_A));
         harness.engine.accept(list(1, NOW, List.of(

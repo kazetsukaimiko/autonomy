@@ -41,6 +41,10 @@ public final class H2PendingStore implements PendingStore, AutoCloseable {
     }
 
     public static Optional<H2PendingStore> open(Path directory) {
+        return open(directory, "classpath:db/scheduled");
+    }
+
+    public static Optional<H2PendingStore> open(Path directory, String migrations) {
         try {
             long uid = ConfigFileTrust.processUid();
             if (!Files.exists(directory)) {
@@ -66,7 +70,7 @@ public final class H2PendingStore implements PendingStore, AutoCloseable {
             String url = "jdbc:h2:file:" + database.toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
             Flyway.configure()
                     .dataSource(url, "sa", "")
-                    .locations("classpath:db/scheduled")
+                    .locations(migrations)
                     .load()
                     .migrate();
             Connection connection = DriverManager.getConnection(url, "sa", "");

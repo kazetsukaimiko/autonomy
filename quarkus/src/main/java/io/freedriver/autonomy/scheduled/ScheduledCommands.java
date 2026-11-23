@@ -43,8 +43,9 @@ public class ScheduledCommands implements CommandListSink, PendingSource {
 
     private final String storeDir;
     private final String commandsEnabled;
+    private final String migrations;
     private final Instance<MqttStatePublisher> publishers;
-    private final AliasBoardGateway boards;
+    private final CommandListEngine.BoardGateway boards;
     private final io.freedriver.autonomy.mqtt.CacheApplianceStateSource states;
 
     private final AtomicBoolean logged = new AtomicBoolean();
@@ -56,11 +57,14 @@ public class ScheduledCommands implements CommandListSink, PendingSource {
     public ScheduledCommands(
             @ConfigProperty(name = "autonomy.scheduled.store-dir") String storeDir,
             @ConfigProperty(name = "autonomy.mqtt.commands-enabled") String commandsEnabled,
+            @ConfigProperty(name = "autonomy.scheduled.migrations", defaultValue = "classpath:db/scheduled")
+                    String migrations,
             Instance<MqttStatePublisher> publishers,
-            AliasBoardGateway boards,
+            CommandListEngine.BoardGateway boards,
             io.freedriver.autonomy.mqtt.CacheApplianceStateSource states) {
         this.storeDir = storeDir;
         this.commandsEnabled = commandsEnabled;
+        this.migrations = migrations;
         this.publishers = publishers;
         this.boards = boards;
         this.states = states;
@@ -72,7 +76,7 @@ public class ScheduledCommands implements CommandListSink, PendingSource {
             thread.setDaemon(true);
             return thread;
         });
-        Optional<H2PendingStore> opened = H2PendingStore.open(Path.of(storeDir));
+        Optional<H2PendingStore> opened = H2PendingStore.open(Path.of(storeDir), migrations);
         if (opened.isEmpty()) {
             if (logged.compareAndSet(false, true)) {
                 LOG.info("command-lists not subscribed reason=scheduled store unavailable");
@@ -88,7 +92,7 @@ public class ScheduledCommands implements CommandListSink, PendingSource {
                 Instant::now,
                 this::commandsOn,
                 this::acknowledge);
-        engine.recover();
+        timers.execute(() -> engine.recover());
     }
 
     void onStop(@Observes ShutdownEvent event) {
@@ -140,7 +144,11 @@ public class ScheduledCommands implements CommandListSink, PendingSource {
         timers.schedule(() -> engine.onFire(id, dueAt), delay, TimeUnit.MILLISECONDS);
     }
 
-    private void acknowledge(UUID id) {
+    H2PendingStore store() {
+        return store;
+    }
+
+    void acknowledge(UUID id) {
         if (!publishers.isResolvable()) {
             return;
         }
