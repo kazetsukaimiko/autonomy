@@ -23,6 +23,7 @@ final class EmbeddedMqttBroker implements AutoCloseable {
     private final String storePassword;
     private final String username;
     private final String password;
+    private IAuthorizatorPolicy authorizer = new AllowAll();
     private Server server;
 
     EmbeddedMqttBroker(int port, Path keystore, String storePassword, String username, String password) {
@@ -35,6 +36,11 @@ final class EmbeddedMqttBroker implements AutoCloseable {
 
     int port() {
         return port;
+    }
+
+    /** Replaces the allow-all policy. Takes effect on the next {@link #start()}. */
+    void authorizer(IAuthorizatorPolicy policy) {
+        this.authorizer = policy == null ? new AllowAll() : policy;
     }
 
     void start() throws Exception {
@@ -60,7 +66,7 @@ final class EmbeddedMqttBroker implements AutoCloseable {
         properties.setProperty("immediate_buffer_flush", "true");
         Server started = new Server();
         started.startServer(new MemoryConfig(properties), List.<InterceptHandler>of(), null,
-                new PasswordAuthenticator(username, password), new AllowAll());
+                new PasswordAuthenticator(username, password), authorizer);
         this.server = started;
     }
 

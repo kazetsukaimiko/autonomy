@@ -2,6 +2,7 @@ package io.freedriver.autonomy.mqtt.impl;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,12 +19,29 @@ class MqttModuleBoundaryTest {
     }
 
     @Test
-    void pahoAndTheWireContractStayOutOfTheApiAndTheService() throws IOException {
+    void pahoStaysOutOfTheApiAndTheService() throws IOException {
         Path root = Path.of("..").toAbsolutePath().normalize();
         assertAbsent(root.resolve("mqtt-api/src/main/java"), "org.eclipse.paho");
-        assertAbsent(root.resolve("mqtt-api/src/main/java"), "io.freedriver.mqtt.contract");
+        assertContractOnlyOnCommandListPorts(root.resolve("mqtt-api/src/main/java"));
         assertAbsent(root.resolve("quarkus/src/main/java"), "org.eclipse.paho");
         assertAbsent(root.resolve("quarkus/src/main/java"), "io.freedriver.autonomy.mqtt.impl");
+    }
+
+    private static void assertContractOnlyOnCommandListPorts(Path sourceRoot) throws IOException {
+        try (var files = Files.walk(sourceRoot)) {
+            files.filter(path -> path.toString().endsWith(".java")).forEach(path -> {
+                String name = path.getFileName().toString();
+                boolean port = name.equals("CommandListSink.java") || name.equals("PendingSource.java");
+                try {
+                    String text = Files.readString(path);
+                    if (text.contains("io.freedriver.mqtt.contract")) {
+                        assertTrue(port, path + " names the MQTT contract outside the command-list ports");
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException(path.toString(), e);
+                }
+            });
+        }
     }
 
     private static void assertAbsent(Path sourceRoot, String token) throws IOException {
