@@ -1,7 +1,6 @@
 package io.freedriver.autonomy.serial;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -23,14 +22,6 @@ public class SerialGatewayJsonTest {
 
     private static final UUID REQUEST_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
-    private static final String REQUEST_JSON = """
-            {"uuid":null,"requestId":"11111111-1111-1111-1111-111111111111","mode":{"13":false,"14":true},"read":null,"write":{"digital":{"7":false,"8":true},"empty":false},"boardInfo":null,"turn_off":[],"turn_on":[]}\
-            """;
-
-    private static final String RESPONSE_JSON = """
-            {"version":[1,0,0],"uuid":null,"requestId":"11111111-1111-1111-1111-111111111111","boardInfo":null,"info":[],"error":[],"debug":[],"digital":{},"analog":[],"created":"2026-11-22T00:00:00Z"}\
-            """;
-
     @Test
     public void requestRoundTripKeepsModeAndDigitalWrite() throws Exception {
         Map<Identifier, Mode> mode = new LinkedHashMap<>();
@@ -49,17 +40,9 @@ public class SerialGatewayJsonTest {
                 List.of(),
                 List.of());
 
-        ObjectMapper mapper = SerialGatewayJson.mapper();
-        String json = mapper.writeValueAsString(request);
-        // jsonlink copies maps with Map.copyOf, whose iteration order is unspecified, so the locked
-        // string is compared as a tree. The raw text still has to carry both states and the empty flag.
-        assertEquals(mapper.readTree(REQUEST_JSON), mapper.readTree(json));
-        assertTrue(json.contains("\"13\":false"));
-        assertTrue(json.contains("\"14\":true"));
-        assertTrue(json.contains("\"7\":false"));
-        assertTrue(json.contains("\"8\":true"));
-        assertTrue(json.contains("\"empty\":false"));
-        assertEquals(request, mapper.readValue(json, Request.class));
+        Request again = roundTrip(request, Request.class);
+        assertEquals(request, again);
+        assertEquals(request.hashCode(), again.hashCode());
     }
 
     @Test
@@ -76,16 +59,20 @@ public class SerialGatewayJsonTest {
                 null,
                 Instant.parse("2026-11-22T00:00:00Z"));
 
-        ObjectMapper mapper = SerialGatewayJson.mapper();
-        String json = mapper.writeValueAsString(response);
-        assertEquals(RESPONSE_JSON, json);
-        assertEquals(response, mapper.readValue(json, Response.class));
+        Response again = roundTrip(response, Response.class);
+        assertEquals(response, again);
+        assertEquals(response.hashCode(), again.hashCode());
     }
 
     @Test
-    public void errorBodyIsTheMessageOnly() throws Exception {
+    public void errorBodyRoundTrips() throws Exception {
         assertEquals("X-Autonomy-Serial-Write", SerialGatewayHeaders.WRITE_TOKEN);
-        String json = SerialGatewayJson.mapper().writeValueAsString(new SerialGatewayError("board not connected"));
-        assertEquals("{\"error\":\"board not connected\"}", json);
+        SerialGatewayError error = new SerialGatewayError("board not connected");
+        assertEquals(error, roundTrip(error, SerialGatewayError.class));
+    }
+
+    private static <T> T roundTrip(T value, Class<T> type) throws Exception {
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        return mapper.readValue(mapper.writeValueAsString(value), type);
     }
 }

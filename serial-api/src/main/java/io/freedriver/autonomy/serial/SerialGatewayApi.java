@@ -44,7 +44,7 @@ public interface SerialGatewayApi {
 
     /**
      * One jsonlink request. {@code writeToken} is null on a read. The return value is the jsonlink
-     * response, the same JSON the board speaks.
+     * response, the same JSON the board speaks. The request body is the last parameter.
      */
     @POST
     @Path("/{boardId}/requests")
@@ -52,6 +52,6 @@ public interface SerialGatewayApi {
     @Produces(MediaType.APPLICATION_JSON)
     Response send(
             @PathParam("boardId") UUID boardId,
-            Request request,
-            @HeaderParam(SerialGatewayHeaders.WRITE_TOKEN) String writeToken);
+            @HeaderParam(SerialGatewayHeaders.WRITE_TOKEN) String writeToken,
+            Request request);
 }

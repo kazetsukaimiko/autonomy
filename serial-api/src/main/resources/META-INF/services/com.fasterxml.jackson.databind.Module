@@ -1,0 +1,2 @@
+io.freedriver.autonomy.serial.SerialGatewayModule
+io.freedriver.jsonlink.jackson.JsonLinkModule
