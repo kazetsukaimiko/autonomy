@@ -1,4 +1,4 @@
-package io.freedriver.autonomy.serial;
+package io.freedriver.autonomy.serial.api;
 
 import java.util.UUID;
 

@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>autonomy-serial-api</artifactId>
     <name>Autonomy Serial API</name>
-    <description>JAX-RS contract and wire mapper shared by the serial gateway and the controller.</description>
+    <description>JAX-RS contract shared by the serial gateway and the controller. The board schema is jsonlink-api.</description>
     <packaging>jar</packaging>
 
     <dependencyManagement>
@@ -42,17 +42,20 @@
     <dependencies>
         <dependency>
             <groupId>io.freedriver</groupId>
-            <artifactId>jsonlink</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
+            <artifactId>jsonlink-api</artifactId>
+            <!-- Not in the 1.0.0 bom. Master publishes this jar in freedriver#74. -->
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
             <artifactId>jakarta.ws.rs-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
