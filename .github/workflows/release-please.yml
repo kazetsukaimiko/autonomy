@@ -1,0 +1,53 @@
+name: release-please
+
+# Keeps one standing release pull request current. Merging it creates the
+# version tag and the GitHub release. kazetsukaimiko approves and merges it.
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest
+    # The App secrets live in this environment, which deploys from master only.
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      # A pull request or tag made with the built-in token starts no workflow.
+      # The App token does, so the release pull request runs its checks and the
+      # tag starts release.yml.
+      - name: Mint the release App token for this repository
+        id: app-token
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: kazetsukaimiko
+          repositories: autonomy
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Open or update the release pull request, or publish the release
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # release.yml attaches the archive and promotes the release.
+      - name: Mark the new release a prerelease until its assets attach
+        if: steps.release.outputs.release_created == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease
