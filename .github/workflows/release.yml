@@ -1,18 +1,44 @@
 name: release
 
+# Runs for the version tag release-please creates when the release pull request
+# merges. The GitHub release already exists as a prerelease. This workflow
+# attaches the archive and its checksum, then promotes the release.
 on:
   push:
     tags:
       - "v*"
 
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  state:
+    name: release state
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      state: ${{ steps.state.outputs.state }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Promoted means not a prerelease and both assets present. Anything else
+      # is unfinished and is marked a prerelease again before the build.
+      - name: Read the release and keep an unfinished one a prerelease
+        id: state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/release_publish.py state --tag "$GITHUB_REF_NAME"
+
   release:
     name: release
+    needs: state
+    if: needs.state.outputs.state == 'unfinished'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -39,9 +65,8 @@ jobs:
             exit 1
           fi
 
-      - name: Check out freedriver at the pin and confirm it is on master
-        run: bash scripts/checkout-pinned-commit.sh freedriver.sha freedriver https://github.com/kazetsukaimiko/freedriver.git master
-
+      # jsonlink and serial-impl come from the published io.freedriver.version packages,
+      # the same source ci.yml verifies. The MQTT contract jar is not published.
       - name: Check out freedriver-web at the pin and confirm it is on main
         run: bash scripts/checkout-pinned-commit.sh freedriver-web.sha freedriver-web https://github.com/kazetsukaimiko/freedriver-web.git main
 
@@ -53,15 +78,56 @@ jobs:
           cache: maven
           cache-dependency-path: |
             pom.xml
-            freedriver/pom.xml
+            freedriver-web/pom.xml
 
-      - name: Drop duplicate freedriver BOM import
-        working-directory: freedriver
-        run: python3 "$GITHUB_WORKSPACE/scripts/drop-duplicate-freedriver-bom.py" inotify-cdi/pom.xml
-
-      - name: Install freedriver SNAPSHOT
-        working-directory: freedriver
-        run: mvn --batch-mode --no-transfer-progress install -DskipTests
+      # This step is the same text as in ci.yml. test_workflow_contract.py compares them.
+      # Maven on GitHub Packages is repository-scoped, so this repository's GITHUB_TOKEN
+      # cannot read freedriver's packages. FREEDRIVER_PACKAGES_TOKEN can, and it has a wider
+      # scope than this read, so it is used in this step only. The step runs from
+      # runner.temp, outside the checkout, so no pom, plugin, extension or script from this
+      # branch runs while the token is set. Maven reads it from the environment through
+      # ${env.FREEDRIVER_PACKAGES_TOKEN} in a temporary settings file; the token itself is
+      # never written to disk. Later steps resolve these artifacts from the local
+      # repository with no token, and a freedriver artifact missing from this list fails
+      # there instead of being fetched.
+      - name: Fetch the freedriver release artifacts from GitHub Packages
+        working-directory: ${{ runner.temp }}
+        env:
+          FREEDRIVER_PACKAGES_TOKEN: ${{ secrets.FREEDRIVER_PACKAGES_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FREEDRIVER_PACKAGES_TOKEN}" ]; then
+            echo "FREEDRIVER_PACKAGES_TOKEN is not available to this run (fork pull requests get no secrets)."
+            exit 1
+          fi
+          version="$(sed -n 's:.*<io.freedriver.version>\(.*\)</io.freedriver.version>.*:\1:p' "${GITHUB_WORKSPACE}/pom.xml")"
+          case "${version}" in
+            ''|*SNAPSHOT*) echo "io.freedriver.version must be a release, got '${version}'"; exit 1 ;;
+          esac
+          settings="$(mktemp "${RUNNER_TEMP}/freedriver-settings.XXXXXX")"
+          trap 'rm -f "${settings}"' EXIT
+          cat > "${settings}" <<'XML'
+          <settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>kazetsukaimiko</username>
+                <password>${env.FREEDRIVER_PACKAGES_TOKEN}</password>
+              </server>
+            </servers>
+          </settings>
+          XML
+          for coordinate in \
+            freedriver-bom:pom freedriver-3p-bom:pom \
+            jsonlink:jar serial-impl:jar victron:jar victron-jpa:jar \
+            math-jpa:jar inotify-cdi:jar metrics:jar; do
+            mvn --batch-mode --no-transfer-progress --settings "${settings}" \
+              -Dmaven.repo.local="${HOME}/.m2/repository" \
+              org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
+              -DremoteRepositories=github::default::https://maven.pkg.github.com/kazetsukaimiko/freedriver \
+              -Dartifact="io.freedriver:${coordinate%%:*}:${version}:${coordinate##*:}" \
+              -Dtransitive=true
+          done
 
       - name: Install freedriver-mqtt-contract from the pinned freedriver-web commit
         working-directory: freedriver-web
@@ -99,14 +165,15 @@ jobs:
               > "autonomy-${GITHUB_REF_NAME}-quarkus-app.tar.gz.sha256"
           )
 
-      - name: Write release notes from the new changelog section
+      # The section release-please committed to CHANGELOG.md, then one line
+      # naming the jsonlink jar in the archive.
+      - name: Write release notes from the committed changelog section
         run: |
           set -euo pipefail
-          sha="$(tr -d '[:space:]' < freedriver.sha)"
           python3 .github/scripts/release_notes.py \
-            --changelog quarkus/target/generated-changelog/CHANGELOG.md \
+            --changelog CHANGELOG.md \
             --version "${GITHUB_REF_NAME#v}" \
-            --freedriver-sha "${sha}" \
+            --lib quarkus/target/quarkus-app/lib \
             --output dist/release-notes.md
 
       # create-storage-record stays off. The attestation is the GitHub
@@ -117,18 +184,36 @@ jobs:
           subject-path: dist/autonomy-${{ github.ref_name }}-quarkus-app.tar.gz*
           create-storage-record: false
 
-      - name: Publish the GitHub release
+      # Sets the whole release body, uploads with --clobber while the release
+      # is a prerelease, and promotes it last. It reads the release again
+      # first and stops when the release is already promoted.
+      - name: Attach the assets to the existing release and promote it
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           tag="$GITHUB_REF_NAME"
-          gh release create "$tag" \
-            --repo "$GITHUB_REPOSITORY" \
-            --verify-tag \
-            --target "$GITHUB_SHA" \
-            --title "$tag" \
-            --latest \
-            --notes-file dist/release-notes.md \
-            "dist/autonomy-${tag}-quarkus-app.tar.gz" \
-            "dist/autonomy-${tag}-quarkus-app.tar.gz.sha256"
+          python3 .github/scripts/release_publish.py publish --tag "$tag" \
+            --notes dist/release-notes.md \
+            --archive "dist/autonomy-${tag}-quarkus-app.tar.gz" \
+            --checksum "dist/autonomy-${tag}-quarkus-app.tar.gz.sha256"
+
+  # A rerun for a release that is already promoted. It builds nothing and
+  # uploads nothing. A fresh build of the same commit has other bytes, so the
+  # published archive is checked against its own checksum and attestation.
+  verify:
+    name: verify the promoted release
+    needs: state
+    if: needs.state.outputs.state == 'promoted'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify the published archive, checksum and attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/release_publish.py verify --tag "$GITHUB_REF_NAME" --commit "$GITHUB_SHA"

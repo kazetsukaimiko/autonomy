@@ -2,6 +2,8 @@
 // Types and scopes are the fixed lists below. A breaking change uses `!`
 // and a BREAKING CHANGE footer. The body carries a Refs footer naming the card.
 
+const { execFileSync } = require("node:child_process");
+
 const types = [
     "feat",
     "fix",
@@ -49,6 +51,20 @@ module.exports = {
                     }
                     return [true, ""];
                 },
+                // The built-in trailer-exists rule runs git interpret-trailers
+                // without --no-divider, so git stops reading at a `---` line.
+                // A release-please body has two of those before its footer.
+                "refs-trailer": (parsed) => {
+                    const trailers = execFileSync(
+                        "git",
+                        ["interpret-trailers", "--parse", "--no-divider"],
+                        { input: parsed.raw || "", encoding: "utf8" },
+                    );
+                    if (!trailers.split(/\r?\n/).some((line) => line.startsWith("Refs:"))) {
+                        return [false, "the message needs a Refs: trailer in its last paragraph"];
+                    }
+                    return [true, ""];
+                },
                 "refs-card": (parsed) => {
                     const values = [];
                     for (const line of (parsed.raw || "").split(/\r?\n/)) {
@@ -76,7 +92,7 @@ module.exports = {
         "footer-max-line-length": [0],
         "subject-case": [0],
         "breaking-change-exclamation-mark": [2, "always"],
-        "trailer-exists": [2, "always", "Refs:"],
+        "refs-trailer": [2, "always"],
         "refs-card": [2, "always"],
         "empty-scope": [2, "always"],
     },

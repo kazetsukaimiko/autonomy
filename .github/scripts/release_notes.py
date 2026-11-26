@@ -1,22 +1,29 @@
 #!/usr/bin/env python3
-"""Take the changelog section for one version and name the jsonlink commit.
+"""Take the changelog section for one version and name the bundled jsonlink jar.
 
-The section text is the generated changelog. This script does not edit that
-file. The jsonlink line is release-note provenance, after the section.
+The section comes from the committed CHANGELOG.md that release-please writes.
+This script does not edit that file. The jsonlink line is release-note
+provenance, after the section: the Maven coordinate and the sha256 of the jar
+in the quarkus-app lib directory, which is the jar the archive ships.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import sys
 from pathlib import Path
 
+# release-please writes `## [1.2.0](compare link) (date)`, and `## 1.1.0 (date)`
+# for a release with no earlier version tag to compare against.
 SECTION = re.compile(
-    r"^(## \[(?:v)?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\][^\n]*\n.*?)(?=^## |\Z)",
+    r"^(## (?:\[v?(?P<linked>[0-9]+\.[0-9]+\.[0-9]+)\]|(?P<plain>[0-9]+\.[0-9]+\.[0-9]+)(?=[ \n]))"
+    r"[^\n]*\n.*?)(?=^## |\Z)",
     re.M | re.S,
 )
-SHA = re.compile(r"[0-9a-f]{40}")
+# Quarkus fast-jar names a dependency <groupId>.<artifactId>-<version>.jar under lib/main.
+JSONLINK_JAR = re.compile(r"io\.freedriver\.jsonlink-(?P<version>[0-9][A-Za-z0-9.+-]*)\.jar")
 
 
 class ReleaseNotesError(Exception):
@@ -33,30 +40,40 @@ def version_number(version: str) -> str:
 def changelog_section(changelog: str, version: str) -> str:
     number = version_number(version)
     for match in SECTION.finditer(changelog):
-        if match.group("version") == number:
+        if (match.group("linked") or match.group("plain")) == number:
             return match.group(1).rstrip() + "\n"
     raise ReleaseNotesError(f"changelog has no section for {number}")
 
 
-def release_notes(changelog: str, version: str, freedriver_sha: str) -> str:
-    if SHA.fullmatch(freedriver_sha) is None:
-        raise ReleaseNotesError("freedriver sha must be 40 lowercase hex characters")
+def jsonlink_line(lib: Path) -> str:
+    jars = sorted(path for path in lib.rglob("*.jar") if JSONLINK_JAR.fullmatch(path.name))
+    if not jars:
+        raise ReleaseNotesError(f"no jsonlink jar under {lib}")
+    if len(jars) > 1:
+        names = ", ".join(str(path.relative_to(lib)) for path in jars)
+        raise ReleaseNotesError(f"more than one jsonlink jar under {lib}: {names}")
+    version = JSONLINK_JAR.fullmatch(jars[0].name).group("version")
+    digest = hashlib.sha256(jars[0].read_bytes()).hexdigest()
+    return f"jsonlink: io.freedriver:jsonlink:{version} sha256:{digest}"
+
+
+def release_notes(changelog: str, version: str, lib: Path) -> str:
     section = changelog_section(changelog, version)
-    return f"{section.rstrip()}\n\njsonlink: kazetsukaimiko/freedriver@{freedriver_sha}\n"
+    return f"{section.rstrip()}\n\n{jsonlink_line(lib)}\n"
 
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Write release notes for one version tag.")
     parser.add_argument("--changelog", required=True)
     parser.add_argument("--version", required=True)
-    parser.add_argument("--freedriver-sha", required=True)
+    parser.add_argument("--lib", required=True, help="quarkus-app/lib of the build being released")
     parser.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     try:
         text = release_notes(
             Path(args.changelog).read_text(),
             args.version,
-            args.freedriver_sha,
+            Path(args.lib),
         )
     except ReleaseNotesError as exc:
         print(f"release notes: {exc}", file=sys.stderr)

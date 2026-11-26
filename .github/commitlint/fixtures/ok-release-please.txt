@@ -1,0 +1,21 @@
+chore(release): release 1.1.0
+
+:robot: I have created a release *beep* *boop*
+---
+
+
+## [1.1.0](https://github.com/kazetsukaimiko/autonomy/compare/v1.0.0...v1.1.0) (2026-11-23)
+
+
+### Features
+
+* **quarkus:** run startup actions ([#45](https://github.com/kazetsukaimiko/autonomy/issues/45)) ([a703869](https://github.com/kazetsukaimiko/autonomy/commit/a7038690bf0fd7395375e291e1a8ed55e5c1ae82))
+
+
+### Bug Fixes
+
+* **mqtt:** keep booting when settings are malformed ([#12](https://github.com/kazetsukaimiko/autonomy/issues/12)) ([0b48649](https://github.com/kazetsukaimiko/autonomy/commit/0b486490bf0fd7395375e291e1a8ed55e5c1ae82))
+
+---
+
+Refs: #128
