@@ -43,8 +43,8 @@
         <dependency>
             <groupId>io.freedriver</groupId>
             <artifactId>jsonlink-api</artifactId>
-            <!-- Not in the 1.0.0 bom. Master publishes this jar in freedriver#74. -->
-            <version>1.0.0-SNAPSHOT</version>
+            <!-- Released as io.freedriver:jsonlink-api:2.0.0. Not in the autonomy 1.0.0 bom. -->
+            <version>2.0.0</version>
         </dependency>
 
         <dependency>
