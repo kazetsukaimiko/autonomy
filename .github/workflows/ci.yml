@@ -90,6 +90,16 @@ jobs:
               -Dartifact="io.freedriver:${coordinate%%:*}:${version}:${coordinate##*:}" \
               -Dtransitive=true
           done
+          jsonlink_api_version="$(sed -n 's:.*<io.freedriver.jsonlink-api.version>\(.*\)</io.freedriver.jsonlink-api.version>.*:\1:p' "${GITHUB_WORKSPACE}/pom.xml")"
+          case "${jsonlink_api_version}" in
+            ''|*SNAPSHOT*) echo "io.freedriver.jsonlink-api.version must be a release, got '${jsonlink_api_version}'"; exit 1 ;;
+          esac
+          mvn --batch-mode --no-transfer-progress --settings "${settings}" \
+            -Dmaven.repo.local="${HOME}/.m2/repository" \
+            org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
+            -DremoteRepositories=github::default::https://maven.pkg.github.com/kazetsukaimiko/freedriver \
+            -Dartifact="io.freedriver:jsonlink-api:${jsonlink_api_version}:jar" \
+            -Dtransitive=true
 
       - name: Install freedriver-mqtt-contract from the pinned freedriver-web commit
         working-directory: freedriver-web
