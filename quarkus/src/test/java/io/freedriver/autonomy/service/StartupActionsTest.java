@@ -45,10 +45,10 @@ import io.freedriver.autonomy.service.startup.StartupActionService;
 import io.freedriver.autonomy.service.startup.StartupMappingsLoader;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.ConnectorTimeoutException;
+import io.freedriver.jsonlink.api.v1.BoardRequest;
+import io.freedriver.jsonlink.api.v1.BoardResponse;
+import io.freedriver.jsonlink.api.v1.Identifier;
 import io.freedriver.jsonlink.config.v2.MappingsAction;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.util.TypeLiteral;
 import jakarta.validation.Validation;
@@ -696,7 +696,7 @@ class StartupActionsTest {
         }
 
         @Override
-        public Response send(UUID uuid, Request request) {
+        public BoardResponse send(UUID uuid, BoardRequest request) {
             return withBoardLock(() -> {
                 holdCounts.add(boardLockHoldCount());
                 if (timeoutAfterApply) {
@@ -709,11 +709,11 @@ class StartupActionsTest {
                     throw new IllegalStateException("board rejected the request");
                 }
                 apply(request);
-                return Response.builder().uuid(uuid).digital(new LinkedHashMap<>(pins)).build();
+                return new BoardResponse(uuid, null, null, null, null, null, new LinkedHashMap<>(pins), null);
             });
         }
 
-        private void apply(Request request) {
+        private void apply(BoardRequest request) {
             if (request.write() == null) {
                 return;
             }
@@ -738,13 +738,13 @@ class StartupActionsTest {
         }
 
         @Override
-        public UUID makeRequest(Request request, Duration maxWait) {
+        public UUID makeRequest(BoardRequest request, Duration maxWait) {
             return UUID.randomUUID();
         }
 
         @Override
-        public Response getResponse(UUID requestId, Duration maxWait) {
-            return Response.empty();
+        public BoardResponse getResponse(UUID requestId, Duration maxWait) {
+            return BoardResponse.empty();
         }
 
         @Override

@@ -17,10 +17,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.freedriver.autonomy.service.SimpleAliasService;
+import io.freedriver.jsonlink.api.v1.Identifier;
 import io.freedriver.jsonlink.config.v2.Appliance;
 import io.freedriver.jsonlink.config.v2.Mapping;
 import io.freedriver.jsonlink.config.v2.Mappings;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
 import org.junit.jupiter.api.Test;
 
 class MappedApplianceCommandsTest {

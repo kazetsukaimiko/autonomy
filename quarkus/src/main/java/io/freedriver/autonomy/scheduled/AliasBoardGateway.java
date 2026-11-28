@@ -6,8 +6,8 @@ import java.util.UUID;
 
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.autonomy.service.SimpleAliasService;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import io.freedriver.jsonlink.api.v1.BoardResponse;
+import io.freedriver.jsonlink.api.v1.Identifier;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -30,7 +30,7 @@ public class AliasBoardGateway implements CommandListEngine.BoardGateway {
     @Override
     public CommandListEngine.WriteResult write(UUID board, Map<String, Boolean> desired) {
         try {
-            Response response = aliases.setState(board, desired);
+            BoardResponse response = aliases.setState(board, desired);
             // The response from a send that ran before startup actions, or while they
             // are still running, is not confirmation. The off stays pending and retries.
             if (!connectors.startupActionsFinished(board) || connectors.lastSendPrecededStartupActions()) {
