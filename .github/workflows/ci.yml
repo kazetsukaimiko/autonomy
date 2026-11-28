@@ -25,7 +25,7 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_*.py'
           bash quarkus/build/generate-changelog-test.sh
 
-      # jsonlink and serial-impl come from the published 1.0.0 packages.
+      # jsonlink and serial-impl come from the published 2.0.0 packages.
       # freedriver-web.sha is still the MQTT contract commit. That jar is not published.
       - name: Check out freedriver-web at the pin and confirm it is on main
         run: bash scripts/checkout-pinned-commit.sh freedriver-web.sha freedriver-web https://github.com/kazetsukaimiko/freedriver-web.git main

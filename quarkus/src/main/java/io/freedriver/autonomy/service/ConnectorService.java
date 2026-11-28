@@ -10,12 +10,11 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.freedriver.jsonlink.jackson.JsonLinkModule;
-import io.freedriver.jsonlink.jackson.schema.v1.AnalogRead;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import io.freedriver.jsonlink.api.v1.AnalogRead;
+import io.freedriver.jsonlink.api.v1.BoardRequest;
+import io.freedriver.jsonlink.api.v1.BoardResponse;
+import io.freedriver.jsonlink.api.v1.DigitalWrite;
+import io.freedriver.jsonlink.api.v1.Identifier;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,7 +27,6 @@ public class ConnectorService extends ConnectorServiceCommon {
     //private static final List<Connector> ACTIVE_CONNECTORS = new ArrayList<>();
     private static final Path CONFIG_PATH = Paths.get(System.getProperty("user.home"), ".config/autonomy");
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .registerModule(new JsonLinkModule())
             .enable(SerializationFeature.INDENT_OUTPUT);
 
 
@@ -45,21 +43,21 @@ public class ConnectorService extends ConnectorServiceCommon {
     @Deprecated
     public synchronized Map<Identifier, Boolean> readDigital(UUID boardId, Collection<Identifier> pins) {
         return send(boardId, pins.stream()
-                .reduce(Request.empty(), Request::digitalRead, (a, b) -> a))
+                .reduce(BoardRequest.empty(), BoardRequest::digitalRead, (a, b) -> a))
                 .digital();
     }
 
      */
 
-    public synchronized Response readDigitalAndAnalog(UUID boardId, Collection<Identifier> pins, Stream<AnalogRead> analogReads) {
+    public synchronized BoardResponse readDigitalAndAnalog(UUID boardId, Collection<Identifier> pins, Stream<AnalogRead> analogReads) {
         return send(boardId, pins.stream()
-                .reduce(Request.empty(), Request::digitalRead, (a, b) -> a)
+                .reduce(BoardRequest.empty(), BoardRequest::digitalRead, (a, b) -> a)
                 .analogRead(analogReads));
     }
 
     public synchronized Map<Identifier, Boolean> writeDigital(UUID boardId, Map<Identifier, Boolean> state) {
-        Request request = state.entrySet().stream()
-                .reduce(Request.empty(),
+        BoardRequest request = state.entrySet().stream()
+                .reduce(BoardRequest.empty(),
                         (req, e) -> req.digitalWrite(new DigitalWrite(e.getKey(), e.getValue())),
                         (a, b) -> a);
         return send(boardId, request)

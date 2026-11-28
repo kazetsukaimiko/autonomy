@@ -34,19 +34,19 @@ import io.freedriver.autonomy.event.speech.SpeechEventType;
 import io.freedriver.autonomy.jaxrs.ObjectMapperContextResolver;
 import io.freedriver.autonomy.jaxrs.view.AliasView;
 import io.freedriver.base.util.file.DirectoryProviders;
+import io.freedriver.jsonlink.api.v1.AnalogResponse;
+import io.freedriver.jsonlink.api.v1.BoardRequest;
+import io.freedriver.jsonlink.api.v1.BoardResponse;
+import io.freedriver.jsonlink.api.v1.DigitalState;
+import io.freedriver.jsonlink.api.v1.DigitalWrite;
+import io.freedriver.jsonlink.api.v1.Identifier;
+import io.freedriver.jsonlink.api.v1.Mode;
+import io.freedriver.jsonlink.api.v1.ModeSet;
 import io.freedriver.jsonlink.config.v2.AnalogAlert;
 import io.freedriver.jsonlink.config.v2.AnalogSensor;
 import io.freedriver.jsonlink.config.v2.Appliance;
 import io.freedriver.jsonlink.config.v2.Mapping;
 import io.freedriver.jsonlink.config.v2.Mappings;
-import io.freedriver.jsonlink.jackson.schema.v1.AnalogResponse;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalState;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Mode;
-import io.freedriver.jsonlink.jackson.schema.v1.ModeSet;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.ObservesAsync;
@@ -147,9 +147,9 @@ public class SimpleAliasService  {
     public Future<Boolean> cacheAnalogPins(Mapping mapping) {
         return pool.submit(() -> {
             try {
-                Request readAnalogPinsAnyway = Request.empty()
+                BoardRequest readAnalogPinsAnyway = BoardRequest.empty()
                         .analogRead(mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead));
-                Response response = connectorService.send(mapping.connectorId(), readAnalogPinsAnyway);
+                BoardResponse response = connectorService.send(mapping.connectorId(), readAnalogPinsAnyway);
                 cacheBoardState(mapping, response);
                 sendAnalogSensorEvents(mapping, response);
                 return true;
@@ -237,7 +237,7 @@ public class SimpleAliasService  {
         digitalPinCache.keySet().removeIf(pin -> boardId.equals(pin.boardId()));
     }
 
-    public Response cacheBoardState(Mapping mapping, Response currentState) {
+    public BoardResponse cacheBoardState(Mapping mapping, BoardResponse currentState) {
         // Cache Digital Pins
         currentState.digital().forEach((k, v) ->
                 digitalPinCache.put(new PinCoordinate(mapping.connectorId(), k), v));
@@ -301,7 +301,7 @@ public class SimpleAliasService  {
                 analogAlert.content()));
     }
 
-    private void sendAnalogSensorEvents(Mapping mapping, Response currentState) {
+    private void sendAnalogSensorEvents(Mapping mapping, BoardResponse currentState) {
         currentState.analog()
                 .forEach(analogResponse -> getAnalogSensorByMapping(mapping, analogResponse)
                     .ifPresent(analogSensor -> {
@@ -515,21 +515,21 @@ public class SimpleAliasService  {
 
      */
 
-    public Response setState(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
+    public BoardResponse setState(UUID boardId, Map<String, Boolean> desiredState) throws IOException {
         Mapping mapping = getMapping(boardId);
         if (!desiredState.isEmpty()) {
             log.info("Setting states:");
             desiredState.forEach((k, v) -> log.info(k+": " + (v ? "true":"false")));
 
-            Request r = identifiers(boardId, desiredState)
+            BoardRequest r = identifiers(boardId, desiredState)
                     .entrySet()
                     .stream()
                     .map(e -> new DigitalWrite(e.getKey(), e.getValue()))
-                    .reduce(Request.empty(), Request::digitalWrite, (a, b) -> a);
+                    .reduce(BoardRequest.empty(), BoardRequest::digitalWrite, (a, b) -> a);
             r = mapping.analogSensors().stream().map(AnalogSensor::asAnalogRead)
-                    .reduce(r, Request::analogRead, (a, b) -> a);
+                    .reduce(r, BoardRequest::analogRead, (a, b) -> a);
 
-            Response response = connectorService.send(boardId, r);
+            BoardResponse response = connectorService.send(boardId, r);
             sendAnalogSensorEvents(mapping, response);
             return cacheBoardState(mapping, response);
         }
@@ -554,20 +554,20 @@ public class SimpleAliasService  {
     }
 
     /**
-     * Empty board response, built the same way as {@link Request#empty()}.
+     * Empty board response, built the same way as {@link BoardRequest#empty()}.
      * The record supplies empty info, error, debug, digital, and analog collections.
      */
-    private static Response emptyResponse() {
-        return Response.builder().build();
+    private static BoardResponse emptyResponse() {
+        return BoardResponse.empty();
     }
 
-    public Response setupBoard(UUID boardId) throws IOException {
-        Request request = getMapping(boardId)
+    public BoardResponse setupBoard(UUID boardId) throws IOException {
+        BoardRequest request = getMapping(boardId)
                 .appliances()
                 .stream()
                 .map(Appliance::identifier)
                 .map(id -> new ModeSet(id, Mode.OUTPUT))
-                .reduce(Request.empty(), Request::modeSet, (a, b) -> a);
+                .reduce(BoardRequest.empty(), BoardRequest::modeSet, (a, b) -> a);
         return connectorService.send(boardId, request);
     }
 
@@ -607,11 +607,11 @@ public class SimpleAliasService  {
                 .noneMatch(appliance -> digitalState.get(appliance.identifier()));
 
         // Read appliances
-        Request request = mapping.appliances()
+        BoardRequest request = mapping.appliances()
                 .stream()
                 .filter(appliance -> appliances.contains(appliance.name()))
                 .reduce(
-                        Request.empty(),
+                        BoardRequest.empty(),
                         (req, app) -> req.digitalWrite(new DigitalWrite(app.identifier(),
                                 DigitalState.fromBoolean(setStateAs))), (a, b) -> a);
 

@@ -24,9 +24,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import io.freedriver.autonomy.service.startup.StartupActionService;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.Connectors;
-import io.freedriver.jsonlink.jackson.JsonLinkModule;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import io.freedriver.jsonlink.api.v1.BoardRequest;
+import io.freedriver.jsonlink.api.v1.BoardResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -44,7 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ConnectorServiceCommon {
     private static final List<Connector> ACTIVE_CONNECTORS = new CopyOnWriteArrayList<>();
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .registerModule(new JsonLinkModule())
             .enable(SerializationFeature.INDENT_OUTPUT);
 
     private final ReentrantLock boardLock = new ReentrantLock();
@@ -269,7 +267,7 @@ public class ConnectorServiceCommon {
                 .findFirst();
     }
 
-    public Response send(UUID uuid, Request request) {
+    public BoardResponse send(UUID uuid, BoardRequest request) {
         sendPrecededStartup.set(Boolean.FALSE);
         try {
             return withBoardLock(() -> {

@@ -12,13 +12,13 @@ import io.freedriver.autonomy.event.speech.SpeechEvent;
 import io.freedriver.autonomy.event.speech.SpeechEventType;
 import io.freedriver.autonomy.service.ConnectorService;
 import io.freedriver.autonomy.service.SimpleAliasService;
+import io.freedriver.jsonlink.api.v1.BoardRequest;
+import io.freedriver.jsonlink.api.v1.BoardResponse;
+import io.freedriver.jsonlink.api.v1.DigitalWrite;
+import io.freedriver.jsonlink.api.v1.Identifier;
 import io.freedriver.jsonlink.config.v2.Appliance;
 import io.freedriver.jsonlink.config.v2.Mapping;
 import io.freedriver.jsonlink.config.v2.MappingsAction;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -117,8 +117,8 @@ public class StartupActionService {
 
         @Override
         public void setPin(Identifier pin, boolean on) {
-            Request request = Request.empty().digitalWrite(new DigitalWrite(pin, on));
-            Response response = connectors.send(boardId, request);
+            BoardRequest request = BoardRequest.empty().digitalWrite(new DigitalWrite(pin, on));
+            BoardResponse response = connectors.send(boardId, request);
             // A send that times out throws before this. The pin cache stays unchanged.
             if (response != null && !response.digital().isEmpty()) {
                 aliases.cacheBoardDigitalState(boardId, response.digital());

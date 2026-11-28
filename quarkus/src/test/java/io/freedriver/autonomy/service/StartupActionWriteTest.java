@@ -29,10 +29,10 @@ import io.freedriver.autonomy.scheduled.PendingStore;
 import io.freedriver.autonomy.service.startup.StartupActionService;
 import io.freedriver.jsonlink.Connector;
 import io.freedriver.jsonlink.ConnectorException;
-import io.freedriver.jsonlink.jackson.schema.v1.DigitalWrite;
-import io.freedriver.jsonlink.jackson.schema.v1.Identifier;
-import io.freedriver.jsonlink.jackson.schema.v1.Request;
-import io.freedriver.jsonlink.jackson.schema.v1.Response;
+import io.freedriver.jsonlink.api.v1.BoardRequest;
+import io.freedriver.jsonlink.api.v1.BoardResponse;
+import io.freedriver.jsonlink.api.v1.DigitalWrite;
+import io.freedriver.jsonlink.api.v1.Identifier;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -125,7 +125,7 @@ class StartupActionWriteTest {
         SimpleAliasService aliases = mock(SimpleAliasService.class);
         when(aliases.setState(eq(BOARD), any())).thenAnswer(invocation -> {
             Map<String, Boolean> desired = invocation.getArgument(1);
-            return harness.send(BOARD, Request.empty().digitalWrite(new DigitalWrite(PIN, desired.get("lamp"))));
+            return harness.send(BOARD, BoardRequest.empty().digitalWrite(new DigitalWrite(PIN, desired.get("lamp"))));
         });
         when(aliases.identifiers(eq(BOARD), any())).thenAnswer(invocation -> {
             Map<String, Boolean> desired = invocation.getArgument(1);
@@ -187,7 +187,7 @@ class StartupActionWriteTest {
                 when(aliases.setState(eq(BOARD), any())).thenAnswer(invocation -> {
                     Map<String, Boolean> desired = invocation.getArgument(1);
                     return harness.send(BOARD,
-                            Request.empty().digitalWrite(new DigitalWrite(PIN, desired.get("lamp"))));
+                            BoardRequest.empty().digitalWrite(new DigitalWrite(PIN, desired.get("lamp"))));
                 });
                 when(aliases.identifiers(eq(BOARD), any())).thenAnswer(invocation -> {
                     Map<String, Boolean> desired = invocation.getArgument(1);
@@ -265,7 +265,7 @@ class StartupActionWriteTest {
         }
 
         @Override
-        public UUID makeRequest(Request request, Duration maxWait) {
+        public UUID makeRequest(BoardRequest request, Duration maxWait) {
             if (request.write() != null && request.write().digital() != null) {
                 requested = new LinkedHashMap<>();
                 request.write().digital().forEach((pin, state) -> requested.put(pin, state.getValue()));
@@ -277,16 +277,16 @@ class StartupActionWriteTest {
         }
 
         @Override
-        public Response getResponse(UUID requestId, Duration maxWait) throws ConnectorException {
+        public BoardResponse getResponse(UUID requestId, Duration maxWait) throws ConnectorException {
             if (feedback == Feedback.MISSING) {
-                return Response.builder().uuid(BOARD).build();
+                return new BoardResponse(BOARD, null, null, null, null, null, null, null);
             }
             if (feedback == Feedback.CONTRARY) {
                 Map<Identifier, Boolean> lie = new LinkedHashMap<>();
                 requested.forEach((pin, value) -> lie.put(pin, !value));
-                return Response.builder().uuid(BOARD).digital(lie).build();
+                return new BoardResponse(BOARD, null, null, null, null, null, lie, null);
             }
-            return Response.builder().uuid(BOARD).digital(new LinkedHashMap<>(pins)).build();
+            return new BoardResponse(BOARD, null, null, null, null, null, new LinkedHashMap<>(pins), null);
         }
 
         @Override
